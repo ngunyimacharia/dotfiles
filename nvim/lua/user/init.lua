@@ -27,6 +27,7 @@ local config = {
     },
     g = {
       mapleader = " ", -- sets vim.g.mapleader
+      php_cs_fixer_path="~/Codeden/kirschbaum/php-cs/vendor/friendsofphp/php-cs-fixer/php-cs-fixer"
     },
   },
 
@@ -168,6 +169,10 @@ local config = {
           }
         end,
       },
+      { 'tpope/vim-sleuth' },
+      { 'stephpy/vim-php-cs-fixer' },
+
+
     },
     -- All other entries override the setup() call for default plugins
     ["null-ls"] = function(config)
