@@ -88,6 +88,8 @@ local config = {
       --     require("lsp_signature").setup()
       --   end,
       -- },
+      ["alexandersix/vim-blade"] = {},
+      ["prettier/vim-prettier"] = {},
       {
         's1n7ax/nvim-search-and-replace',
         config = function() require'nvim-search-and-replace'.setup() end,
@@ -170,7 +172,14 @@ local config = {
         end,
       },
       { 'tpope/vim-sleuth' },
-      { 'stephpy/vim-php-cs-fixer' },
+      {
+        'stephpy/vim-php-cs-fixer',
+        config = function()
+          vim.cmd [[
+              autocmd BufWritePost *.php silent! call PhpCsFixerFixFile()
+          ]]
+        end
+      },
 
 
     },
