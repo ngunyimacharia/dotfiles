@@ -88,6 +88,7 @@ local config = {
       --     require("lsp_signature").setup()
       --   end,
       -- },
+      {'neoclide/coc.nvim', branch = 'release'},
       ["alexandersix/vim-blade"] = {},
       ["prettier/vim-prettier"] = {},
       {
