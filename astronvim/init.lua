@@ -88,13 +88,14 @@ local config = {
       --     require("lsp_signature").setup()
       --   end,
       -- },
-      {'neoclide/coc.nvim', branch = 'release'},
-      ["alexandersix/vim-blade"] = {},
-      ["prettier/vim-prettier"] = {},
+      ["edluffy/hologram.nvim"] = {}, --allow viewing images
+      {'neoclide/coc.nvim', branch = 'release'}, --allow vscode like plugin intergrations
+      ["alexandersix/vim-blade"] = {}, --blade support
+      ["prettier/vim-prettier"] = {}, -- prettier support
       {
         's1n7ax/nvim-search-and-replace',
         config = function() require'nvim-search-and-replace'.setup() end,
-      },
+      }, -- global search and replace
       {
         "catppuccin/nvim",
         as = "catppuccin",
