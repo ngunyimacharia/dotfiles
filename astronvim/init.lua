@@ -92,6 +92,8 @@ local config = {
       {'neoclide/coc.nvim', branch = 'release'}, --allow vscode like plugin intergrations
       ["alexandersix/vim-blade"] = {}, --blade support
       ["prettier/vim-prettier"] = {}, -- prettier support
+      ["preservim/vimux"] = {}, -- allow tmux interaction in Vim
+      ["vim-test/vim-test"] = {}, -- test support
       {
         's1n7ax/nvim-search-and-replace',
         config = function() require'nvim-search-and-replace'.setup() end,
@@ -320,7 +322,19 @@ local config = {
   -- This function is run last
   -- good place to configuring augroups/autocommands and custom filetypes
   polish = function()
+    local opts = { noremap = true, silent = true }
+    local map = vim.api.nvim_set_keymap
+    local set = vim.opt
+    -- Set options
+    set.relativenumber = true
     -- Set key binding
+    -- Vim-test
+    map("n", "<leader>ten", "<cmd>TestNearest<cr>", opts)
+    map("n", "<leader>tef", "<cmd>TestFile<cr>", opts)
+    map("n", "<leader>tes", "<cmd>TestSuite<cr>", opts)
+    map("n", "<leader>tev", "<cmd>TestVisit<cr>", opts)
+
+    vim.cmd("let test#strategy = 'vimux'")
     -- Set autocommands
     vim.api.nvim_create_augroup("packer_conf", { clear = true })
     vim.api.nvim_create_autocmd("BufWritePost", {
