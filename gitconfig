@@ -4,7 +4,7 @@
 [pull]
 	rebase = false
 [core]
-	excludesfile = /Users/kelvinngunyi/.global-gitignore
+	excludesfile = /Users/kelvinngunyi/.gitignore_global
 	autocrlf = input
 [filter "lfs"]
 	clean = git-lfs clean -- %f

@@ -17,3 +17,15 @@ alias art="valet php artisan"
 # ====================================================
 
 export PATH="$HOME/.composer/vendor/bin:$PATH"
+
+# }}}
+
+# Bash functions {{{
+
+# Switch AWS profiles
+
+aws_profile()
+{
+  export AWS_PROFILE=$1
+  aws configure list
+}
