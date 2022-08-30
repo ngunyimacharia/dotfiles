@@ -12,6 +12,7 @@ eval "$(direnv hook zsh)"
 
 alias art="valet php artisan"
 
+alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
 # Path configurations {{{
 # ====================================================
