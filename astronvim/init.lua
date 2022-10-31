@@ -48,7 +48,7 @@ local config = {
 		},
 		g = {
 			mapleader = " ", -- sets vim.g.mapleader
-			php_cs_fixer_path = "~/Codeden/kirschbaum/php-cs/vendor/friendsofphp/php-cs-fixer/php-cs-fixer",
+			php_cs_fixer_path = "~/Codeden/php-cs/vendor/friendsofphp/php-cs-fixer/php-cs-fixer",
 		},
 	},
 	-- If you need more control, you can use the function()...end notation
@@ -209,8 +209,8 @@ local config = {
 				"stephpy/vim-php-cs-fixer",
 				config = function()
 					vim.cmd([[
-              autocmd BufWritePost *.php silent! call PhpCsFixerFixFile()
-          ]])
+              	      	      	      	      autocmd BufWritePost *.php silent! call PhpCsFixerFixFile()
+          	  	  	  	  ]])
 				end,
 			},
 			-- We also support a key value style plugin definition similar to NvChad:
@@ -236,11 +236,11 @@ local config = {
 			-- set up null-ls's on_attach function
 			-- NOTE: You can remove this on attach function to disable format on save
 			config.on_attach = function(client)
-				if client.resolved_capabilities.document_formatting then
+				if client.server_capabilities.document_formatting then
 					vim.api.nvim_create_autocmd("BufWritePre", {
 						desc = "Auto format before save",
 						pattern = "<buffer>",
-						callback = vim.lsp.buf.formatting_sync,
+						callback = vim.lsp.buf.format,
 					})
 				end
 			end
