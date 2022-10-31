@@ -20,6 +20,9 @@ alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 
 export PATH="$HOME/Library/Python/3.10/bin:$PATH"
+
+export PATH="$HOME/.cargo/env:$PATH"
+
 # }}}
 
 # Bash functions {{{
