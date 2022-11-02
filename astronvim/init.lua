@@ -115,6 +115,16 @@ local config = {
 
 	-- Extend LSP configuration
 	lsp = {
+		-- formatting configuration
+		formatting = {
+			format_on_save = {
+				enabled = true, -- enable formatting on save
+				ignore_filetypes = { -- disable format on save for the following filtypes
+					"php",
+				},
+			},
+		},
+
 		-- enable servers that you already have installed without mason
 		servers = {
 			-- "pyright"
