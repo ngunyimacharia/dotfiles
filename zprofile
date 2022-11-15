@@ -23,6 +23,8 @@ export PATH="$HOME/Library/Python/3.10/bin:$PATH"
 
 export PATH="$HOME/.cargo/env:$PATH"
 
+export PATH="/usr/local/opt/libpq/bin:$PATH"
+
 # }}}
 
 # Bash functions {{{
