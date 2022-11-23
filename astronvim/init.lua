@@ -215,14 +215,14 @@ local config = {
 				end,
 			}, -- global search and replace
 			{ "tpope/vim-sleuth" }, -- indentation plugin compatible with EditorConfig
-			{
-				"stephpy/vim-php-cs-fixer",
-				config = function()
-					vim.cmd([[
-              	      	      	      	      autocmd BufWritePost *.php silent! call PhpCsFixerFixFile()
-          	  	  	  	  ]])
-				end,
-			},
+			-- {
+			-- 	"stephpy/vim-php-cs-fixer",
+			-- 	config = function()
+			-- 		vim.cmd([[
+			--            	      	      	      	      autocmd BufWritePost *.php silent! call PhpCsFixerFixFile()
+			--        	  	  	  	  ]])
+			-- 	end,
+			-- },
 			-- We also support a key value style plugin definition similar to NvChad:
 			-- ["ray-x/lsp_signature.nvim"] = {
 			--   event = "BufRead",
