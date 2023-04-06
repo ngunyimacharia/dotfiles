@@ -120,7 +120,7 @@ local config = {
 			format_on_save = {
 				enabled = true, -- enable formatting on save
 				ignore_filetypes = { -- disable format on save for the following filtypes
-					"php",
+					".blade.php",
 				},
 			},
 		},
