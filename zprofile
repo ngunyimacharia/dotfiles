@@ -25,6 +25,8 @@ export PATH="$HOME/.cargo/env:$PATH"
 
 export PATH="/usr/local/opt/libpq/bin:$PATH"
 
+export PATH="$(pyenv root)/shims:${PATH}"
+
 # }}}
 
 # Bash functions {{{
