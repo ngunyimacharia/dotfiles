@@ -38,3 +38,14 @@ aws_profile()
   export AWS_PROFILE=$1
   aws configure list
 }
+
+# Added by OrbStack: command-line tools and integration
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+
+# Puppeteer configuration {{{
+# ====================================================
+
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+
+# }}}
