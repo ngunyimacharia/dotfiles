@@ -144,3 +144,9 @@ then
   autoload -Uz compinit
   compinit
 fi
+
+#
+# Install pyenv/python
+#
+
+PATH=$(pyenv root)/shims:$PATH
