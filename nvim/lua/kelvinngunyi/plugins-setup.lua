@@ -110,6 +110,9 @@ return require("packer").startup(function(use)
     use('jose-elias-alvarez/null-ls.nvim')
     use('MunifTanjim/prettier.nvim')
 
+    -- php-cs-fixer
+    use('stephpy/vim-php-cs-fixer')
+
 	if packer_bootstrap then
 		require("packer").sync()
 	end
