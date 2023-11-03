@@ -211,6 +211,26 @@ _G.packer_plugins = {
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/telescope.nvim",
     url = "https://github.com/nvim-telescope/telescope.nvim"
   },
+  ["vim-dadbod"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/vim-dadbod",
+    url = "https://github.com/tpope/vim-dadbod"
+  },
+  ["vim-dadbod-completion"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/vim-dadbod-completion",
+    url = "https://github.com/kristijanhusak/vim-dadbod-completion"
+  },
+  ["vim-dadbod-ui"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/vim-dadbod-ui",
+    url = "https://github.com/kristijanhusak/vim-dadbod-ui"
+  },
+  ["vim-dotenv"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/vim-dotenv",
+    url = "https://github.com/tpope/vim-dotenv"
+  },
   ["vim-maximizer"] = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/vim-maximizer",

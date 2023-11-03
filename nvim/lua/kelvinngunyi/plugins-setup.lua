@@ -113,6 +113,15 @@ return require("packer").startup(function(use)
     -- php-cs-fixer
     use('stephpy/vim-php-cs-fixer')
 
+    -- vim-dadbod
+    use({"tpope/vim-dadbod",
+      requires = {
+        "tpope/vim-dotenv",
+        "kristijanhusak/vim-dadbod-ui",
+        "kristijanhusak/vim-dadbod-completion",
+      },
+    })
+
 	if packer_bootstrap then
 		require("packer").sync()
 	end
