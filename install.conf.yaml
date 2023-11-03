@@ -3,6 +3,7 @@
 - link:
     ~/.config/kitty/kitty.conf: kitty.conf
     ~/.config/nvim: nvim 
+    ~/.config/spotifyd/spotifyd.conf: spotifyd.conf 
     ~/.gitconfig: gitconfig
     ~/.tmux.conf: tmux.conf
     ~/.zimrc: zimrc
