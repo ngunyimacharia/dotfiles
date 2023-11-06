@@ -64,6 +64,14 @@ lspconfig["tailwindcss"].setup({
 lspconfig["intelephense"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
+    settings = {
+        intelephense = {
+            files = {
+                maxSize = 5000000,  -- Set your desired file size limit here
+            },
+            -- Other Intelephense settings can be added here
+        },
+    },
 })
 
 -- configure js server
