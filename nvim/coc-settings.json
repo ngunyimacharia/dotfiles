@@ -1,3 +1,4 @@
 {
+  "coc.preferences.formatOnSave": true,
+  "intelephense.format.enable": false,
 }
-
