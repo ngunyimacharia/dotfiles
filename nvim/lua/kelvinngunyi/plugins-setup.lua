@@ -98,6 +98,12 @@ return require("packer").startup(function(use)
       },
     })
 
+    -- coc
+    use({
+      "neoclide/coc.nvim",
+      branch = 'release'
+    })
+
 	if packer_bootstrap then
 		require("packer").sync()
 	end
