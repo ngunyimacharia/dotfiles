@@ -11,7 +11,9 @@ require("kelvinngunyi.core.keymaps")
 require("kelvinngunyi.core.colorscheme")
 
 -- coc
+require("kelvinngunyi.plugins.coc.node")
 require("kelvinngunyi.plugins.coc.default")
+require("kelvinngunyi.plugins.coc.extensions")
 
 -- plugins
 require("kelvinngunyi.plugins.comment")
