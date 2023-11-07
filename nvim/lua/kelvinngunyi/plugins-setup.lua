@@ -106,13 +106,6 @@ return require("packer").startup(function(use)
 	-- git integration
 	use("lewis6991/gitsigns.nvim") -- show line modifications on left hand side
 
-    -- prettier setup
-    use('jose-elias-alvarez/null-ls.nvim')
-    use('MunifTanjim/prettier.nvim')
-
-    -- php-cs-fixer
-    use('stephpy/vim-php-cs-fixer')
-
     -- vim-dadbod
     use({"tpope/vim-dadbod",
       requires = {
