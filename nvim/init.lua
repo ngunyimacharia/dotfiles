@@ -10,8 +10,10 @@ require("kelvinngunyi.core.keymaps")
 -- vim colorscheme
 require("kelvinngunyi.core.colorscheme")
 
+-- coc
+require("kelvinngunyi.plugins.coc.default")
+
 -- plugins
-require("kelvinngunyi.plugins.coc")
 require("kelvinngunyi.plugins.comment")
 require("kelvinngunyi.plugins.nvim-tree")
 require("kelvinngunyi.plugins.lualine")
