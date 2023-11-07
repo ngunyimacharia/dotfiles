@@ -11,6 +11,7 @@ require("kelvinngunyi.core.keymaps")
 require("kelvinngunyi.core.colorscheme")
 
 -- plugins
+require("kelvinngunyi.plugins.coc")
 require("kelvinngunyi.plugins.comment")
 require("kelvinngunyi.plugins.nvim-tree")
 require("kelvinngunyi.plugins.lualine")
