@@ -79,3 +79,8 @@ keymap.set("n", "<leader>os", ":ObsidianSearch<CR>")      -- search for notes in
 keymap.set("n", "<leader>ol", ":ObsidianLink<CR>")        -- link inline visual text selection to existing note. Optional argument: ID, Path, Alias. If not given, selected note used to find note
 keymap.set("n", "<leader>oln", ":ObsidianLinkNew<CR>")    -- create a new notes and link inline visual text selection. Optional argument is title of note. Defaults to selected text
 keymap.set("n", "<leader>ow", ":ObsidianWorkspace<CR>")   -- switch to another workspace
+
+-- cloak
+keymap.set("n", "<leader>ce", ":CloakEnable<CR>")
+keymap.set("n", "<leader>cd", ":CloakDisable<CR>")
+keymap.set("n", "<leader>ct", ":CloakToggle<CR>")

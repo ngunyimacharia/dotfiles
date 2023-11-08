@@ -84,6 +84,11 @@ _G.packer_plugins = {
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/ReplaceWithRegister",
     url = "https://github.com/vim-scripts/ReplaceWithRegister"
   },
+  ["cloak.nvim"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/cloak.nvim",
+    url = "https://github.com/laytan/cloak.nvim"
+  },
   ["coc.nvim"] = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/coc.nvim",

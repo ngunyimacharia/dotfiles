@@ -101,11 +101,13 @@ return require("packer").startup(function(use)
   -- obsidian for note taking
   use({
     "epwalsh/obsidian.nvim",
-    tag = "v1.11.0",
     requires = {
       "nvim-lua/plenary.nvim",
     },
   })
+
+  -- hide sensitive values  e.g. .env files
+  use("laytan/cloak.nvim")
 
   if packer_bootstrap then
     require("packer").sync()
