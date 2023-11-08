@@ -94,6 +94,9 @@ return require("packer").startup(function(use)
       branch = 'release'
     })
 
+    -- test support 
+    use("vim-test/vim-test")
+
 	if packer_bootstrap then
 		require("packer").sync()
 	end

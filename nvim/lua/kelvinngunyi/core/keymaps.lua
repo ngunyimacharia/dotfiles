@@ -28,7 +28,7 @@ keymap.set("n", "<leader>se", "<C-w>=") -- make split windows equal width & heig
 keymap.set("n", "<leader>sc", ":close<CR>") -- close current split window
 -- tab management
 keymap.set("n", "<leader>to", ":tabnew<CR>") -- open new tab
-keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close current tab
+keymap.set("n", "<leader>tc", ":tabclose<CR>") -- close current tab
 keymap.set("n", "<leader>tn", ":tabn<CR>") --  go to next tab
 keymap.set("n", "<leader>tp", ":tabp<CR>") --  go to previous tab
 
@@ -58,3 +58,10 @@ keymap.set("n", "<leader>gc", "<cmd>Telescope git_commits<cr>") -- list all git 
 keymap.set("n", "<leader>gfc", "<cmd>Telescope git_bcommits<cr>") -- list git commits for current file/buffer (use <cr> to checkout) ["gfc" for git file commits]
 keymap.set("n", "<leader>gb", "<cmd>Telescope git_branches<cr>") -- list git branches (use <cr> to checkout) ["gb" for git branch]
 keymap.set("n", "<leader>gs", "<cmd>Telescope git_status<cr>") -- list current changes per file with diff preview ["gs" for git status]
+
+-- local testing
+keymap.set("n", "<leader>t", ":TestNearest<CR>")
+keymap.set("n", "<leader>T", ":TestFile<CR>")
+keymap.set("n", "<leader>a", ":TestSuite<CR>")
+keymap.set("n", "<leader>l", ":TestLast<CR>")
+keymap.set("n", "<leader>g", ":TestVisit<CR>")
