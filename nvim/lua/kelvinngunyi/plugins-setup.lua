@@ -77,7 +77,8 @@ return require("packer").startup(function(use)
   use({ "windwp/nvim-ts-autotag", after = "nvim-treesitter" }) -- autoclose tags
 
   -- git integration
-  use("tpope/vim-fugitive") -- show line modifications on left hand side
+  use("tpope/vim-fugitive")     -- show line modifications on left hand side
+  use("almo7aya/openingh.nvim") -- open files and projects in Github
 
   -- vim-dadbod
   use({
