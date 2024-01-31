@@ -84,3 +84,6 @@ keymap.set("n", "<leader>ow", ":ObsidianWorkspace<CR>")   -- switch to another w
 keymap.set("n", "<leader>ce", ":CloakEnable<CR>")
 keymap.set("n", "<leader>cd", ":CloakDisable<CR>")
 keymap.set("n", "<leader>ct", ":CloakToggle<CR>")
+
+-- Blame line
+keymap.set("n", "<leader>b", ":ToggleBlameLine<CR>")

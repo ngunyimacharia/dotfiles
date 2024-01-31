@@ -94,6 +94,11 @@ _G.packer_plugins = {
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/coc.nvim",
     url = "https://github.com/neoclide/coc.nvim"
   },
+  ["gitsigns.nvim"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/gitsigns.nvim",
+    url = "https://github.com/lewis6991/gitsigns.nvim"
+  },
   ["lualine.nvim"] = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/lualine.nvim",
@@ -103,6 +108,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/nvim-autopairs",
     url = "https://github.com/windwp/nvim-autopairs"
+  },
+  ["nvim-blame-line"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/nvim-blame-line",
+    url = "https://github.com/tveskag/nvim-blame-line"
   },
   ["nvim-tree.lua"] = {
     loaded = true,
