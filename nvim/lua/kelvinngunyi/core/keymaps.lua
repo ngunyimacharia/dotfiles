@@ -87,3 +87,6 @@ keymap.set("n", "<leader>ct", ":CloakToggle<CR>")
 
 -- Blame line
 keymap.set("n", "<leader>b", ":ToggleBlameLine<CR>")
+
+-- Copy path of currently opened buffer
+keymap.set("n", "cp", ":let @+ = expand('%')<CR>")
