@@ -10,6 +10,10 @@ vim.opt.updatetime = 300
 -- diagnostics appeared/became resolved
 vim.opt.signcolumn = "yes"
 
+-- Enabled to allow additional markdown rendering in Obsidian
+-- https://github.com/epwalsh/obsidian.nvim/issues/286
+vim.opt.conceallevel = 2
+
 local keyset = vim.keymap.set
 -- Autocomplete
 function _G.check_back_space()
