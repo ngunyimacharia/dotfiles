@@ -1,9 +1,10 @@
-- clean: ['~']
+- clean: ["~"]
 
 - link:
     ~/.config/kitty/kitty.conf: kitty.conf
-    ~/.config/nvim: nvim 
-    ~/.config/spotifyd/spotifyd.conf: spotifyd.conf 
+    ~/.config/nvim: nvim
+    ~/.config/spotifyd/spotifyd.conf: spotifyd.conf
+    ~/.config/spotify-player/app.toml: spotify-player/app.toml
     ~/.gitconfig: gitconfig
     ~/.tmux.conf: tmux.conf
     ~/.zimrc: zimrc
