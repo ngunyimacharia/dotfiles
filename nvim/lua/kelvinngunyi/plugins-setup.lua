@@ -121,6 +121,17 @@ return require("packer").startup(function(use)
     },
   })
 
+  -- Laravel support for neovim
+  use({
+    "adalessa/laravel.nvim",
+    requires = {
+      "nvim-telescope/telescope.nvim",
+      "tpope/vim-dotenv",
+      "MunifTanjim/nui.nvim",
+      "nvimtools/none-ls.nvim",
+    },
+  })
+
   if packer_bootstrap then
     require("packer").sync()
   end
