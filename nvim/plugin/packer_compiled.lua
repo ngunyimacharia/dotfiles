@@ -99,6 +99,11 @@ _G.packer_plugins = {
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/gitsigns.nvim",
     url = "https://github.com/lewis6991/gitsigns.nvim"
   },
+  ["laravel.nvim"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/laravel.nvim",
+    url = "https://github.com/adalessa/laravel.nvim"
+  },
   ["lazygit.nvim"] = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/lazygit.nvim",
@@ -108,6 +113,16 @@ _G.packer_plugins = {
     loaded = true,
     path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/lualine.nvim",
     url = "https://github.com/nvim-lualine/lualine.nvim"
+  },
+  ["none-ls.nvim"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/none-ls.nvim",
+    url = "https://github.com/nvimtools/none-ls.nvim"
+  },
+  ["nui.nvim"] = {
+    loaded = true,
+    path = "/Users/kelvinngunyi/.local/share/nvim/site/pack/packer/start/nui.nvim",
+    url = "https://github.com/MunifTanjim/nui.nvim"
   },
   ["nvim-autopairs"] = {
     loaded = true,
