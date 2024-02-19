@@ -90,3 +90,6 @@ keymap.set("n", "<leader>b", ":ToggleBlameLine<CR>")
 
 -- Copy path of currently opened buffer
 keymap.set("n", "cp", ":let @+ = expand('%')<CR>")
+
+-- Lazygit
+keymap.set("n", "gg", ":LazyGit<CR>")

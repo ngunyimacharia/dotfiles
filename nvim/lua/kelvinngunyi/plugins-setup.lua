@@ -112,6 +112,15 @@ return require("packer").startup(function(use)
   -- hide sensitive values  e.g. .env files
   use("laytan/cloak.nvim")
 
+  -- show Lazygit as popup
+  use({
+    "kdheepak/lazygit.nvim",
+    -- optional for floating window border decoration
+    requires = {
+      "nvim-lua/plenary.nvim",
+    },
+  })
+
   if packer_bootstrap then
     require("packer").sync()
   end
