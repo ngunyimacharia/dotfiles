@@ -93,3 +93,8 @@ keymap.set("n", "cp", ":let @+ = expand('%')<CR>")
 
 -- Lazygit
 keymap.set("n", "gg", ":LazyGit<CR>")
+
+-- Laravel
+keymap.set("n", "<leader>la", ":Laravel artisan<cr>")
+keymap.set("n", "<leader>lr", ":Laravel routes<cr>")
+keymap.set("n", "<leader>lm", ":Laravel related<cr>")
