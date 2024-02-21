@@ -92,7 +92,7 @@ keymap.set("n", "<leader>b", ":ToggleBlameLine<CR>")
 keymap.set("n", "cp", ":let @+ = expand('%')<CR>")
 
 -- Lazygit
-keymap.set("n", "gg", ":LazyGit<CR>")
+keymap.set("n", "lg", ":LazyGit<CR>")
 
 -- Laravel
 keymap.set("n", "<leader>la", ":Laravel artisan<cr>")
