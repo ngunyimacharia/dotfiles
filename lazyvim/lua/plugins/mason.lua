@@ -3,7 +3,8 @@ return {
     "williamboman/mason.nvim",
     opts = {
       ensure_installed = {
-        "phpactor", -- For php
+        "phpactor", -- PHP LSP
+        "phpstan", -- Adds PHPStan / Larastan support
       },
     },
   },
