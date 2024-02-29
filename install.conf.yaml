@@ -2,7 +2,7 @@
 
 - link:
     ~/.config/kitty/kitty.conf: kitty.conf
-    ~/.config/nvim: nvim
+    ~/.config/nvim: lazyvim
     ~/.config/spotifyd/spotifyd.conf: spotifyd.conf
     ~/.config/spotify-player/app.toml: spotify-player/app.toml
     ~/.gitconfig: gitconfig
