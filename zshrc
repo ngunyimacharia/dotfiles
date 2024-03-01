@@ -154,10 +154,6 @@ PATH=$(pyenv root)/shims:$PATH
 # Add alias to change theme
 alias theme="~/.config/kitty/change_kitty_theme.sh"
 
-# Change theme
-theme
-
-
 # Herd injected PHP 8.2 configuration.
 export HERD_PHP_82_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/82/"
 
