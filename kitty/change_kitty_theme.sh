@@ -7,7 +7,7 @@ KITTY_CONFIG_DIR="${HOME}/.config/kitty/kitty-themes/themes"
 
 # Define the light and dark theme names
 LIGHT_THEME="AtomOneLight.conf"
-DARK_THEME="Atom.conf"
+DARK_THEME="Dracula.conf"
 
 # Define the theme to use based on the value of DARKMODE
 if [ -n "$DARK_MODE" ] && [ "$DARK_MODE" = "Dark" ]; then
