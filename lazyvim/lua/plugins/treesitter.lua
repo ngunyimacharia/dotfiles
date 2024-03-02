@@ -4,6 +4,10 @@ return {
     opts = {
       ensure_installed = {
         "php",
+        "go",
+        "gomod",
+        "gowork",
+        "gosum",
       },
     },
   },
