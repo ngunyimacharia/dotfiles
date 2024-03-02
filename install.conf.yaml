@@ -8,7 +8,7 @@
     ~/.config/spotifyd/spotifyd.conf: spotifyd.conf
     ~/.config/spotify-player/app.toml: spotify-player/app.toml
     ~/.gitconfig: gitconfig
-    ~/.tmux.conf: tmux.conf
+    ~/.tmux.conf: tmux/tmux.conf
     ~/.zimrc: zimrc
     ~/.zprofile: zprofile
     ~/.zshrc: zshrc
