@@ -153,33 +153,4 @@ eval "$(pyenv init -)"
 # Add alias to change theme
 alias theme="~/.config/kitty/change_kitty_theme.sh"
 
-# Herd injected PHP 8.2 configuration.
-export HERD_PHP_82_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/82/"
-
-
-# Herd injected PHP 8.1 configuration.
-export HERD_PHP_81_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/81/"
-
-
-# Herd injected PHP 8.0 configuration.
-export HERD_PHP_80_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/80/"
-
-
-# Herd injected PHP binary.
-export PATH="/Users/kelvinngunyi/Library/Application Support/Herd/bin/":$PATH
-
-
-# Herd injected PHP 7.4 configuration.
-export HERD_PHP_74_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/74/"
-
-
-# Herd injected PHP 8.3 configuration.
-export HERD_PHP_83_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support/Herd/config/php/83/"
-
-# Brew installed PHP
-# export PATH="/opt/homebrew/opt/php@8.2/bin:$PATH"
-#export PATH="/opt/homebrew/opt/php@8.2/sbin:$PATH"
-
-
-
 if [ -e /home/raven/.nix-profile/etc/profile.d/nix.sh ]; then . /home/raven/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
