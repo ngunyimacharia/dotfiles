@@ -181,3 +181,5 @@ export HERD_PHP_83_INI_SCAN_DIR="/Users/kelvinngunyi/Library/Application Support
 #export PATH="/opt/homebrew/opt/php@8.2/sbin:$PATH"
 
 
+
+if [ -e /home/raven/.nix-profile/etc/profile.d/nix.sh ]; then . /home/raven/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
