@@ -45,3 +45,6 @@ composer global install
 
 # Install Devbox
 curl -fsSL https://get.jetify.com/devbox | bash
+
+# Install MySql client
+sudo dnf install mariadb
