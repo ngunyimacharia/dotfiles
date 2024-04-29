@@ -5,8 +5,6 @@
     ~/.config/kitty/kitty-themes: kitty/kitty-themes
     ~/.config/kitty/change_kitty_theme.sh: kitty/change_kitty_theme.sh
     ~/.config/nvim: lazyvim
-    ~/.config/spotifyd/spotifyd.conf: spotifyd.conf
-    ~/.config/spotify-player/app.toml: spotify-player/app.toml
     ~/.gitconfig: gitconfig
     ~/.tmux.conf: tmux/tmux.conf
     ~/.zimrc: zimrc
