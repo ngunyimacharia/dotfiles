@@ -145,11 +145,10 @@ then
   compinit
 fi
 
-#
-# Install pyenv/python
-#
-
-PATH=$(pyenv root)/shims:$PATH
+# Configure pyenv 
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
 
 # Add alias to change theme
 alias theme="~/.config/kitty/change_kitty_theme.sh"
