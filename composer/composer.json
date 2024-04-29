@@ -1,0 +1,6 @@
+{
+    "require": {
+        "tightenco/takeout": "^2.6",
+        "cpriego/valet-linux": "^2.3"
+    }
+}

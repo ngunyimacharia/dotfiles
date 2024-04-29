@@ -41,5 +41,7 @@ sudo dnf install php-{fpm,cli,posix,process,mbstring,mcrypt,xml,soap,sodium}
 # Install composer
 ./scripts/composer-install.sh
 
+composer global install
+
 # Install Devbox
 curl -fsSL https://get.jetify.com/devbox | bash
