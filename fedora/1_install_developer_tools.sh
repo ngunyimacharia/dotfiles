@@ -25,8 +25,10 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker
 
-# Install Chromium
-sudo dnf install chromium -y
+# Install Chrome
+sudo dnf install fedora-workstation-repositories
+sudo dnf config-manager --set-enabled google-chrome
+sudo dnf install google-chrome-stable -y
 
 # Install PHP
 sudo dnf install http://rpms.remirepo.net/fedora/remi-release-40.rpm -y
