@@ -1,5 +1,5 @@
 # Install Kitty
-curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
+sudo dnf install kitty
 
 # Setup LazyVim 
 sudo dnf install neovim
@@ -7,8 +7,8 @@ sudo dnf install neovim
 sudo dnf copr enable maveonair/jetbrains-mono-nerd-fonts
 sudo dnf install jetbrains-mono-nerd-fonts jetbrains-mono-nerd-fonts
 
-sudo dnf copy enable atim/lazygit -y
-sudo dnf install lazygit
+sudo dnf copr enable atim/lazygit -y
+sudo dnf install lazygit -y
 
 sudo dnf install ripgrep
 
@@ -25,18 +25,14 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker
 
-# Install Docker Desktop
-wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.22.1-x86_64.rpm
-sudo dnf install ./docker-desktop*-x86_64.rpm
-
 # Install Chromium
-sudo dnf install chromium
+sudo dnf install chromium -y
 
 # Install PHP
 sudo dnf install http://rpms.remirepo.net/fedora/remi-release-40.rpm -y
 sudo dnf module list php
 sudo dnf module enable php:remi-8.2 -y
-sudo dnf install php-{fpm,cli,posix,process,mbstring,mcrypt,xml,soap,sodium}
+sudo dnf install php-{fpm,cli,posix,process,mbstring,mcrypt,xml,soap,sodium} -y
 
 # Install composer
 ./scripts/composer-install.sh
@@ -45,6 +41,3 @@ composer global install
 
 # Install Devbox
 curl -fsSL https://get.jetify.com/devbox | bash
-
-# Install MySql client
-sudo dnf install mariadb
