@@ -1,16 +1,22 @@
 # Install Kitty
-sudo dnf install kitty
+sudo dnf install kitty -y
 
 # Setup LazyVim 
-sudo dnf install neovim
+sudo dnf install neovim -y
 
 sudo dnf copr enable maveonair/jetbrains-mono-nerd-fonts
-sudo dnf install jetbrains-mono-nerd-fonts jetbrains-mono-nerd-fonts
+sudo dnf install jetbrains-mono-nerd-fonts jetbrains-mono-nerd-fonts -y
 
 sudo dnf copr enable atim/lazygit -y
 sudo dnf install lazygit -y
 
-sudo dnf install ripgrep
+sudo dnf install ripgrep -y
+
+sudo dnf install fzf -y
+
+sudo dnf install copyq -y
+
+sudo dnf install bat -y
 
 # Install Pyenv
 curl https://pyenv.run | bash
@@ -18,7 +24,7 @@ curl https://pyenv.run | bash
 # Install Docker
 sudo dnf -y install dnf-plugins-core
 sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo groupadd docker
