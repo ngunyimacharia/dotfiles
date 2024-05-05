@@ -53,3 +53,8 @@ composer global install
 
 # Install Devbox
 curl -fsSL https://get.jetify.com/devbox | bash
+
+# Install TablePlus
+sudo rpm -v --import https://yum.tableplus.com/apt.tableplus.com.gpg.key
+sudo dnf config-manager --add-repo https://yum.tableplus.com/rpm/x86_64/tableplus.repo
+sudo dnf install tableplus -y
