@@ -1,3 +1,24 @@
+# Install various utilities
+sudo apt install curl -y
+ 
+sudo apt install xclip -y
+
+sudo apt-get install ripgrep -y
+
+sudo apt install fzf -y
+
+sudo apt install copyq -y
+
+sudo apt install bat -y
+
+sudo apt-get install curl network-manager libnss3-tools jq xsel -y
+
+# Instal JetBrainsMono font
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/install_manual.sh)"
+
+# Install Flatpak
+sudo apt install flatpak
+
 # Install 1Password
 
 curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
