@@ -154,3 +154,40 @@ eval "$(pyenv init -)"
 alias theme="~/.config/kitty/change_kitty_theme.sh"
 
 if [ -e /home/raven/.nix-profile/etc/profile.d/nix.sh ]; then . /home/raven/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
+
+# Brew setup {{
+# ====================================================
+
+# eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# }}}
+
+# Aliases {{{
+# ====================================================
+
+alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+
+# Path configurations {{{
+# ====================================================
+
+export PATH="$HOME/.composer/vendor/bin:$PATH"
+
+export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+
+export PATH="$HOME/Library/Python/3.10/bin:$PATH"
+
+export PATH="$HOME/.cargo/env:$PATH"
+
+export PATH="/usr/local/opt/libpq/bin:$PATH"
+
+# }}}
+
+# Bash functions {{{
+
+# Switch AWS profiles
+
+aws_profile()
+{
+  export AWS_PROFILE=$1
+  aws configure list
+}
