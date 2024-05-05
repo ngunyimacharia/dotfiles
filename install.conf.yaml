@@ -7,8 +7,8 @@
     ~/.config/kitty/kitty-themes: kitty/kitty-themes
     ~/.config/kitty/change_kitty_theme.sh: kitty/change_kitty_theme.sh
     ~/.config/nvim: lazyvim
-    ~/.gitconfig: gitconfig
+    ~/.gitconfig: git/gitconfig
+    ~/.gitignore: git/gitignore
     ~/.tmux.conf: tmux/tmux.conf
     ~/.zimrc: zimrc
-    ~/.zprofile: zprofile
     ~/.zshrc: zshrc

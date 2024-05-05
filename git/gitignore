@@ -1,0 +1,5 @@
+devbox.d
+.env.me
+.env.vault
+devbox.json
+devbox.lock
