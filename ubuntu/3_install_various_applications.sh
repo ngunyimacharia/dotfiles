@@ -6,3 +6,9 @@ sudo apt install google-chrome-stable -y
 
 # Install Slack
 flatpak install flathub com.slack.Slack -y
+
+# Install Zoom
+flatpak install flathub us.zoom.Zoom -y
+
+# Install MS Teams
+sudo snap install teams-for-linux
