@@ -3,3 +3,4 @@ devbox.d
 .env.vault
 devbox.json
 devbox.lock
+.env.previous

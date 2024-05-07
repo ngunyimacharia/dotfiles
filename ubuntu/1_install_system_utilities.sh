@@ -13,6 +13,9 @@ sudo apt install bat -y
 
 sudo apt-get install curl network-manager libnss3-tools jq xsel -y
 
+# Required to run AppImage
+sudo apt install libfuse2 
+
 # Instal JetBrainsMono font
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/install_manual.sh)"
 
