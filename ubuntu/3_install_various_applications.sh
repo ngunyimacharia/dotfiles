@@ -12,3 +12,6 @@ flatpak install flathub us.zoom.Zoom -y
 
 # Install MS Teams
 sudo snap install teams-for-linux
+
+# Install Spotify
+flatpak install flathub com.spotify.Client
