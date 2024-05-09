@@ -35,3 +35,5 @@ curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --d
  
 sudo apt update && sudo apt install 1password -y
 
+# Install KDE Connect
+sudo apt install kdeconnect

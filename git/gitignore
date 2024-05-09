@@ -4,3 +4,6 @@ devbox.d
 devbox.json
 devbox.lock
 .env.previous
+.phpactor.json
+.null-ls*
+.php-cs-fixer.cache

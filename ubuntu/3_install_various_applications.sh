@@ -15,3 +15,10 @@ sudo snap install teams-for-linux
 
 # Install Spotify
 flatpak install flathub com.spotify.Client
+
+# Install Dropbox
+flatpak install https://dl.flathub.org/repo/appstream/com.dropbox.Client.flatpakref
+
+# Install Obsidian
+sudo snap install obsidian --classic
+
