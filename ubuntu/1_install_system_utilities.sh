@@ -37,3 +37,9 @@ sudo apt update && sudo apt install 1password -y
 
 # Install KDE Connect
 sudo apt install kdeconnect
+
+# Install Gnome Tweak Tool and Extension Manager
+sudo apt install gnome-tweaks
+sudo apt install gnome-shell-extension-manager
+
+sudo apt install lm-sensors # Required for Astra Monitor (https://extensions.gnome.org/extension/6682/astra-monitor/)

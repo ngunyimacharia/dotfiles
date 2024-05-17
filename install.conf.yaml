@@ -12,3 +12,4 @@
     ~/.tmux.conf: tmux/tmux.conf
     ~/.zimrc: zimrc
     ~/.zshrc: zshrc
+    ~/.local/share/gnome-shell/extensions: ubuntu/gnome-shell-extensions
