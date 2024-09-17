@@ -197,3 +197,6 @@ aws_profile()
 
 # Turso
 export PATH="/home/raven/.turso:$PATH"
+
+# Golang
+export PATH=$PATH:/usr/local/go/bin
