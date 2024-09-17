@@ -1,6 +1,7 @@
 {
     "require": {
         "tightenco/takeout": "^2.6",
-        "genesisweb/valet-linux-plus": "^1.6"
+        "genesisweb/valet-linux-plus": "^1.6",
+        "laravel/vapor-cli": "^1.65"
     }
 }
