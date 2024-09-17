@@ -7,3 +7,4 @@ devbox.lock
 .phpactor.json
 .null-ls*
 .php-cs-fixer.cache
+.rgignore
