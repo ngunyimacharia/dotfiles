@@ -180,6 +180,9 @@ export PATH="$HOME/.cargo/env:$PATH"
 
 export PATH="/usr/local/opt/libpq/bin:$PATH"
 
+export FLYCTL_INSTALL="/home/raven/.fly"
+
+export PATH="$FLYCTL_INSTALL/bin:$PATH"
 # }}}
 
 # Bash functions {{{
@@ -191,3 +194,6 @@ aws_profile()
   export AWS_PROFILE=$1
   aws configure list
 }
+
+# Turso
+export PATH="/home/raven/.turso:$PATH"

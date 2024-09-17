@@ -43,3 +43,9 @@ sudo apt install gnome-tweaks
 sudo apt install gnome-shell-extension-manager
 
 sudo apt install lm-sensors # Required for Astra Monitor (https://extensions.gnome.org/extension/6682/astra-monitor/)
+
+# Install WireGuard
+sudo apt install wireguard
+
+# Install Just
+sudo apt install just

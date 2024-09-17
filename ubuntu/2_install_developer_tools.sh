@@ -63,3 +63,9 @@ wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor |
 sudo add-apt-repository "deb [arch=amd64] https://deb.tableplus.com/debian/22 tableplus main"
 sudo apt update
 sudo apt install tableplus -y
+
+# Install Flyctl
+curl -L https://fly.io/install.sh | sh
+
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
