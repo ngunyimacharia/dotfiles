@@ -1,0 +1,50 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+
+# valet-linux-plus
+# sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
+# composer global require genesisweb/valet-linux-plus
+
+# Utilities
+if ! dpkg -l | grep -q "xclip"; then
+  echo "Installing xclip ..."
+
+  sudo apt install xclip
+else
+  echo "xclip is already installed."
+fi
+
+
+if ! dpkg -l | grep -q "libfuse2"; then
+  echo "Installing libfuse2..."
+
+sudo apt install libfuse2
+else
+  echo "libfuse2 is already installed."
+fi
+
+
+# DevTools
+
+if ! dpkg -l | grep -q "tableplus"; then
+  echo "Installing tableplus ..."
+# Add TablePlus gpg key
+  wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null
+# Add TablePlus repo
+  sudo add-apt-repository "deb [arch=amd64] https://deb.tableplus.com/debian/24 tableplus main"
+# Install
+  sudo apt update
+  sudo apt install tableplus
+else
+  echo "TablePlus is already installed."
+fi
+
+# Communication tools
+
+if ! snap list | grep -q "slack"; then
+  sudo snap install slack
+else
+  echo "Slack is already installed."
+fi
+
+{{ end -}}
