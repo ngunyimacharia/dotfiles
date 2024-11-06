@@ -6,3 +6,10 @@ export SUDO_EDITOR="$EDITOR"
 
 # Path edits
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+
+# Aliases
+
+# Laravel specific
+alias a='php artisan'
+alias amfs='php artisan migrate:fresh --seed'
+alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
