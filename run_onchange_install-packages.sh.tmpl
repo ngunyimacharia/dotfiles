@@ -2,8 +2,15 @@
 #!/bin/sh
 
 # valet-linux-plus
-# sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
-# composer global require genesisweb/valet-linux-plus
+composer global show "genesisweb/valet-linux-plus" > /dev/null 2>%1
+if [ $? -eq 0 ]; then
+    echo "valet-linux-plus is already installed"
+else
+  echo "Installing valet-linux-plus..."
+  sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
+  composer global require genesisweb/valet-linux-plus
+  sudo add-apt-repository ppa:ondrej/php
+fi
 
 # Utilities
 if ! dpkg -l | grep -q "xclip"; then
