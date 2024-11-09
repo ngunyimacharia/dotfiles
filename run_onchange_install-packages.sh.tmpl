@@ -46,6 +46,13 @@ else
   echo "TablePlus is already installed."
 fi
 
+if ! snap list | grep -q "postman"; then
+  echo "Installing postman..."
+  sudo snap install postman 
+else
+  echo "Postman is already installed."
+fi
+
 # Communication tools
 
 if ! snap list | grep -q "slack"; then
