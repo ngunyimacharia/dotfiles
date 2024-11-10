@@ -1,0 +1,5 @@
+private_dot_config/nvim/lazy-lock.json
+
+{{ if ne .chezmoi.os "darwin" }}
+
+{{ end }}
