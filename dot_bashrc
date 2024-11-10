@@ -1,4 +1,6 @@
+{{ if ne .chezmoi.os "linux" }}
 source ~/.local/share/omakub/defaults/bash/rc
+{{ end }}
 
 # Editor used by CLI
 export EDITOR="nvim"
