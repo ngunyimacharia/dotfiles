@@ -62,3 +62,11 @@ else
 fi
 
 {{ end -}}
+
+
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+
+brew install --cask alacritty
+
+{{ end -}}
