@@ -69,6 +69,14 @@ else
   sudo apt install npm
 fi
 
+# No package manager available
+which freeze > /dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "freeze already installed."
+else
+  echo "Freeze is not installed. Opening browser for download..."
+  xdg-open https://github.com/charmbracelet/freeze/releases & disown
+fi
 {{ end -}}
 
 
