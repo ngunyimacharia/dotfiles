@@ -61,7 +61,13 @@ else
   echo "Slack is already installed."
 fi
 
-sudo apt install npm
+which npm > /dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "npm already installed."
+else
+  echo "Installing npm..."
+  sudo apt install npm
+fi
 
 {{ end -}}
 
@@ -73,5 +79,18 @@ brew install --cask alacritty
 
 {{ end -}}
 
-npm install -g blade-formatter
-npm install -g prettier 
+npm list -g blade-formatter > /dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "blade-formatter already installed"
+else
+  echo "installing blade-formatter..."
+  npm install -g blade-formatter
+fi
+
+npm list -g prettier  > /dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "prettier already installed"
+else
+  echo "installing prettier..."
+  npm install -g prettier 
+fi
