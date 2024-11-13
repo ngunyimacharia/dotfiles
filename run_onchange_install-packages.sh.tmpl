@@ -61,6 +61,12 @@ else
   echo "Slack is already installed."
 fi
 
+if ! snap list | grep -q "discord"; then
+  sudo snap install discord 
+else
+  echo "Discord is already installed."
+fi
+
 which npm > /dev/null 2>%1
 if [ $? -eq 0 ]; then
   echo "npm already installed."
