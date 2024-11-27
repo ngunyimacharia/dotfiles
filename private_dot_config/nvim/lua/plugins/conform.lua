@@ -16,7 +16,7 @@ return {
         },
         php_cs_fixer = {
           condition = function(self, ctx)
-            local php_cs_config = ".php-cs-fixer.php"
+            local php_cs_config = ".php-cs-fixer.dist.php"
             return vim.fn.filereadable(vim.fn.getcwd() .. "/" .. php_cs_config) == 1
           end,
         },
