@@ -17,5 +17,9 @@ alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
-# Secrets
-# export ANTHROPIC_API_KEY=$(op read "op://private/claude-nvim/credential")
+# Wrap nvim to set required secrets
+nvim() {
+    export ANTHROPIC_API_KEY=$(op read "op://private/claude-nvim/credential")
+    command nvim "$@"
+    unset ANTHROPIC_API_KEY
+}
