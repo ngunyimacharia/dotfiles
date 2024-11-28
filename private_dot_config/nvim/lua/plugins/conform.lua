@@ -4,10 +4,16 @@ return {
     opts = {
       formatters_by_ft = {
         php = { "pint", "php_cs_fixer", "intelephense" },
-        blade = { "blade-formatter" },
+        blade = { "prettier", "blade-formatter" },
         fish = {},
       },
       formatters = {
+        ["blade-formatter"] = {
+          condition = function(self, ctx)
+            local prettier_config = ".prettierrc"
+            return vim.fn.filereadable(vim.fn.getcwd() .. "/" .. prettier_config) == 0
+          end,
+        },
         pint = {
           condition = function(self, ctx)
             local pint_config = "pint.json"
