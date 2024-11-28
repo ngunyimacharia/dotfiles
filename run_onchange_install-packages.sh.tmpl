@@ -53,6 +53,13 @@ else
   echo "Postman is already installed."
 fi
 
+if ! snap list | grep -q "ngrok"; then
+  echo "Installing ngrok..."
+  sudo snap install ngrok
+else
+  echo "ngrok is already installed."
+fi
+
 # Communication tools
 
 if ! snap list | grep -q "slack"; then
