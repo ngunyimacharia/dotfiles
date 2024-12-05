@@ -107,13 +107,24 @@ else
   echo "Discord is already installed."
 fi
 
-which npm > /dev/null 2>%1
-if [ $? -eq 0 ]; then
-  echo "npm already installed."
+# Check for NVM installation
+if [ -d "$HOME/.nvm" ]; then
+  echo "NVM is already installed."
 else
-  echo "Installing npm..."
-  sudo apt install npm
+  echo "Installing NVM..."
+  # Install NVM
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+  
+  # Load NVM immediately for the rest of the script
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  
+  # Install latest LTS version of Node
+  nvm install --lts
+  nvm use --lts
 fi
+
+# Now we don't need to check for npm separately since it comes with Node
 
 # No package manager available
 which freeze > /dev/null 2>%1
