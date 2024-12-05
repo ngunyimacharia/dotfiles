@@ -1,14 +1,47 @@
 {{ if eq .chezmoi.os "linux" -}}
 #!/bin/sh
 
+if snap list | grep -q "firefox"; then
+  echo "Removing Firefox Snap..."
+  sudo snap remove --purge firefox
+fi
+
+# Install Firefox .deb if not installed
+which firefox > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "Installing Firefox .deb version..."
+  
+  # Create directory for APT repository keys
+  sudo install -d -m 0755 /etc/apt/keyrings
+
+  # Import Mozilla APT repository signing key
+  wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
+
+  # Add Mozilla APT repository
+  gpg -n -q --import --import-options import-show /etc/apt/keyrings/packages.mozilla.org.asc | awk '/pub/{getline; gsub(/^ +| +$/,""); if($0 == "35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3") print "\nThe key fingerprint matches ("$0").\n"; else print "\nVerification failed: the fingerprint ("$0") does not match the expected one.\n"}'
+
+  # Configure APT to prioritize Mozilla packages
+  echo '
+  Package: *
+  Pin: origin packages.mozilla.org
+  Pin-Priority: 1000
+  ' | sudo tee /etc/apt/preferences.d/mozilla
+
+  # Update and install Firefox
+  sudo apt-get update 
+  sudo apt-get install -y firefox
+else
+  echo "Firefox .deb is already installed."
+fi
+
 # valet-linux-plus
-composer global show "genesisweb/valet-linux-plus" > /dev/null 2>%1
+composer global show "cpriego/valet-linux" > /dev/null 2>%1
 if [ $? -eq 0 ]; then
     echo "valet-linux-plus is already installed"
 else
   echo "Installing valet-linux-plus..."
   sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
-  composer global require genesisweb/valet-linux-plus
+  composer global require cpriego/valet-linux
   sudo add-apt-repository ppa:ondrej/php
 fi
 
@@ -115,3 +148,4 @@ else
   echo "installing prettier..."
   npm install -g prettier 
 fi
+
