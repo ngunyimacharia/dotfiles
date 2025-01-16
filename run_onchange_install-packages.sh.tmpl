@@ -38,6 +38,34 @@ else
   echo "libfuse2 is already installed."
 fi
 
+if ! dpkg -l | grep -q "wireguard"; then
+  echo "Installing Wireguard VPN client..."
+  sudo apt install wireguard systemd-resolved
+  # Enable and start systemd-resolved service
+  sudo systemctl enable systemd-resolved
+  sudo systemctl start systemd-resolved
+  # Configure system to use systemd-resolved
+  sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+else
+  echo "Wireguard is already installed."
+fi
+
+# Set up Wireguard configuration from 1Password if it doesn't exist
+if [ ! -f "/etc/wireguard/wg0.conf" ]; then
+  echo "Setting up Wireguard configuration..."
+  sudo mkdir -p /etc/wireguard
+  WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
+
+  if [ $? -eq 0 ]; then
+    echo "$WIREGUARD_CONF" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+    sudo chmod 600 /etc/wireguard/wg0.conf
+    echo "Wireguard configuration installed successfully."
+  else
+    echo "Failed to fetch Wireguard configuration from 1Password."
+  fi
+else
+  echo "Wireguard configuration already exists."
+fi
 
 # DevTools
 
