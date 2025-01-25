@@ -22,8 +22,16 @@ return {
         },
         php_cs_fixer = {
           condition = function(self, ctx)
-            local php_cs_config = ".php-cs-fixer.dist.php"
-            return vim.fn.filereadable(vim.fn.getcwd() .. "/" .. php_cs_config) == 1
+            local config_files = {
+              ".php-cs-fixer.dist.php",
+              ".php-cs-fixer.php",
+            }
+            for _, filename in ipairs(config_files) do
+              if vim.fn.filereadable(vim.fn.getcwd() .. "/" .. filename) == 1 then
+                return true
+              end
+            end
+            return false
           end,
         },
       },
