@@ -51,7 +51,7 @@ else
 fi
 
 # Set up Wireguard configuration from 1Password if it doesn't exist
-if [ ! -f "/etc/wireguard/wg0.conf" ]; then
+if ! sudo test -f "/etc/wireguard/wg0.conf"; then
   echo "Setting up Wireguard configuration..."
   sudo mkdir -p /etc/wireguard
   WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
