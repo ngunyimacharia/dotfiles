@@ -10,6 +10,13 @@ export SUDO_EDITOR="$EDITOR"
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"
 
+# 1Password SSH agent
+{{ if eq .chezmoi.os "linux" -}}
+export SSH_AUTH_SOCK=~/.1password/agent.sock
+{{ else if eq .chezmoi.os "darwin" -}}
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+{{ end }}
+
 # Aliases
 
 # Laravel specific
