@@ -84,11 +84,13 @@ if ! docker ps -a | grep -q "open-webui"; then
   echo "Setting up Ollama Web UI..."
   docker run -d \
     -p 3000:8080 \
+    --gpus all \
     -v ollama:/root/.ollama \
     -v open-webui:/app/backend/data \
     --name open-webui \
     --restart always \
     --network=host \
+  -e WEBUI_AUTH=False \
     ghcr.io/open-webui/open-webui:ollama
   echo "Ollama Web UI is now available at http://localhost:3000"
 else
