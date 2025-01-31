@@ -38,6 +38,13 @@ else
   echo "libfuse2 is already installed."
 fi
 
+if ! dpkg -l | grep -q "variety"; then
+  echo "Installing Variety wallpaper manager..."
+  sudo apt install variety
+else
+  echo "Variety is already installed."
+fi
+
 if ! dpkg -l | grep -q "wireguard"; then
   echo "Installing Wireguard VPN client..."
   sudo apt install wireguard systemd-resolved
