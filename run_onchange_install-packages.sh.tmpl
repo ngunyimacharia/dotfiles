@@ -145,7 +145,7 @@ else
   echo "Google Chrome is already installed."
 fi
 
-if ! dpkg -l | grep -q "zen-browser"; then
+if ! flatpak list | grep -q "app.zen_browser.zen"; then
   echo "Installing Zen Browser..."
   flatpak install flathub app.zen_browser.zen
   flatpak run app.zen_browser.zen
@@ -181,6 +181,29 @@ else
   echo "Ghostty is already installed."
 fi
 
+# Install lazygit
+if ! dpkg -l | grep -q "lazygit"; then
+  echo "Installing lazygit..."
+  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+  tar xf lazygit.tar.gz lazygit
+  sudo install lazygit /usr/local/bin
+  rm lazygit.tar.gz lazygit
+else
+  echo "lazygit is already installed."
+fi
+
+# Install Zellij
+if ! dpkg -l | grep -q "zellij"; then
+  echo "Installing Zellij..."
+  ZELLIJ_VERSION=$(curl -s "https://api.github.com/repos/zellij-org/zellij/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo zellij.deb "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.deb"
+  sudo dpkg -i zellij.deb
+  rm zellij.deb
+else
+  echo "Zellij is already installed."
+fi
+
 # Communication tools
 
 if ! snap list | grep -q "slack"; then
@@ -212,7 +235,14 @@ else
   nvm use --lts
 fi
 
-# Now we don't need to check for npm separately since it comes with Node
+# Check for npm installation
+if command -v npm >/dev/null 2>&1; then
+  echo "npm is already installed"
+else
+  echo "Installing npm..."
+  sudo apt update
+  sudo apt install -y npm
+fi
 
 # No package manager available
 which freeze > /dev/null 2>%1
@@ -271,6 +301,70 @@ if ! brew list --cask | grep -q "ghostty"; then
   brew install --cask ghostty
 else
   echo "Ghostty is already installed."
+fi
+
+# Install Syncthing
+if ! brew list | grep -q "syncthing"; then
+  echo "Installing Syncthing..."
+  brew install syncthing
+else
+  echo "Syncthing is already installed."
+fi
+
+# Install Microsoft Teams
+if ! brew list --cask | grep -q "microsoft-teams"; then
+  echo "Installing Microsoft Teams..."
+  brew install --cask microsoft-teams
+else
+  echo "Microsoft Teams is already installed."
+fi
+
+# Check for Wireguard
+if ! test -d "/Applications/WireGuard.app"; then
+  echo "Wireguard is not installed. Opening Mac App Store..."
+  open "https://apps.apple.com/us/app/wireguard/id1451685025?ls=1&mt=12"
+else
+  echo "Wireguard is already installed."
+fi
+
+# Install lazygit
+if ! brew list | grep -q "lazygit"; then
+  echo "Installing lazygit..."
+  brew install lazygit
+else
+  echo "lazygit is already installed."
+fi
+
+# Install Raycast
+if ! brew list --cask | grep -q "raycast"; then
+  echo "Installing Raycast..."
+  brew install --cask raycast
+else
+  echo "Raycast is already installed."
+fi
+
+# Install npm
+if ! brew list | grep -q "npm"; then
+  echo "Installing npm..."
+  brew install npm
+else
+  echo "npm is already installed."
+fi
+
+# Install Zellij
+if ! brew list | grep -q "zellij"; then
+  echo "Installing Zellij..."
+  brew install zellij
+else
+  echo "Zellij is already installed."
+fi
+
+# Install Slack
+if ! brew list --cask | grep -q "slack"; then
+  echo "Installing Slack..."
+  brew install --cask slack
+else
+  echo "Slack is already installed."
 fi
 
 {{ end -}}
