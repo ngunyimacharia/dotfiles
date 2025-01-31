@@ -106,18 +106,6 @@ fi
 
 # DevTools
 
-if ! dpkg -l | grep -q "tableplus"; then
-  echo "Installing tableplus ..."
-# Add TablePlus gpg key
-  wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null
-# Add TablePlus repo
-  sudo add-apt-repository "deb [arch=amd64] https://deb.tableplus.com/debian/24 tableplus main"
-# Install
-  sudo apt update
-  sudo apt install tableplus
-else
-  echo "TablePlus is already installed."
-fi
 
 if ! snap list | grep -q "postman"; then
   echo "Installing postman..."
@@ -144,6 +132,53 @@ if [ $? -ne 0 ]; then
 
 else
   echo "Stripe CLI is already installed."
+fi
+
+# Browsers
+if ! dpkg -l | grep -q "google-chrome-stable"; then
+  echo "Installing Google Chrome..."
+  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+  sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+  sudo apt update
+  sudo apt install google-chrome-stable
+else
+  echo "Google Chrome is already installed."
+fi
+
+if ! dpkg -l | grep -q "zen-browser"; then
+  echo "Installing Zen Browser..."
+  flatpak install flathub app.zen_browser.zen
+  flatpak run app.zen_browser.zen
+else
+  echo "Zen Browser is already installed."
+fi
+
+# Password Manager
+if ! dpkg -l | grep -q "1password"; then
+  echo "Installing 1Password..."
+  # Add the key for the 1Password apt repository
+  curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+  # Add the 1Password apt repository
+  echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
+  # Add the debsig-verify policy
+  sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+  curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+  sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+  curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  # Install 1Password
+  sudo apt update && sudo apt install 1password 1password-cli
+else
+  echo "1Password is already installed."
+fi
+
+# Terminal
+if ! dpkg -l | grep -q "ghostty"; then
+  echo "Installing Ghostty..."
+  wget -O ghostty.deb https://github.com/mkasberg/ghostty-ubuntu/releases/download/1.0.1-0-ppa4/ghostty_1.0.1-0.ppa4_amd64_24.10.deb
+  sudo apt install ./ghostty.deb
+  rm ghostty.deb
+else
+  echo "Ghostty is already installed."
 fi
 
 # Communication tools
@@ -195,7 +230,48 @@ fi
 {{ if eq .chezmoi.os "darwin" -}}
 #!/bin/sh
 
-brew install --cask alacritty
+# Install 1Password
+if ! brew list --cask | grep -q "1password"; then
+  echo "Installing 1Password..."
+  brew install --cask 1password 1password-cli
+else
+  echo "1Password is already installed."
+fi
+
+# Install Google Chrome
+if ! brew list --cask | grep -q "google-chrome"; then
+  echo "Installing Google Chrome..."
+  brew install --cask google-chrome
+else
+  echo "Google Chrome is already installed."
+fi
+# Install Zen Browser
+if ! test -d "/Applications/Zen.app"; then
+  echo "Installing Zen Browser..."
+  curl -L "https://objects.githubusercontent.com/github-production-release-asset-2e65be/778556932/07bb19d8-1960-4589-9d79-c290c0b6795d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250131T071117Z&X-Amz-Expires=300&X-Amz-Signature=271b6858c0614b280560b1b2f2df0d5c9ae074b8bb45b982cef68c5aa4ac953a&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dzen.macos-universal.dmg&response-content-type=application%2Foctet-stream" -o zen.dmg
+  hdiutil attach zen.dmg
+  cp -R "/Volumes/Zen/Zen.app" /Applications/
+  hdiutil detach "/Volumes/Zen"
+  rm zen.dmg
+else
+  echo "Zen Browser is already installed."
+fi
+
+# Install Setapp
+if ! brew list --cask | grep -q "setapp"; then
+  echo "Installing Setapp..."
+  brew install --cask setapp
+else
+  echo "Setapp is already installed."
+fi
+
+# Install Ghostty
+if ! brew list --cask | grep -q "ghostty"; then
+  echo "Installing Ghostty..."
+  brew install --cask ghostty
+else
+  echo "Ghostty is already installed."
+fi
 
 {{ end -}}
 
