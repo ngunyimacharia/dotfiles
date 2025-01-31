@@ -7,7 +7,7 @@ return {
     provider = "claude",
     auto_suggestions_provider = "claude",
     claude = {
-      api_key_name = "cmd:op read op://private/claude-nvim/credential",
+      api_key_name = "cmd:op read op://private/claude-nvim/credential --account my.1password.com",
     },
     -- vendors = {
     --   groq = {
