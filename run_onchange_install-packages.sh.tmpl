@@ -1,3 +1,13 @@
+# Configure global gitignore
+if [ ! -f "$HOME/.gitignore" ]; then
+  echo "Configuring global gitignore..."
+  cp ~/.local/share/chezmoi/dot_gitignore ~/.gitignore
+  git config --global core.excludesfile ~/.gitignore
+else
+  echo "Global gitignore already configured."
+fi
+
+
 {{ if eq .chezmoi.os "linux" -}}
 #!/bin/sh
 
@@ -306,7 +316,7 @@ else
   echo "Google Chrome is already installed."
 fi
 # Install Zen Browser
-if ! test -d "/Applications/Zen.app"; then
+if ! test -d "/Applications/Zen Browser.app"; then
   echo "Installing Zen Browser..."
   curl -L "https://objects.githubusercontent.com/github-production-release-asset-2e65be/778556932/07bb19d8-1960-4589-9d79-c290c0b6795d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250131T071117Z&X-Amz-Expires=300&X-Amz-Signature=271b6858c0614b280560b1b2f2df0d5c9ae074b8bb45b982cef68c5aa4ac953a&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dzen.macos-universal.dmg&response-content-type=application%2Foctet-stream" -o zen.dmg
   hdiutil attach zen.dmg
@@ -374,7 +384,7 @@ else
 fi
 
 # Install npm
-if ! brew list | grep -q "npm"; then
+if ! brew list | grep -q "node"; then
   echo "Installing npm..."
   brew install npm
 else
@@ -395,6 +405,14 @@ if ! brew list --cask | grep -q "slack"; then
   brew install --cask slack
 else
   echo "Slack is already installed."
+fi
+
+# Install Laravel Herd
+if ! test -d "/Applications/Herd.app"; then
+  echo "Laravel Herd is not installed. Opening download page..."
+  open "https://herd.laravel.com/download"
+else
+  echo "Laravel Herd is already installed."
 fi
 
 {{ end -}}
