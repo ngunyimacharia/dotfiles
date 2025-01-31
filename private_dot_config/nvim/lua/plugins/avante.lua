@@ -4,7 +4,19 @@ return {
   lazy = false,
   version = false, -- set this if you want to always pull the latest change
   opts = {
-    -- add any opts here
+    provider = "claude",
+    auto_suggestions_provider = "claude",
+    claude = {
+      api_key_name = "cmd:op read op://private/claude-nvim/credential",
+    },
+    -- vendors = {
+    --   groq = {
+    --     __inherited_from = "openai",
+    --     api_key_name = "cmd:op read op://private/groq-nvim/credential",
+    --     endpoint = "https://api.groq.com/openai/v1/",
+    --     model = "deepseek-r1-distill-llama-70b",
+    --   },
+    -- },
   },
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
   build = "make",

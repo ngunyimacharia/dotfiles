@@ -24,12 +24,6 @@ alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
-# Wrap nvim to set required secrets
-nvim() {
-    export ANTHROPIC_API_KEY=$(op read "op://private/claude-nvim/credential")
-    command nvim "$@"
-    unset ANTHROPIC_API_KEY
-}
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
