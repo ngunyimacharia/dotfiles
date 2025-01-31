@@ -45,6 +45,19 @@ else
   echo "Variety is already installed."
 fi
 
+if ! dpkg -l | grep -q "syncthing"; then
+  echo "Installing Syncthing..."
+  # Add the release PGP keys
+  sudo mkdir -p /etc/apt/keyrings
+  sudo curl -L -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
+  # Add the "stable" channel to APT sources
+  echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
+  # Install Syncthing
+  sudo apt update && sudo apt install syncthing
+else
+  echo "Syncthing is already installed."
+fi
+
 if ! dpkg -l | grep -q "wireguard"; then
   echo "Installing Wireguard VPN client..."
   sudo apt install wireguard systemd-resolved
@@ -106,6 +119,16 @@ fi
 
 # DevTools
 
+# Install Neovim
+if ! dpkg -l | grep -q "neovim"; then
+  echo "Installing Neovim..."
+  sudo add-apt-repository ppa:neovim-ppa/unstable -y
+  sudo apt update
+  sudo apt install neovim
+else
+  echo "Neovim is already installed."
+fi
+
 
 if ! snap list | grep -q "postman"; then
   echo "Installing postman..."
@@ -148,7 +171,6 @@ fi
 if ! dpkg -l | grep -q "zen-browser"; then
   echo "Installing Zen Browser..."
   flatpak install flathub app.zen_browser.zen
-  flatpak run app.zen_browser.zen
 else
   echo "Zen Browser is already installed."
 fi
@@ -229,6 +251,14 @@ fi
 
 {{ if eq .chezmoi.os "darwin" -}}
 #!/bin/sh
+
+# Install Neovim
+if ! brew list | grep -q "neovim"; then
+  echo "Installing Neovim..."
+  brew install neovim
+else
+  echo "Neovim is already installed."
+fi
 
 # Install 1Password
 if ! brew list --cask | grep -q "1password"; then
