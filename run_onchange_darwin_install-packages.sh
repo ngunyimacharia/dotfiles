@@ -143,3 +143,11 @@ if ! brew list | grep -q "whatsapp"; then
 else
   echo "Whatsapp is already installed."
 fi
+
+# Install Watchman
+if ! brew list | grep -q "watchman"; then
+  echo "Installing watchman..."
+  brew install watchman
+else
+  echo "Watchman is already installed."
+fi
