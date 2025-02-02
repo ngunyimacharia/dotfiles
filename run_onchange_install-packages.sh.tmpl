@@ -415,6 +415,14 @@ else
   echo "Laravel Herd is already installed."
 fi
 
+# Install Stripe CLI
+if ! brew list | grep -q "stripe"; then
+  echo "Installing Stripe CLI..."
+  brew install stripe/stripe-cli/stripe
+else
+  echo "Stripe CLI is already installed."
+fi
+
 {{ end -}}
 
 npm list -g blade-formatter > /dev/null 2>%1
