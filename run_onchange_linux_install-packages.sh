@@ -1,5 +1,9 @@
-{{ if eq .chezmoi.os "linux" -}}
 #!/bin/sh
+
+# Exit if not running on Linux
+if [ "$(uname)" != "Linux" ]; then
+  exit 0
+fi
 
 if snap list | grep -q "firefox"; then
   echo "Firefox is already installed"
@@ -10,9 +14,9 @@ else
 fi
 
 # valet-linux-plus
-composer global show "cpriego/valet-linux" > /dev/null 2>%1
+composer global show "cpriego/valet-linux" >/dev/null 2>%1
 if [ $? -eq 0 ]; then
-    echo "valet-linux-plus is already installed"
+  echo "valet-linux-plus is already installed"
 else
   echo "Installing valet-linux-plus..."
   sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
@@ -29,11 +33,10 @@ else
   echo "xclip is already installed."
 fi
 
-
 if ! dpkg -l | grep -q "libfuse2"; then
   echo "Installing libfuse2..."
 
-sudo apt install libfuse2
+  sudo apt install libfuse2
 else
   echo "libfuse2 is already installed."
 fi
@@ -80,7 +83,7 @@ if ! test -f "/etc/wireguard/wg0.conf"; then
   WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
 
   if [ $? -eq 0 ]; then
-    echo "$WIREGUARD_CONF" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+    echo "$WIREGUARD_CONF" | sudo tee /etc/wireguard/wg0.conf >/dev/null
     sudo chmod 600 /etc/wireguard/wg0.conf
     echo "Wireguard configuration installed successfully."
   else
@@ -91,7 +94,7 @@ else
 fi
 
 # AI Tools
-which ollama > /dev/null 2>&1
+which ollama >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "Installing Ollama..."
   curl https://ollama.ai/install.sh | sh
@@ -110,7 +113,7 @@ if ! docker ps -a | grep -q "open-webui"; then
     --name open-webui \
     --restart always \
     --network=host \
-  -e WEBUI_AUTH=False \
+    -e WEBUI_AUTH=False \
     ghcr.io/open-webui/open-webui:ollama
   echo "Ollama Web UI is now available at http://localhost:3000"
 else
@@ -129,10 +132,9 @@ else
   echo "Neovim is already installed."
 fi
 
-
 if ! snap list | grep -q "postman"; then
   echo "Installing postman..."
-  sudo snap install postman 
+  sudo snap install postman
 else
   echo "Postman is already installed."
 fi
@@ -144,8 +146,7 @@ else
   echo "ngrok is already installed."
 fi
 
-
-which stripe > /dev/null 2>&1
+which stripe >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "Installing Stripe CLI..."
   curl -s https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public | gpg --dearmor | sudo tee /usr/share/keyrings/stripe.gpg
@@ -235,7 +236,7 @@ else
 fi
 
 if ! snap list | grep -q "discord"; then
-  sudo snap install discord 
+  sudo snap install discord
 else
   echo "Discord is already installed."
 fi
@@ -247,11 +248,11 @@ else
   echo "Installing NVM..."
   # Install NVM
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-  
+
   # Load NVM immediately for the rest of the script
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  
+
   # Install latest LTS version of Node
   nvm install --lts
   nvm use --lts
@@ -267,191 +268,11 @@ else
 fi
 
 # No package manager available
-which freeze > /dev/null 2>%1
+which freeze >/dev/null 2>%1
 if [ $? -eq 0 ]; then
   echo "freeze already installed."
 else
   echo "Freeze is not installed. Opening browser for download..."
-  xdg-open https://github.com/charmbracelet/freeze/releases & disown
-fi
-
-
-{{ end -}}
-
-
-{{ if eq .chezmoi.os "darwin" -}}
-#!/bin/sh
-
-# Install Neovim
-if ! brew list | grep -q "neovim"; then
-  echo "Installing Neovim..."
-  brew install neovim
-else
-  echo "Neovim is already installed."
-fi
-
-# Install 1Password
-if ! brew list --cask | grep -q "1password"; then
-  echo "Installing 1Password..."
-  brew install --cask 1password 1password-cli
-else
-  echo "1Password is already installed."
-fi
-
-# Install Google Chrome
-if ! brew list --cask | grep -q "google-chrome"; then
-  echo "Installing Google Chrome..."
-  brew install --cask google-chrome
-else
-  echo "Google Chrome is already installed."
-fi
-# Install Zen Browser
-if ! test -d "/Applications/Zen Browser.app"; then
-  echo "Installing Zen Browser..."
-  curl -L "https://objects.githubusercontent.com/github-production-release-asset-2e65be/778556932/07bb19d8-1960-4589-9d79-c290c0b6795d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250131T071117Z&X-Amz-Expires=300&X-Amz-Signature=271b6858c0614b280560b1b2f2df0d5c9ae074b8bb45b982cef68c5aa4ac953a&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dzen.macos-universal.dmg&response-content-type=application%2Foctet-stream" -o zen.dmg
-  hdiutil attach zen.dmg
-  cp -R "/Volumes/Zen/Zen.app" /Applications/
-  hdiutil detach "/Volumes/Zen"
-  rm zen.dmg
-else
-  echo "Zen Browser is already installed."
-fi
-
-# Install Setapp
-if ! brew list --cask | grep -q "setapp"; then
-  echo "Installing Setapp..."
-  brew install --cask setapp
-else
-  echo "Setapp is already installed."
-fi
-
-# Install Ghostty
-if ! brew list --cask | grep -q "ghostty"; then
-  echo "Installing Ghostty..."
-  brew install --cask ghostty
-else
-  echo "Ghostty is already installed."
-fi
-
-# Install Syncthing
-if ! brew list | grep -q "syncthing"; then
-  echo "Installing Syncthing..."
-  brew install syncthing
-else
-  echo "Syncthing is already installed."
-fi
-
-# Install Microsoft Teams
-if ! brew list --cask | grep -q "microsoft-teams"; then
-  echo "Installing Microsoft Teams..."
-  brew install --cask microsoft-teams
-else
-  echo "Microsoft Teams is already installed."
-fi
-
-# Check for Wireguard
-if ! test -d "/Applications/WireGuard.app"; then
-  echo "Wireguard is not installed. Opening Mac App Store..."
-  open "https://apps.apple.com/us/app/wireguard/id1451685025?ls=1&mt=12"
-else
-  echo "Wireguard is already installed."
-fi
-
-# Install lazygit
-if ! brew list | grep -q "lazygit"; then
-  echo "Installing lazygit..."
-  brew install lazygit
-else
-  echo "lazygit is already installed."
-fi
-
-# Install Raycast
-if ! brew list --cask | grep -q "raycast"; then
-  echo "Installing Raycast..."
-  brew install --cask raycast
-else
-  echo "Raycast is already installed."
-fi
-
-# Install npm
-if ! brew list | grep -q "node"; then
-  echo "Installing npm..."
-  brew install npm
-else
-  echo "npm is already installed."
-fi
-
-# Install Zellij
-if ! brew list | grep -q "zellij"; then
-  echo "Installing Zellij..."
-  brew install zellij
-else
-  echo "Zellij is already installed."
-fi
-
-# Install Slack
-if ! brew list --cask | grep -q "slack"; then
-  echo "Installing Slack..."
-  brew install --cask slack
-else
-  echo "Slack is already installed."
-fi
-
-# Install Laravel Herd
-if ! test -d "/Applications/Herd.app"; then
-  echo "Laravel Herd is not installed. Opening download page..."
-  open "https://herd.laravel.com/download"
-else
-  echo "Laravel Herd is already installed."
-fi
-
-# Install Stripe CLI
-if ! brew list | grep -q "stripe"; then
-  echo "Installing Stripe CLI..."
-  brew install stripe/stripe-cli/stripe
-else
-  echo "Stripe CLI is already installed."
-fi
-
-# Install Whatsapp 
-if ! brew list | grep -q "whatsapp"; then
-  echo "Installing Stripe CLI..."
-  brew install --cask whatsapp
-else
-  echo "Whatsapp is already installed."
-fi
-
-{{ end -}}
-
-npm list -g blade-formatter > /dev/null 2>%1
-if [ $? -eq 0 ]; then
-  echo "blade-formatter already installed"
-else
-  echo "installing blade-formatter..."
-  npm install -g blade-formatter
-fi
-
-npm list -g prettier  > /dev/null 2>%1
-if [ $? -eq 0 ]; then
-  echo "prettier already installed"
-else
-  echo "installing prettier..."
-  npm install -g prettier 
-  fi
-  
-  npm list -g yarn > /dev/null 2>%1
-  if [ $? -eq 0 ]; then
-    echo "yarn already installed"
-  else
-    echo "installing yarn..."
-    npm install -g yarn
-fi
-
-# Configure global gitignore
-if [ ! -f "$HOME/.gitignore" ]; then
-  echo "Configuring global gitignore..."
-  cp ~/.local/share/chezmoi/dot_gitignore ~/.gitignore
-  git config --global core.excludesfile ~/.gitignore
-else
-  echo "Global gitignore already configured."
+  xdg-open https://github.com/charmbracelet/freeze/releases &
+  disown
 fi
