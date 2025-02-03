@@ -159,3 +159,11 @@ if ! brew list --cask | grep -q "obsidian"; then
 else
   echo "Obsidian is already installed."
 fi
+
+# Install ripgrep
+if ! brew list | grep -q "ripgrep"; then
+  echo "Installing ripgrep..."
+  brew install ripgrep
+else
+  echo "ripgrep is already installed."
+fi
