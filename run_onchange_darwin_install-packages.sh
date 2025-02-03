@@ -143,3 +143,19 @@ if ! brew list | grep -q "whatsapp"; then
 else
   echo "Whatsapp is already installed."
 fi
+
+# Install Spotify
+if ! brew list --cask | grep -q "spotify"; then
+  echo "Installing Spotify..."
+  brew install --cask spotify
+else
+  echo "Spotify is already installed."
+fi
+
+# Install Obsidian
+if ! brew list --cask | grep -q "obsidian"; then
+  echo "Installing Obsidian..."
+  brew install --cask obsidian
+else
+  echo "Obsidian is already installed."
+fi
