@@ -120,7 +120,31 @@ else
   echo "Ollama Web UI is already running."
 fi
 
-# DevTools
+# Development Tools
+
+# Install ripgrep
+if ! dpkg -l | grep -q "ripgrep"; then
+  echo "Installing ripgrep..."
+  sudo apt install ripgrep
+else
+  echo "ripgrep is already installed."
+fi
+
+# Install Spotify
+if ! flatpak list | grep -q "com.spotify.Client"; then
+  echo "Installing Spotify..."
+  flatpak install -y flathub com.spotify.Client
+else
+  echo "Spotify is already installed."
+fi
+
+# Install Obsidian
+if ! flatpak list | grep -q "md.obsidian.Obsidian"; then
+  echo "Installing Obsidian..."
+  flatpak install -y flathub md.obsidian.Obsidian
+else
+  echo "Obsidian is already installed."
+fi
 
 # Install Neovim
 if ! dpkg -l | grep -q "neovim"; then
