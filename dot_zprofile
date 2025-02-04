@@ -7,4 +7,5 @@ export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"
 # Herd injected PHP binary.
 export PATH="/Users/raven/Library/Application Support/Herd/bin/":$PATH
 
-
+# Go route
+export GOPATH=$HOME/go
