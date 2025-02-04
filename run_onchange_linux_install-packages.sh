@@ -2,6 +2,7 @@
 
 # Exit if not running on Linux
 if [ "$(uname)" != "Linux" ]; then
+  echo "Not on Linux"
   exit 0
 fi
 
@@ -121,6 +122,16 @@ else
 fi
 
 # Development Tools
+
+# Install Golang
+if ! command -v go >/dev/null 2>&1; then
+  echo "Installing Golang..."
+  sudo add-apt-repository ppa:longsleep/golang-backports -y
+  sudo apt update
+  sudo apt install golang-go
+else
+  echo "Golang is already installed."
+fi
 
 # Install ripgrep
 if ! dpkg -l | grep -q "ripgrep"; then

@@ -2,6 +2,7 @@
 
 # Exit if not running on Linux
 if [ "$(uname)" != "Darwin" ]; then
+  echo "Not on MacOS"
   exit 0
 fi
 
@@ -166,4 +167,20 @@ if ! brew list | grep -q "ripgrep"; then
   brew install ripgrep
 else
   echo "ripgrep is already installed."
+fi
+
+# Install Golang
+if ! brew list | grep -q "go"; then
+  echo "Installing Golang..."
+  brew install go
+else
+  echo "Golang is already installed."
+fi
+
+# Install Docker Desktop
+if ! brew list --cask | grep -q "docker"; then
+  echo "Installing Docker Desktop..."
+  brew install --cask docker
+else
+  echo "Docker Desktop is already installed."
 fi

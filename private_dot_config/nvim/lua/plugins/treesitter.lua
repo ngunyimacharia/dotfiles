@@ -29,6 +29,7 @@ return {
         "heex",
         "javascript",
         "html",
+        "json5",
       },
       sync_install = false,
       highlight = { enable = true },
