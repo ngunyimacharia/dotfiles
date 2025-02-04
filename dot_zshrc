@@ -19,3 +19,4 @@ export NVM_DIR="/Users/raven/Library/Application Support/Herd/config/nvm"
 alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
