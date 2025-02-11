@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=Flameshot
+Exec="flameshot &"
+Type=Application

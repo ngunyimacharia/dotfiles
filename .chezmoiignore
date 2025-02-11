@@ -1,5 +1,6 @@
 {{ if eq .chezmoi.os "darwin" -}}
 .config/ulauncher
+.config/autostart
 .bashrc
 {{ else if eq .chezmoi.os "linux" -}}
 .zshrc
