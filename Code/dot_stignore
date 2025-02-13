@@ -44,3 +44,6 @@ yarn-error.log
 
 # syncthing files
 .syncthing*
+
+# composer files
+vendor/
