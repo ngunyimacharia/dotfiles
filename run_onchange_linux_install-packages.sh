@@ -76,7 +76,7 @@ fi
 
 # Set up Wireguard configuration from 1Password if it doesn't exist
 echo "Sudo access is required to check Wireguard configuration."
-if ! test -f "/etc/wireguard/wg0.conf"; then
+if ! file "/etc/wireguard/wg0.conf" >/dev/null 2>&1; then
   sudo mkdir -p /etc/wireguard
   WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
   echo "Setting up Wireguard configuration..."
@@ -238,9 +238,9 @@ if ! dpkg -l | grep -q "ghostty"; then
 else
   echo "Ghostty is already installed."
 fi
-
 # Install lazygit
-if ! dpkg -l | grep -q "lazygit"; then
+which lazygit >/dev/null 2>&1
+if [ $? -ne 0 ]; then
   echo "Installing lazygit..."
   LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
   curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
@@ -252,7 +252,8 @@ else
 fi
 
 # Install Zellij
-if ! dpkg -l | grep -q "zellij"; then
+which zellij >/dev/null 2>&1
+if [ $? -ne 0 ]; then
   echo "Installing Zellij..."
   ZELLIJ_VERSION=$(curl -s "https://api.github.com/repos/zellij-org/zellij/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
   curl -Lo zellij.deb "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.deb"
@@ -261,8 +262,16 @@ if ! dpkg -l | grep -q "zellij"; then
 else
   echo "Zellij is already installed."
 fi
-
 # Communication tools
+
+# Check for Franz installation
+if ! dpkg -l | grep -q "franz"; then
+  echo "Franz is not installed. Opening download page..."
+  xdg-open "https://meetfranz.com/#download" &
+  disown
+else
+  echo "Franz is already installed."
+fi
 
 if ! snap list | grep -q "slack"; then
   sudo snap install slack
