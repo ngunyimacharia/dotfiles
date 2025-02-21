@@ -15,6 +15,13 @@ export SSH_AUTH_SOCK=~/.1password/agent.sock
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 {{ end }}
 
+# Fly setup
+{{ if eq .chezmoi.os "linux" -}}
+export FLYCTL_INSTALL="/home/raven/.fly"
+export PATH="$FLYCTL_INSTALL/bin:$PATH"
+{{ else if eq .chezmoi.os "darwin" -}}
+{{ end }}
+
 # Aliases
 
 # Laravel specific
@@ -26,3 +33,4 @@ alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
