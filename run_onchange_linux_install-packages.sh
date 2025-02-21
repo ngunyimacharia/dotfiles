@@ -123,6 +123,14 @@ fi
 
 # Development Tools
 
+# Install Fly.io CLI
+if ! fly version >/dev/null 2>&1; then
+  echo "Installing Fly.io CLI..."
+  curl -L https://fly.io/install.sh | sh
+else
+  echo "Fly.io CLI is already installed."
+fi
+
 # Install Golang
 if ! command -v go >/dev/null 2>&1; then
   echo "Installing Golang..."
