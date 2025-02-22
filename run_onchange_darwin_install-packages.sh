@@ -60,7 +60,7 @@ fi
 # Install Syncthing
 if ! brew list | grep -q "syncthing"; then
   echo "Installing Syncthing..."
-  brew install syncthing
+  brew install --cask syncthing
 else
   echo "Syncthing is already installed."
 fi
