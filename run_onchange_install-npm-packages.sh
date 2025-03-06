@@ -23,3 +23,11 @@ else
   echo "installing yarn..."
   npm install -g yarn
 fi
+
+npm list -g @anthropic-ai/claude-code >/dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "claude-code already installed"
+else
+  echo "installing claude-code..."
+  npm install -g @anthropic-ai/claude-code
+fi
