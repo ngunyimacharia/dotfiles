@@ -184,3 +184,11 @@ if ! brew list --cask | grep -q "docker"; then
 else
   echo "Docker Desktop is already installed."
 fi
+
+# Install Fly CLI
+if ! brew list | grep -q "flyctl"; then
+  echo "Installing Fly CLI..."
+  brew install flyctl
+else
+  echo "Fly CLI is already installed."
+fi
