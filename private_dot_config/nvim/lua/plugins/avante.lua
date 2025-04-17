@@ -4,11 +4,11 @@ return {
   lazy = false,
   version = false, -- set this if you want to always pull the latest change
   opts = {
-    provider = "claude",
-    auto_suggestions_provider = "claude",
-    claude = {
-      api_key_name = "cmd:op read op://private/claude-nvim/credential --account my.1password.com",
-    },
+    provider = "copilot",
+    auto_suggestions_provider = "copilot",
+    -- claude = {
+    --   api_key_name = "cmd:op read op://private/claude-nvim/credential --account my.1password.com",
+    -- },
     -- vendors = {
     --   groq = {
     --     __inherited_from = "openai",
@@ -27,7 +27,12 @@ return {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
     --- The below dependencies are optional,
+    "echasnovski/mini.pick", -- for file_selector provider mini.pick
+    "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+    "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+    "ibhagwan/fzf-lua", -- for file_selector provider fzf
     "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+    "zbirenbaum/copilot.lua", -- for providers='copilot'
     {
       -- support for image pasting
       "HakonHarnes/img-clip.nvim",
