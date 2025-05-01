@@ -14,9 +14,7 @@ return {
       adapters = {
         "neotest-plenary",
         "neotest-phpunit",
-        ["neotest-pest"] = {
-          command = "./vendor/bin/pest",
-        },
+        "neotest-pest",
       },
     },
   },
