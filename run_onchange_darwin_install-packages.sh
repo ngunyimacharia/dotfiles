@@ -192,3 +192,11 @@ if ! brew list | grep -q "flyctl"; then
 else
   echo "Fly CLI is already installed."
 fi
+
+# Install LocalSend
+if ! brew list --cask | grep -q "localsend"; then
+  echo "Installing LocalSend..."
+  brew install --cask localsend
+else
+  echo "LocalSend is already installed."
+fi
