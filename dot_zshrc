@@ -20,3 +20,18 @@ alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
+
+# Herd injected PHP 8.3 configuration.
+export HERD_PHP_83_INI_SCAN_DIR="/Users/raven/Library/Application Support/Herd/config/php/83/"
+
+
+# Herd injected PHP 8.2 configuration.
+export HERD_PHP_82_INI_SCAN_DIR="/Users/raven/Library/Application Support/Herd/config/php/82/"
+
+
+# Herd injected PHP 8.0 configuration.
+export HERD_PHP_80_INI_SCAN_DIR="/Users/raven/Library/Application Support/Herd/config/php/80/"
+
+
+# Herd injected PHP 7.4 configuration.
+export HERD_PHP_74_INI_SCAN_DIR="/Users/raven/Library/Application Support/Herd/config/php/74/"
