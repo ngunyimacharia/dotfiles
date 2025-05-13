@@ -12,6 +12,7 @@ return {
       temperature = 0.7,
       max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
       reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
+      api_key_name = "NVIM_OPENROUTER_API_KEY",
     },
     -- enable cursor planning mode
     behaviour = {
