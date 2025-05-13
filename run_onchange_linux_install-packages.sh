@@ -328,3 +328,11 @@ else
   xdg-open https://github.com/charmbracelet/freeze/releases &
   disown
 fi
+
+# Install OpenCode
+which opencode >/dev/null 2>%1
+if [ $? -eq 0 ]; then
+  echo "OpenCode already installed."
+else
+  curl -fsSL https://opencode.ai/install | bash
+fi
