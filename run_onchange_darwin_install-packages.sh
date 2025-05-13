@@ -199,6 +199,8 @@ if ! brew list --cask | grep -q "localsend"; then
   brew install --cask localsend
 else
   echo "LocalSend is already installed."
+fi
+
 # Install OpenCode
 which opencode >/dev/null 2>%1
 if [ $? -eq 0 ]; then
