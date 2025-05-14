@@ -4,15 +4,14 @@ return {
   lazy = false,
   version = false, -- set this if you want to always pull the latest change
   opts = {
-    provider = "openai",
-    openai = {
-      endpoint = "https://openrouter.ai/api/v1",
-      model = "anthropic/claude-3.5-haiku", -- your desired model (or use gpt-4o, etc.)
-      timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-      temperature = 0.7,
-      max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
-      reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
-      api_key_name = "NVIM_OPENROUTER_API_KEY",
+    provider = "openrouter",
+    vendors = {
+      openrouter = {
+        __inherited_from = "openai",
+        endpoint = "https://openrouter.ai/api/v1",
+        api_key_name = "OPENROUTER_API_KEY",
+        model = "anthropic/claude-3.5-haiku", -- your desired model (or use gpt-4o, etc.)
+      },
     },
     -- enable cursor planning mode
     behaviour = {
