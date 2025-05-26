@@ -13,6 +13,7 @@ Thumbs.db
 *.sublime-workspace
 *.sublime-project
 .null
+.null-ls*
 
 # Node
 node_modules/
