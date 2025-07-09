@@ -1,7 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "theme": "opencode",
+  "theme": "gruvbox",
   "model": "anthropic/claude-sonnet-4-20250514",
   "autoshare": false,
-  "autoupdate": true
+  "autoupdate": true,
+  "git": {
+    "coAuthor": false,
+    "commitFormat": "conventional"
+  }
 }
