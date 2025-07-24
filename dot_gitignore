@@ -54,3 +54,4 @@ yarn-error.log
 
 # syncthing files
 .syncthing*
+*.sync-conflict*
