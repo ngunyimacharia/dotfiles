@@ -201,6 +201,14 @@ else
   echo "LocalSend is already installed."
 fi
 
+# Install Ollama App
+if ! brew list --cask | grep -q "ollama"; then
+  echo "Installing Ollama App..."
+  brew install --cask ollama
+else
+  echo "Ollama App is already installed."
+fi
+
 # Install OpenCode
 which opencode >/dev/null 2>%1
 if [ $? -eq 0 ]; then
