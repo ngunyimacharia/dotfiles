@@ -329,6 +329,20 @@ else
   disown
 fi
 
+# Install Beekeeper Studio
+if ! dpkg -l | grep -q "beekeeper-studio"; then
+  echo "Installing Beekeeper Studio..."
+  # Install GPG key and repository
+  curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | sudo gpg --dearmor --output /usr/share/keyrings/beekeeper.gpg \
+    && sudo chmod go+r /usr/share/keyrings/beekeeper.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/beekeeper.gpg] https://deb.beekeeperstudio.io stable main" \
+    | sudo tee /etc/apt/sources.list.d/beekeeper-studio-app.list > /dev/null
+  # Update apt and install
+  sudo apt update && sudo apt install beekeeper-studio -y
+else
+  echo "Beekeeper Studio is already installed."
+fi
+
 # Install OpenCode
 which opencode >/dev/null 2>%1
 if [ $? -eq 0 ]; then
