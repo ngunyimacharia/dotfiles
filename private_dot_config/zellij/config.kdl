@@ -1,2 +1,2 @@
-theme "gruvbox"
+theme "everforest"
 on_force_close "quit"
