@@ -2,6 +2,12 @@
 
 # Spotify setup: Remove APT package and ensure Flatpak version is installed
 
+# Exit if not running on Ubuntu
+if [ ! -f /etc/os-release ] || ! grep -q "^ID=ubuntu" /etc/os-release; then
+  echo "Not on Ubuntu, skipping Spotify setup"
+  exit 0
+fi
+
 echo "Setting up Spotify via Flatpak..."
 
 # Remove APT spotify-client if installed
