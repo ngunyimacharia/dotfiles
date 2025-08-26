@@ -49,12 +49,12 @@ else
   echo "Setapp is already installed."
 fi
 
-# Install Ghostty
-if ! brew list --cask | grep -q "ghostty"; then
-  echo "Installing Ghostty..."
-  brew install --cask ghostty
+# Install Alacritty
+if ! brew list --cask | grep -q "alacritty"; then
+  echo "Installing Alacritty..."
+  brew install --cask alacritty
 else
-  echo "Ghostty is already installed."
+  echo "Alacritty is already installed."
 fi
 
 # Install Syncthing
