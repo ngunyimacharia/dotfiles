@@ -237,14 +237,12 @@ else
   echo "1Password is already installed."
 fi
 
-# Terminal
-if ! dpkg -l | grep -q "ghostty"; then
-  echo "Installing Ghostty..."
-  wget -O ghostty.deb https://github.com/mkasberg/ghostty-ubuntu/releases/download/1.0.1-0-ppa4/ghostty_1.0.1-0.ppa4_amd64_24.10.deb
-  sudo apt install ./ghostty.deb
-  rm ghostty.deb
+# Terminal - Alacritty
+if ! dpkg -l | grep -q "alacritty"; then
+  echo "Installing Alacritty..."
+  sudo apt install -y alacritty
 else
-  echo "Ghostty is already installed."
+  echo "Alacritty is already installed."
 fi
 # Install lazygit
 which lazygit >/dev/null 2>&1
