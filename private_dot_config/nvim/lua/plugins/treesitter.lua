@@ -1,52 +1,43 @@
-LazyVim.on_very_lazy(function()
-  vim.filetype.add({
-    pattern = {
-      [".*%.blade%.php"] = "blade",
-    },
-  })
-end)
-
 return {
   "nvim-treesitter/nvim-treesitter",
-  build = ":TSUpdate",
-  config = function()
-    local configs = require("nvim-treesitter.configs")
-
-    configs.setup({
-      ensure_installed = {
-        "php",
-        "go",
-        "gomod",
-        "gowork",
-        "gosum",
-        "blade",
-        "c",
-        "lua",
-        "vim",
-        "vimdoc",
-        "query",
-        "elixir",
-        "heex",
-        "javascript",
-        "html",
-        "json5",
-        "markdown",
-        "markdown_inline",
+  event = { "BufReadPost", "BufNewFile" },
+  cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
+  keys = {
+    { "<c-space>", desc = "Increment selection" },
+    { "<bs>", desc = "Decrement selection", mode = "x" },
+  },
+  opts = {
+    ensure_installed = {
+      "php",
+      "go",
+      "gomod",
+      "gowork",
+      "gosum",
+      "blade",
+      "c",
+      "lua",
+      "vim",
+      "vimdoc",
+      "query",
+      "elixir",
+      "heex",
+      "javascript",
+      "html",
+      "json5",
+      "markdown",
+      "markdown_inline",
+    },
+    sync_install = false,
+    highlight = { enable = true },
+    indent = { enable = true },
+    incremental_selection = {
+      enable = true,
+      keymaps = {
+        init_selection = "<C-space>",
+        node_incremental = "<C-space>",
+        scope_incremental = false,
+        node_decremental = "<bs>",
       },
-      sync_install = false,
-      highlight = { enable = true },
-      indent = { enable = true },
-    })
-  end,
-  opts = function(_, opts)
-    local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-    parser_config.blade = {
-      install_info = {
-        url = "https://github.com/EmranMR/tree-sitter-blade",
-        files = { "src/parser.c" },
-        branch = "main",
-      },
-      filetype = "blade",
-    }
-  end,
+    },
+  },
 }
