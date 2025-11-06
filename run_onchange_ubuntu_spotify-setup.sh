@@ -2,9 +2,9 @@
 
 # Spotify setup: Remove APT package and ensure Flatpak version is installed
 
-# Exit if not running on Ubuntu
-if [ ! -f /etc/os-release ] || ! grep -q "^ID=ubuntu" /etc/os-release; then
-  echo "Not on Ubuntu, skipping Spotify setup"
+# Exit if not running on Ubuntu/Debian
+if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian)" /etc/os-release; then
+  echo "Not on Ubuntu/Debian, skipping Spotify setup"
   exit 0
 fi
 

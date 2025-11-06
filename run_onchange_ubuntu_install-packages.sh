@@ -1,18 +1,12 @@
 #!/bin/sh
 
-# Exit if not running on Linux
-if [ "$(uname)" != "Linux" ]; then
-  echo "Not on Linux"
+# Exit if not running on Ubuntu/Debian
+if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian)" /etc/os-release; then
+  echo "Not on Ubuntu/Debian, skipping Ubuntu/Debian package installation"
   exit 0
 fi
 
-if snap list | grep -q "firefox"; then
-  echo "Firefox is already installed"
-else
-  echo "Installing Firefox..."
 
-  sudo snap install firefox
-fi
 
 # valet-linux-plus
 composer global show "cpriego/valet-linux" >/dev/null 2>%1
@@ -94,42 +88,11 @@ else
   echo "Wireguard configuration already exists."
 fi
 
-# AI Tools
-which ollama >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-  echo "Installing Ollama..."
-  curl https://ollama.ai/install.sh | sh
-else
-  echo "Ollama is already installed."
-fi
 
-# Setup Ollama Web UI
-if ! docker ps -a | grep -q "open-webui"; then
-  echo "Setting up Ollama Web UI..."
-  docker run -d \
-    -p 3000:8080 \
-    --gpus all \
-    -v ollama:/root/.ollama \
-    -v open-webui:/app/backend/data \
-    --name open-webui \
-    --restart always \
-    --network=host \
-    -e WEBUI_AUTH=False \
-    ghcr.io/open-webui/open-webui:ollama
-  echo "Ollama Web UI is now available at http://localhost:3000"
-else
-  echo "Ollama Web UI is already running."
-fi
 
 # Development Tools
 
-# Install Fly.io CLI
-if ! fly version >/dev/null 2>&1; then
-  echo "Installing Fly.io CLI..."
-  curl -L https://fly.io/install.sh | sh
-else
-  echo "Fly.io CLI is already installed."
-fi
+
 
 # Install Golang
 if ! command -v go >/dev/null 2>&1; then
@@ -237,13 +200,7 @@ else
   echo "1Password is already installed."
 fi
 
-# Terminal - Alacritty
-if ! dpkg -l | grep -q "alacritty"; then
-  echo "Installing Alacritty..."
-  sudo apt install -y alacritty
-else
-  echo "Alacritty is already installed."
-fi
+
 # Install lazygit
 which lazygit >/dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -270,14 +227,7 @@ else
 fi
 # Communication tools
 
-# Check for Franz installation
-if ! dpkg -l | grep -q "franz"; then
-  echo "Franz is not installed. Opening download page..."
-  xdg-open "https://meetfranz.com/#download" &
-  disown
-else
-  echo "Franz is already installed."
-fi
+
 
 if ! snap list | grep -q "slack"; then
   sudo snap install slack
@@ -339,6 +289,30 @@ if ! dpkg -l | grep -q "beekeeper-studio"; then
   sudo apt update && sudo apt install beekeeper-studio -y
 else
   echo "Beekeeper Studio is already installed."
+fi
+
+# Install Android Studio via Flatpak
+if ! flatpak list | grep -q "com.google.AndroidStudio"; then
+  echo "Installing Android Studio..."
+  flatpak install -y flathub com.google.AndroidStudio
+else
+  echo "Android Studio is already installed."
+fi
+
+# Install Ghostty via Flatpak
+if ! flatpak list | grep -q "com.mitchellh.ghostty"; then
+  echo "Installing Ghostty..."
+  flatpak install -y flathub com.mitchellh.ghostty
+else
+  echo "Ghostty is already installed."
+fi
+
+# Install LocalSend via Flatpak
+if ! flatpak list | grep -q "org.localsend.localsend_app"; then
+  echo "Installing LocalSend..."
+  flatpak install -y flathub org.localsend.localsend_app
+else
+  echo "LocalSend is already installed."
 fi
 
 # Install OpenCode
