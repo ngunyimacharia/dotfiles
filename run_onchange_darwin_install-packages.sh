@@ -49,13 +49,7 @@ else
   echo "Setapp is already installed."
 fi
 
-# Install Alacritty
-if ! brew list --cask | grep -q "alacritty"; then
-  echo "Installing Alacritty..."
-  brew install --cask alacritty
-else
-  echo "Alacritty is already installed."
-fi
+
 
 # Install Syncthing
 if ! brew list | grep -q "syncthing"; then
@@ -185,13 +179,7 @@ else
   echo "Docker Desktop is already installed."
 fi
 
-# Install Fly CLI
-if ! brew list | grep -q "flyctl"; then
-  echo "Installing Fly CLI..."
-  brew install flyctl
-else
-  echo "Fly CLI is already installed."
-fi
+
 
 # Install LocalSend
 if ! brew list --cask | grep -q "localsend"; then
@@ -201,12 +189,30 @@ else
   echo "LocalSend is already installed."
 fi
 
-# Install Ollama App
-if ! brew list --cask | grep -q "ollama"; then
-  echo "Installing Ollama App..."
-  brew install --cask ollama
+
+
+# Install Android Studio
+if ! brew list --cask | grep -q "android-studio"; then
+  echo "Installing Android Studio..."
+  brew install --cask android-studio
 else
-  echo "Ollama App is already installed."
+  echo "Android Studio is already installed."
+fi
+
+# Install Ghostty
+if ! brew list --cask | grep -q "ghostty"; then
+  echo "Installing Ghostty..."
+  brew install --cask ghostty
+else
+  echo "Ghostty is already installed."
+fi
+
+# Install Beekeeper Studio
+if ! brew list --cask | grep -q "beekeeper-studio"; then
+  echo "Installing Beekeeper Studio..."
+  brew install --cask beekeeper-studio
+else
+  echo "Beekeeper Studio is already installed."
 fi
 
 # Install OpenCode
