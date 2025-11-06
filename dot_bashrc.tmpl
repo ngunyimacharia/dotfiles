@@ -15,12 +15,7 @@ export SSH_AUTH_SOCK=~/.1password/agent.sock
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 {{ end }}
 
-# Fly setup
-{{ if eq .chezmoi.os "linux" -}}
-export FLYCTL_INSTALL="/home/raven/.fly"
-export PATH="$FLYCTL_INSTALL/bin:$PATH"
-{{ else if eq .chezmoi.os "darwin" -}}
-{{ end }}
+
 
 # Aliases
 
@@ -37,5 +32,13 @@ export NVM_DIR="$HOME/.nvm"
 source ~/.env
 
 # opencode
-export PATH=/home/raven/.opencode/bin:$PATH
+{{ if eq .chezmoi.os "linux" -}}
+export PATH=$HOME/.opencode/bin:$PATH
+{{ else if eq .chezmoi.os "darwin" -}}
+export PATH=$HOME/.opencode/bin:$PATH
+{{ end }}
 
+{{ if eq .chezmoi.os "darwin" -}}
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+export ANDROID_HOME=$HOME/Library/Android/sdk && export PATH=$PATH:$ANDROID_HOME/emulator && export PATH=$PATH:$ANDROID_HOME/platform-tools
+{{ end }}
