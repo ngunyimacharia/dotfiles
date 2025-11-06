@@ -1,4 +1,4 @@
-source ~/.local/share/omakub/defaults/bash/rc
+# source ~/.local/share/omakub/defaults/bash/rc  # Commented out - file not found
 
 # Editor used by CLI
 export EDITOR="nvim"
@@ -7,6 +7,7 @@ export SUDO_EDITOR="$EDITOR"
 # Path edits
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"
+export PATH="$PATH:$HOME/.cargo/bin"
 
 # 1Password SSH agent
 {{ if eq .chezmoi.os "linux" -}}
@@ -29,7 +30,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-source ~/.env
+# source ~/.env  # Commented out - file not found
 
 # opencode
 {{ if eq .chezmoi.os "linux" -}}

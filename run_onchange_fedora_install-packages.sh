@@ -26,14 +26,18 @@ fi
 
 # Development Tools
 
-# valet-linux-plus dependencies
-composer global show "cpriego/valet-linux" >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-  echo "Installing valet-linux-plus dependencies..."
-  sudo dnf install -y curl nss-tools jq xsel openssl ca-certificates
-  composer global require cpriego/valet-linux
+# valet-linux-plus dependencies (check after composer is installed)
+if command -v composer >/dev/null 2>&1; then
+  composer global show "cpriego/valet-linux" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing valet-linux-plus dependencies..."
+    sudo dnf install -y curl nss-tools jq xsel openssl ca-certificates
+    composer global require cpriego/valet-linux
+  else
+    echo "valet-linux-plus is already installed"
+  fi
 else
-  echo "valet-linux-plus is already installed"
+  echo "Composer not available, skipping valet-linux-plus installation"
 fi
 
 # Utilities
@@ -58,11 +62,16 @@ else
   echo "Variety is already installed."
 fi
 
-# Syncthing
+if ! rpm -q gnome-tweaks; then
+  echo "Installing GNOME Tweaks..."
+  sudo dnf install -y gnome-tweaks
+else
+  echo "GNOME Tweaks is already installed."
+fi
+
+# Syncthing (install from Fedora repos since external repo is broken)
 if ! rpm -q syncthing; then
-  echo "Installing Syncthing..."
-  # Add Syncthing repository
-  sudo curl -L -o /etc/yum.repos.d/syncthing.repo https://syncthing.net/release-key.repo
+  echo "Installing Syncthing from Fedora repositories..."
   sudo dnf install -y syncthing
 else
   echo "Syncthing is already installed."
@@ -102,6 +111,14 @@ fi
 # Development Tools
 
 
+
+# Install Composer first (needed for valet-linux-plus)
+if ! command -v composer >/dev/null 2>&1; then
+  echo "Installing Composer..."
+  sudo dnf install -y composer
+else
+  echo "Composer is already installed."
+fi
 
 # Install Golang
 if ! command -v go >/dev/null 2>&1; then
@@ -151,12 +168,13 @@ else
   echo "Postman is already installed."
 fi
 
-# Install ngrok
-if ! rpm -q ngrok; then
-  echo "Installing ngrok..."
-  # Add ngrok repository
-  curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.repo | sudo tee /etc/yum.repos.d/ngrok.repo
-  sudo dnf install -y ngrok
+# Install ngrok (manual installation required)
+if ! command -v ngrok >/dev/null 2>&1; then
+  echo "Opening ngrok installation guide..."
+  echo "Please follow the manual installation instructions at:"
+  echo "https://ngrok.com/docs/guides/device-gateway/linux"
+  xdg-open https://ngrok.com/docs/guides/device-gateway/linux &
+  disown
 else
   echo "ngrok is already installed."
 fi
@@ -182,8 +200,7 @@ if ! rpm -q google-chrome-stable; then
   echo "Installing Google Chrome..."
   # Add Google Chrome repository
   sudo dnf install -y fedora-workstation-repositories
-  sudo dnf config-manager --set-enabled google-chrome
-  sudo dnf install -y google-chrome-stable
+  sudo dnf config-manager enable google-chrome 2>/dev/null || sudo dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
 else
   echo "Google Chrome is already installed."
 fi
@@ -218,11 +235,19 @@ else
   echo "lazygit is already installed."
 fi
 
-# Install Zellij
+# Install Zellij (use cargo install since dnf package may not be available)
 which zellij >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo "Installing Zellij..."
-  sudo dnf install -y zellij
+  echo "Installing Zellij via cargo..."
+  # Install required dependencies first
+  sudo dnf install -y perl perl-FindBin openssl-devel
+  if command -v cargo >/dev/null 2>&1; then
+    cargo install zellij --locked
+  else
+    echo "Installing Rust and Cargo first..."
+    sudo dnf install -y rust cargo
+    cargo install zellij --locked
+  fi
 else
   echo "Zellij is already installed."
 fi
@@ -264,11 +289,20 @@ else
   nvm use --lts
 fi
 
-# Check for npm installation
-if command -v npm >/dev/null 2>&1; then
-  echo "npm is already installed"
+# Check for npm installation (after NVM setup)
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+  if command -v npm >/dev/null 2>&1; then
+    echo "npm is already available via NVM"
+    # Install npm packages
+    echo "Installing global npm packages..."
+    npm install -g blade-formatter prettier yarn @anthropic-ai/claude-code
+  else
+    echo "npm not available via NVM, installing system npm..."
+    sudo dnf install -y npm
+  fi
 else
-  echo "Installing npm..."
+  echo "NVM not available, installing system npm..."
   sudo dnf install -y npm
 fi
 
@@ -305,10 +339,11 @@ else
   echo "Android Studio is already installed."
 fi
 
-# Install Ghostty via Flatpak
-if ! flatpak list | grep -q "com.mitchellh.ghostty"; then
-  echo "Installing Ghostty..."
-  flatpak install -y flathub com.mitchellh.ghostty
+# Install Ghostty via COPR repository
+if ! command -v ghostty >/dev/null 2>&1; then
+  echo "Installing Ghostty via COPR..."
+  sudo dnf copr enable -y scottames/ghostty
+  sudo dnf install -y ghostty
 else
   echo "Ghostty is already installed."
 fi
