@@ -19,6 +19,19 @@ else
   sudo add-apt-repository ppa:ondrej/php
 fi
 
+# Laravel Takeout
+if command -v composer >/dev/null 2>&1; then
+  composer global show "tightenco/takeout" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing Laravel Takeout..."
+    composer global require tightenco/takeout
+  else
+    echo "Laravel Takeout is already installed."
+  fi
+else
+  echo "Composer not available, skipping Laravel Takeout installation."
+fi
+
 # Utilities
 if ! dpkg -l | grep -q "xclip"; then
   echo "Installing xclip ..."
@@ -70,19 +83,17 @@ fi
 
 # Set up Wireguard configuration from 1Password if it doesn't exist
 echo "Sudo access is required to check Wireguard configuration."
-if ! file "/etc/wireguard/wg0.conf" >/dev/null 2>&1; then
+if ! test -f "/etc/wireguard/wg0.conf"; then
   sudo mkdir -p /etc/wireguard
-  WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
   echo "Setting up Wireguard configuration..."
-  sudo mkdir -p /etc/wireguard
-  WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf")
+  WIREGUARD_CONF=$(op read "op://private/wireguard-conf/kdg.conf" 2>/dev/null)
 
-  if [ $? -eq 0 ]; then
+  if [ $? -eq 0 ] && [ -n "$WIREGUARD_CONF" ]; then
     echo "$WIREGUARD_CONF" | sudo tee /etc/wireguard/wg0.conf >/dev/null
     sudo chmod 600 /etc/wireguard/wg0.conf
     echo "Wireguard configuration installed successfully."
   else
-    echo "Failed to fetch Wireguard configuration from 1Password."
+    echo "Failed to fetch Wireguard configuration from 1Password or 1Password CLI not available."
   fi
 else
   echo "Wireguard configuration already exists."
@@ -110,6 +121,30 @@ if ! dpkg -l | grep -q "ripgrep"; then
   sudo apt install ripgrep
 else
   echo "ripgrep is already installed."
+fi
+
+# Install fzf
+if ! dpkg -l | grep -q "fzf"; then
+  echo "Installing fzf..."
+  sudo apt install fzf
+else
+  echo "fzf is already installed."
+fi
+
+# Install fd
+if ! dpkg -l | grep -q "fd-find"; then
+  echo "Installing fd..."
+  sudo apt install fd-find
+else
+  echo "fd is already installed."
+fi
+
+# Install build essentials (required for nvim-treesitter)
+if ! dpkg -l | grep -q "build-essential"; then
+  echo "Installing build-essential..."
+  sudo apt install build-essential
+else
+  echo "build-essential is already installed."
 fi
 
 # Install Spotify
@@ -241,6 +276,14 @@ else
   echo "Discord is already installed."
 fi
 
+# Install Zoom via Flatpak
+if ! flatpak list | grep -q "us.zoom.Zoom"; then
+  echo "Installing Zoom..."
+  flatpak install -y flathub us.zoom.Zoom
+else
+  echo "Zoom is already installed."
+fi
+
 # Check for NVM installation
 if [ -d "$HOME/.nvm" ]; then
   echo "NVM is already installed."
@@ -265,6 +308,14 @@ else
   echo "Installing npm..."
   sudo apt update
   sudo apt install -y npm
+fi
+
+# Install tree-sitter CLI (required for nvim-treesitter)
+if ! command -v tree-sitter >/dev/null 2>&1; then
+  echo "Installing tree-sitter CLI..."
+  npm install -g tree-sitter-cli
+else
+  echo "tree-sitter CLI is already installed."
 fi
 
 # No package manager available
