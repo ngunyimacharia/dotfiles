@@ -1,5 +1,3 @@
-# source ~/.local/share/omakub/defaults/bash/rc  # Commented out - file not found
-
 # Editor used by CLI
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
@@ -8,6 +6,8 @@ export SUDO_EDITOR="$EDITOR"
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"
 export PATH="$PATH:$HOME/.cargo/bin"
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/go/bin"
 
 # 1Password SSH agent
 {{ if eq .chezmoi.os "linux" -}}
@@ -24,6 +24,7 @@ export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agen
 alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
 
 
 export NVM_DIR="$HOME/.nvm"
@@ -33,13 +34,22 @@ export NVM_DIR="$HOME/.nvm"
 # source ~/.env  # Commented out - file not found
 
 # opencode
-{{ if eq .chezmoi.os "linux" -}}
 export PATH=$HOME/.opencode/bin:$PATH
-{{ else if eq .chezmoi.os "darwin" -}}
-export PATH=$HOME/.opencode/bin:$PATH
-{{ end }}
 
-{{ if eq .chezmoi.os "darwin" -}}
+{{ if eq .chezmoi.os "linux" -}}
+# Android SDK configuration
+export ANDROID_SDK_ROOT=/home/raven/Android/Sdk
+export ANDROID_HOME=/home/raven/Android/Sdk
+export PATH=$PATH:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools
+alias start-emulator="emulator @Pixel_9 -sysdir \$ANDROID_SDK_ROOT/system-images/android-36.1/google_apis_playstore/x86_64/ &"
+
+# Java configuration
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+{{ else if eq .chezmoi.os "darwin" -}}
+# Java configuration
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
-export ANDROID_HOME=$HOME/Library/Android/sdk && export PATH=$PATH:$ANDROID_HOME/emulator && export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# Android SDK configuration
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
 {{ end }}
