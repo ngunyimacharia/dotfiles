@@ -36,8 +36,36 @@ if command -v composer >/dev/null 2>&1; then
   else
     echo "valet-linux-plus is already installed"
   fi
+  
+  # Install Laravel Takeout
+  composer global show "tightenco/takeout" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing Laravel Takeout..."
+    composer global require tightenco/takeout
+  else
+    echo "Laravel Takeout is already installed."
+  fi
+  
+  # Configure Valet DNS to use reliable upstream servers
+  if command -v valet >/dev/null 2>&1; then
+    echo "Configuring Valet DNS with reliable upstream servers..."
+    mkdir -p ~/.config/valet
+    
+    # Check if dnsmasq.conf already has our DNS servers configured
+    if [ ! -f ~/.config/valet/dnsmasq.conf ] || ! grep -q "server=8.8.8.8" ~/.config/valet/dnsmasq.conf; then
+      echo "Adding DNS server configuration to Valet..."
+      echo "server=8.8.8.8" >> ~/.config/valet/dnsmasq.conf
+      echo "server=1.1.1.1" >> ~/.config/valet/dnsmasq.conf
+      echo "no-resolv" >> ~/.config/valet/dnsmasq.conf
+      
+      echo "Restarting Valet to apply DNS changes..."
+      valet restart
+    else
+      echo "Valet DNS configuration already exists."
+    fi
+  fi
 else
-  echo "Composer not available, skipping valet-linux-plus installation"
+  echo "Composer not available, skipping valet-linux-plus and Laravel Takeout installation"
 fi
 
 # Utilities
@@ -93,7 +121,7 @@ echo "Sudo access is required to check Wireguard configuration."
 if ! test -f "/etc/wireguard/wg0.conf"; then
   sudo mkdir -p /etc/wireguard
   echo "Setting up Wireguard configuration..."
-  WIREGUARD_CONF=$(op read "op://private/wiregard-conf/kdg.conf" 2>/dev/null)
+  WIREGUARD_CONF=$(op read "op://private/wireguard-conf/kdg.conf" 2>/dev/null)
 
   if [ $? -eq 0 ] && [ -n "$WIREGUARD_CONF" ]; then
     echo "$WIREGUARD_CONF" | sudo tee /etc/wireguard/wg0.conf >/dev/null
@@ -134,6 +162,38 @@ if ! rpm -q ripgrep; then
   sudo dnf install -y ripgrep
 else
   echo "ripgrep is already installed."
+fi
+
+# Install fzf
+if ! rpm -q fzf; then
+  echo "Installing fzf..."
+  sudo dnf install -y fzf
+else
+  echo "fzf is already installed."
+fi
+
+# Install fd
+if ! rpm -q fd-find; then
+  echo "Installing fd..."
+  sudo dnf install -y fd-find
+else
+  echo "fd is already installed."
+fi
+
+# Install GCC compiler (required for nvim-treesitter)
+if ! rpm -q gcc; then
+  echo "Installing GCC compiler..."
+  sudo dnf install -y gcc
+else
+  echo "GCC is already installed."
+fi
+
+# Install GitHub CLI
+if ! rpm -q gh; then
+  echo "Installing GitHub CLI..."
+  sudo dnf install -y gh
+else
+  echo "GitHub CLI is already installed."
 fi
 
 # Install Spotify via Flatpak
@@ -272,6 +332,14 @@ else
   echo "Discord is already installed."
 fi
 
+# Install Zoom via Flatpak
+if ! flatpak list | grep -q "us.zoom.Zoom"; then
+  echo "Installing Zoom..."
+  flatpak install -y flathub us.zoom.Zoom
+else
+  echo "Zoom is already installed."
+fi
+
 # Check for NVM installation
 if [ -d "$HOME/.nvm" ]; then
   echo "NVM is already installed."
@@ -296,7 +364,7 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
     echo "npm is already available via NVM"
     # Install npm packages
     echo "Installing global npm packages..."
-    npm install -g blade-formatter prettier yarn @anthropic-ai/claude-code
+    npm install -g blade-formatter prettier yarn @anthropic-ai/claude-code tree-sitter-cli
   else
     echo "npm not available via NVM, installing system npm..."
     sudo dnf install -y npm
@@ -320,6 +388,83 @@ else
     echo "Freeze requires Go to be installed. Opening browser for manual download..."
     xdg-open https://github.com/charmbracelet/freeze/releases &
     disown
+  fi
+fi
+
+# Install Docker
+if ! rpm -q docker-ce >/dev/null 2>&1 && ! rpm -q docker >/dev/null 2>&1; then
+  echo "Installing Docker..."
+  # For Fedora 43+, use native packages (more reliable)
+  if grep -q "Fedora release 4[3-9]" /etc/fedora-release 2>/dev/null; then
+    echo "Using native Fedora Docker packages for Fedora 43+..."
+    sudo dnf install -y docker docker-compose
+  else
+    # For older Fedora versions, use Docker CE repository
+    sudo dnf install -y dnf-plugins-core
+    # Create Docker CE repository file manually (config-manager syntax changed)
+    sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null <<EOF
+[docker-ce-stable]
+name=Docker CE Stable - \$basearch
+baseurl=https://download.docker.com/linux/fedora/\$releasever/\$basearch/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://download.docker.com/linux/fedora/gpg
+EOF
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  fi
+  
+  # Start and enable Docker service
+  sudo systemctl start docker
+  sudo systemctl enable docker
+  
+  # Add user to docker group and verify
+  echo "Adding user to docker group..."
+  sudo usermod -aG docker $USER
+  echo "Docker installed successfully!"
+  echo ""
+  echo "IMPORTANT: Docker group changes require a session restart to take effect."
+  echo "Please either:"
+  echo "  1. Log out and log back in, OR"
+  echo "  2. Run 'newgrp docker' in your current terminal, OR" 
+  echo "  3. Restart your terminal"
+  echo ""
+  echo "After restarting your session, test Docker access with: docker ps"
+else
+  echo "Docker is already installed."
+  # Check if user is in docker group even if Docker is already installed
+  if ! groups | grep -q docker; then
+    echo "Adding user to docker group (Docker was already installed but user not in group)..."
+    sudo usermod -aG docker $USER
+    echo ""
+    echo "IMPORTANT: Docker group changes require a session restart to take effect."
+    echo "Please either:"
+    echo "  1. Log out and log back in, OR"
+    echo "  2. Run 'newgrp docker' in your current terminal, OR"
+    echo "  3. Restart your terminal"
+    echo ""
+    echo "After restarting your session, test Docker access with: docker ps"
+  else
+    echo "User is already in the docker group."
+  fi
+fi
+
+# Install lazydocker
+which lazydocker >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  echo "lazydocker already installed."
+else
+  echo "Installing lazydocker..."
+  if command -v go >/dev/null 2>&1; then
+    go install github.com/jesseduffield/lazydocker@latest
+    echo "lazydocker installed via go install"
+  else
+    echo "Installing lazydocker via binary download..."
+    LAZYDOCKER_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazydocker/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo lazydocker.tar.gz "https://github.com/jesseduffield/lazydocker/releases/latest/download/lazydocker_${LAZYDOCKER_VERSION}_Linux_x86_64.tar.gz"
+    tar xf lazydocker.tar.gz lazydocker
+    sudo install lazydocker /usr/local/bin
+    rm lazydocker.tar.gz lazydocker
+    echo "lazydocker installed via binary download"
   fi
 fi
 
