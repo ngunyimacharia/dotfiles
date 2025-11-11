@@ -1,0 +1,9 @@
+; PHP injection for Blade templates
+(php_only
+  (text) @injection.content
+  (#set! injection.language "php"))
+
+(directive
+  (parameter) @injection.content
+  (#set! injection.language "php")
+  (#offset! @injection.content 0 1 0 -1))

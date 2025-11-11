@@ -1,0 +1,10 @@
+; Blade syntax highlighting
+(directive_name) @function
+(directive_start) @punctuation.bracket
+(directive_end) @punctuation.bracket
+(comment) @comment
+(parameter) @parameter
+(php_only) @embedded
+(bracket_start) @punctuation.bracket
+(bracket_end) @punctuation.bracket
+(keyword) @keyword
