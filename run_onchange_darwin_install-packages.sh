@@ -67,6 +67,14 @@ else
   echo "Microsoft Teams is already installed."
 fi
 
+# Install Zoom
+if ! brew list --cask | grep -q "zoom"; then
+  echo "Installing Zoom..."
+  brew install --cask zoom
+else
+  echo "Zoom is already installed."
+fi
+
 # Check for Wireguard
 if ! test -d "/Applications/WireGuard.app"; then
   echo "Wireguard is not installed. Opening Mac App Store..."
@@ -99,6 +107,14 @@ else
   echo "npm is already installed."
 fi
 
+# Install tree-sitter CLI (required for nvim-treesitter)
+if ! command -v tree-sitter >/dev/null 2>&1; then
+  echo "Installing tree-sitter CLI..."
+  npm install -g tree-sitter-cli
+else
+  echo "tree-sitter CLI is already installed."
+fi
+
 # Install Zellij
 if ! brew list | grep -q "zellij"; then
   echo "Installing Zellij..."
@@ -121,6 +137,19 @@ if ! test -d "/Applications/Herd.app"; then
   open "https://herd.laravel.com/download"
 else
   echo "Laravel Herd is already installed."
+fi
+
+# Install Laravel Takeout (requires Composer)
+if command -v composer >/dev/null 2>&1; then
+  composer global show "tightenco/takeout" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing Laravel Takeout..."
+    composer global require tightenco/takeout
+  else
+    echo "Laravel Takeout is already installed."
+  fi
+else
+  echo "Composer not available, skipping Laravel Takeout installation."
 fi
 
 # Install Stripe CLI
@@ -161,6 +190,22 @@ if ! brew list | grep -q "ripgrep"; then
   brew install ripgrep
 else
   echo "ripgrep is already installed."
+fi
+
+# Install fzf
+if ! brew list | grep -q "fzf"; then
+  echo "Installing fzf..."
+  brew install fzf
+else
+  echo "fzf is already installed."
+fi
+
+# Install fd
+if ! brew list | grep -q "fd"; then
+  echo "Installing fd..."
+  brew install fd
+else
+  echo "fd is already installed."
 fi
 
 # Install Golang
