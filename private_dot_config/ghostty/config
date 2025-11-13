@@ -1,5 +1,8 @@
 # Ghostty Configuration
 
+# Shell
+command = nu
+
 # Theme
 theme = "Aura" 
 

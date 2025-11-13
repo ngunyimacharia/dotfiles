@@ -441,3 +441,19 @@ else
   echo "Installing zoxide..."
   curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 fi
+
+# Install Nushell
+which nu >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  echo "Nushell already installed."
+else
+  echo "Installing Nushell..."
+  NUSHELL_VERSION=$(curl -s "https://api.github.com/repos/nushell/nushell/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+  curl -Lo /tmp/nu.tar.gz "https://github.com/nushell/nushell/releases/download/${NUSHELL_VERSION}/nu-${NUSHELL_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+  tar -xzf /tmp/nu.tar.gz -C /tmp
+  mkdir -p $HOME/.local/bin
+  cp "/tmp/nu-${NUSHELL_VERSION}-x86_64-unknown-linux-gnu/nu" $HOME/.local/bin/
+  chmod +x $HOME/.local/bin/nu
+  rm -rf /tmp/nu.tar.gz "/tmp/nu-${NUSHELL_VERSION}-x86_64-unknown-linux-gnu"
+  echo "Nushell installed to $HOME/.local/bin/nu"
+fi

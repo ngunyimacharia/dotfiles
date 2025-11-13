@@ -291,3 +291,11 @@ if ! brew list | grep -q "zoxide"; then
 else
   echo "zoxide is already installed."
 fi
+
+# Install Nushell
+if ! brew list | grep -q "nushell"; then
+  echo "Installing Nushell..."
+  brew install nushell
+else
+  echo "Nushell is already installed."
+fi
