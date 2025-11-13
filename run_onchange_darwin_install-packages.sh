@@ -269,7 +269,7 @@ else
 fi
 
 # Install OpenCode
-which opencode >/dev/null 2>%1
+which opencode >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "OpenCode already installed."
 else

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-npm list -g blade-formatter >/dev/null 2>%1
+npm list -g blade-formatter >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "blade-formatter already installed"
 else
@@ -8,7 +8,7 @@ else
   npm install -g blade-formatter
 fi
 
-npm list -g prettier >/dev/null 2>%1
+npm list -g prettier >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "prettier already installed"
 else
@@ -16,7 +16,7 @@ else
   npm install -g prettier
 fi
 
-npm list -g yarn >/dev/null 2>%1
+npm list -g yarn >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "yarn already installed"
 else
@@ -24,7 +24,7 @@ else
   npm install -g yarn
 fi
 
-npm list -g @anthropic-ai/claude-code >/dev/null 2>%1
+npm list -g @anthropic-ai/claude-code >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "claude-code already installed"
 else

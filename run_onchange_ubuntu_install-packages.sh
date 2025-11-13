@@ -7,7 +7,7 @@ if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian|pop)" /etc/os-rele
 fi
 
 # valet-linux-plus
-composer global show "cpriego/valet-linux" >/dev/null 2>%1
+composer global show "cpriego/valet-linux" >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "valet-linux-plus is already installed"
 else
@@ -369,7 +369,7 @@ else
 fi
 
 # No package manager available
-which freeze >/dev/null 2>%1
+which freeze >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "freeze already installed."
 else
@@ -417,7 +417,7 @@ else
 fi
 
 # Install OpenCode
-which opencode >/dev/null 2>%1
+which opencode >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "OpenCode already installed."
 else
