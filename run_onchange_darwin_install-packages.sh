@@ -275,3 +275,11 @@ if [ $? -eq 0 ]; then
 else
   curl -fsSL https://opencode.ai/install | bash
 fi
+
+# Install Starship
+if ! brew list | grep -q "starship"; then
+  echo "Installing Starship..."
+  brew install starship
+else
+  echo "Starship is already installed."
+fi

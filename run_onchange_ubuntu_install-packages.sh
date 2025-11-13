@@ -423,3 +423,12 @@ if [ $? -eq 0 ]; then
 else
   curl -fsSL https://opencode.ai/install | bash
 fi
+
+# Install Starship
+which starship >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  echo "Starship already installed."
+else
+  echo "Installing Starship..."
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
+fi
