@@ -34,7 +34,7 @@ else
 fi
 
 # Utilities
-if ! dpkg -l | grep -q "xclip"; then
+if ! dpkg -l | grep "^ii" | grep -q "xclip"; then
   echo "Installing xclip ..."
 
   sudo apt install xclip
@@ -42,7 +42,7 @@ else
   echo "xclip is already installed."
 fi
 
-if ! dpkg -l | grep -q "libfuse2"; then
+if ! dpkg -l | grep "^ii" | grep -q "libfuse2"; then
   echo "Installing libfuse2..."
 
   sudo apt install libfuse2
@@ -50,14 +50,14 @@ else
   echo "libfuse2 is already installed."
 fi
 
-if ! dpkg -l | grep -q "variety"; then
+if ! dpkg -l | grep "^ii" | grep -q "variety"; then
   echo "Installing Variety wallpaper manager..."
   sudo apt install variety
 else
   echo "Variety is already installed."
 fi
 
-if ! dpkg -l | grep -q "syncthing"; then
+if ! dpkg -l | grep "^ii" | grep -q "syncthing"; then
   echo "Installing Syncthing..."
   # Add the release PGP keys
   sudo mkdir -p /etc/apt/keyrings
@@ -70,7 +70,7 @@ else
   echo "Syncthing is already installed."
 fi
 
-if ! dpkg -l | grep -q "wireguard"; then
+if ! dpkg -l | grep "^ii" | grep -q "wireguard"; then
   echo "Installing Wireguard VPN client..."
   sudo apt install wireguard
   # Enable and start systemd-resolved service
@@ -113,7 +113,7 @@ else
 fi
 
 # Install ripgrep
-if ! dpkg -l | grep -q "ripgrep"; then
+if ! dpkg -l | grep "^ii" | grep -q "ripgrep"; then
   echo "Installing ripgrep..."
   sudo apt install ripgrep
 else
@@ -134,7 +134,7 @@ else
 fi
 
 # Install fd
-if ! dpkg -l | grep -q "fd-find"; then
+if ! dpkg -l | grep "^ii" | grep -q "fd-find"; then
   echo "Installing fd..."
   sudo apt install fd-find
 else
@@ -142,7 +142,7 @@ else
 fi
 
 # Install build essentials (required for nvim-treesitter)
-if ! dpkg -l | grep -q "build-essential"; then
+if ! dpkg -l | grep "^ii" | grep -q "build-essential"; then
   echo "Installing build-essential..."
   sudo apt install build-essential
 else
@@ -166,7 +166,7 @@ else
 fi
 
 # Install Neovim
-if ! dpkg -l | grep -q "neovim"; then
+if ! dpkg -l | grep "^ii" | grep -q "neovim"; then
   echo "Installing Neovim..."
   sudo add-apt-repository ppa:neovim-ppa/unstable -y
   sudo apt update
@@ -202,7 +202,7 @@ else
 fi
 
 # Browsers
-if ! dpkg -l | grep -q "google-chrome-stable"; then
+if ! dpkg -l | grep "^ii" | grep -q "google-chrome-stable"; then
   echo "Installing Google Chrome..."
   wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
   sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
@@ -220,7 +220,7 @@ else
 fi
 
 # Password Manager
-if ! dpkg -l | grep -q "1password"; then
+if ! dpkg -l | grep "^ii" | grep -q "1password"; then
   echo "Installing 1Password..."
   # Add the key for the 1Password apt repository
   curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
@@ -366,7 +366,7 @@ else
 fi
 
 # Install Beekeeper Studio
-if ! dpkg -l | grep -q "beekeeper-studio"; then
+if ! dpkg -l | grep "^ii" | grep -q "beekeeper-studio"; then
   echo "Installing Beekeeper Studio..."
   # Install GPG key and repository
   curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | sudo gpg --dearmor --output /usr/share/keyrings/beekeeper.gpg &&
