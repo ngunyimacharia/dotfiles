@@ -432,3 +432,12 @@ else
   echo "Installing Starship..."
   curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
+
+# Install zoxide
+which zoxide >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  echo "zoxide already installed."
+else
+  echo "Installing zoxide..."
+  curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+fi
