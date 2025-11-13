@@ -176,7 +176,7 @@ else
 fi
 
 # Install VSCode
-if ! dpkg -l | grep "^ii" | grep -q "code"; then
+if ! command -v code >/dev/null 2>&1; then
   echo "Installing Visual Studio Code..."
   wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
   sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
