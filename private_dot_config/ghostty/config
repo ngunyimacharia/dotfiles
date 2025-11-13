@@ -1,0 +1,8 @@
+# Ghostty Configuration
+
+# Theme
+theme = "Aura" 
+
+# Font configuration
+font-family="Fira Code"
+adjust-cell-height=50%
