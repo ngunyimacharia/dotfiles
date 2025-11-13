@@ -2,7 +2,7 @@
 Version=1.0
 Name=Docker
 Comment=Manage Docker containers with LazyDocker
-Exec=ghostty --title=Docker -e lazydocker
+Exec=ghostty --title=Docker --fullscreen -e lazydocker
 Terminal=false
 Type=Application
 Icon=/home/raven/.local/share/icons/Docker.png
