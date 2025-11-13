@@ -36,20 +36,15 @@ export NVM_DIR="$HOME/.nvm"
 # opencode
 export PATH=$HOME/.opencode/bin:$PATH
 
-{{ if eq .chezmoi.os "linux" -}}
 # Android SDK configuration
+{{ if eq .chezmoi.os "linux" -}}
 export ANDROID_SDK_ROOT=/home/raven/Android/Sdk
 export ANDROID_HOME=/home/raven/Android/Sdk
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools
 alias start-emulator="emulator @Pixel_9 -sysdir \$ANDROID_SDK_ROOT/system-images/android-36.1/google_apis_playstore/x86_64/ &"
-
-# Java configuration
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 {{ else if eq .chezmoi.os "darwin" -}}
-# Java configuration
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
-
-# Android SDK configuration
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
 {{ end }}

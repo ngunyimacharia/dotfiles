@@ -1,3 +1,14 @@
+## Supported Distributions
+
+This dotfiles repository supports:
+- Ubuntu/Debian-based distributions
+- macOS (Darwin)
+- Pop!_OS
+
+## Fedora Support Removed
+
+Fedora support was removed due to network connectivity issues caused by Valet Linux's dnsmasq configuration conflicting with Fedora's NetworkManager. The DNS resolver conflicts resulted in unreliable internet connectivity.
+
 ## Custom Desktop Entries
 
 Custom `.desktop` files in `dot_local/share/applications/` override default application launchers for better compatibility and user experience:
