@@ -14,6 +14,14 @@ else
   echo "Neovim is already installed."
 fi
 
+# Install Visual Studio Code
+if ! brew list --cask | grep -q "visual-studio-code"; then
+  echo "Installing Visual Studio Code..."
+  brew install --cask visual-studio-code
+else
+  echo "Visual Studio Code is already installed."
+fi
+
 # Install 1Password
 if ! brew list --cask | grep -q "1password"; then
   echo "Installing 1Password..."
