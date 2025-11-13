@@ -26,7 +26,7 @@ Create separate commits based on logical context rather than committing all chan
 Examples:
 
 - `feat(nvim): add avante plugin configuration`
-- `fix(zsh): correct PATH ordering in .zshrc`
+- `fix(bash): correct PATH ordering in .bashrc`
 - `chore(chezmoi): update gitignore patterns`
 - `docs: update README with new setup instructions`
 
