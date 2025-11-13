@@ -1,12 +1,10 @@
 #!/bin/sh
 
 # Exit if not running on Ubuntu/Debian
-if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian)" /etc/os-release; then
+if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian|pop)" /etc/os-release; then
   echo "Not on Ubuntu/Debian, skipping Ubuntu/Debian package installation"
   exit 0
 fi
-
-
 
 # valet-linux-plus
 composer global show "cpriego/valet-linux" >/dev/null 2>%1
@@ -15,8 +13,11 @@ if [ $? -eq 0 ]; then
 else
   echo "Installing valet-linux-plus..."
   sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
+  sudo add-apt-repository ppa:ondrej/php -y
+  sudo apt update
+   sudo apt install php php-cli php-mbstring php-xml php-zip php-curl -y
+   curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
   composer global require cpriego/valet-linux
-  sudo add-apt-repository ppa:ondrej/php
 fi
 
 # Laravel Takeout
@@ -71,7 +72,7 @@ fi
 
 if ! dpkg -l | grep -q "wireguard"; then
   echo "Installing Wireguard VPN client..."
-  sudo apt install wireguard systemd-resolved
+  sudo apt install wireguard
   # Enable and start systemd-resolved service
   sudo systemctl enable systemd-resolved
   sudo systemctl start systemd-resolved
@@ -99,11 +100,7 @@ else
   echo "Wireguard configuration already exists."
 fi
 
-
-
 # Development Tools
-
-
 
 # Install Golang
 if ! command -v go >/dev/null 2>&1; then
@@ -124,9 +121,14 @@ else
 fi
 
 # Install fzf
-if ! dpkg -l | grep -q "fzf"; then
+which fzf >/dev/null 2>&1
+if [ $? -ne 0 ]; then
   echo "Installing fzf..."
-  sudo apt install fzf
+  FZF_VERSION=$(curl -s "https://api.github.com/repos/junegunn/fzf/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo fzf.tar.gz "https://github.com/junegunn/fzf/releases/latest/download/fzf-${FZF_VERSION}-linux_amd64.tar.gz"
+  tar xf fzf.tar.gz fzf
+  sudo install fzf /usr/local/bin
+  rm fzf.tar.gz fzf
 else
   echo "fzf is already installed."
 fi
@@ -235,6 +237,30 @@ else
   echo "1Password is already installed."
 fi
 
+# Install Docker
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Installing Docker..."
+  # Add Docker's official GPG key
+  sudo apt-get update
+  sudo apt-get install ca-certificates curl gnupg
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+  # Add the repository to Apt sources
+  echo \
+    "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt-get update
+
+  # Install Docker
+  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  echo "Adding user to docker group..."
+  sudo usermod -aG docker $(whoami)
+else
+  echo "Docker is already installed."
+fi
 
 # Install lazygit
 which lazygit >/dev/null 2>&1
@@ -249,20 +275,31 @@ else
   echo "lazygit is already installed."
 fi
 
+# Install LazyDocker
+which lazydocker >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "Installing LazyDocker..."
+  LAZYDOCKER_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazydocker/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo lazydocker.tar.gz "https://github.com/jesseduffield/lazydocker/releases/latest/download/lazydocker_${LAZYDOCKER_VERSION}_Linux_x86_64.tar.gz"
+  tar xf lazydocker.tar.gz lazydocker
+  sudo install lazydocker /usr/local/bin
+  rm lazydocker.tar.gz lazydocker
+else
+  echo "LazyDocker is already installed."
+fi
+
 # Install Zellij
 which zellij >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "Installing Zellij..."
-  ZELLIJ_VERSION=$(curl -s "https://api.github.com/repos/zellij-org/zellij/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-  curl -Lo zellij.deb "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.deb"
-  sudo dpkg -i zellij.deb
-  rm zellij.deb
+  curl -Lo zellij.tar.gz "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz"
+  tar xf zellij.tar.gz zellij
+  sudo install zellij /usr/local/bin
+  rm zellij.tar.gz zellij
 else
   echo "Zellij is already installed."
 fi
 # Communication tools
-
-
 
 if ! snap list | grep -q "slack"; then
   sudo snap install slack
@@ -332,10 +369,10 @@ fi
 if ! dpkg -l | grep -q "beekeeper-studio"; then
   echo "Installing Beekeeper Studio..."
   # Install GPG key and repository
-  curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | sudo gpg --dearmor --output /usr/share/keyrings/beekeeper.gpg \
-    && sudo chmod go+r /usr/share/keyrings/beekeeper.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/beekeeper.gpg] https://deb.beekeeperstudio.io stable main" \
-    | sudo tee /etc/apt/sources.list.d/beekeeper-studio-app.list > /dev/null
+  curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | sudo gpg --dearmor --output /usr/share/keyrings/beekeeper.gpg &&
+    sudo chmod go+r /usr/share/keyrings/beekeeper.gpg &&
+    echo "deb [signed-by=/usr/share/keyrings/beekeeper.gpg] https://deb.beekeeperstudio.io stable main" |
+    sudo tee /etc/apt/sources.list.d/beekeeper-studio-app.list >/dev/null
   # Update apt and install
   sudo apt update && sudo apt install beekeeper-studio -y
 else
@@ -350,10 +387,10 @@ else
   echo "Android Studio is already installed."
 fi
 
-# Install Ghostty via Flatpak
-if ! flatpak list | grep -q "com.mitchellh.ghostty"; then
+# Install Ghostty
+if ! snap list | grep -q "ghostty"; then
   echo "Installing Ghostty..."
-  flatpak install -y flathub com.mitchellh.ghostty
+  sudo snap install ghostty --classic
 else
   echo "Ghostty is already installed."
 fi
