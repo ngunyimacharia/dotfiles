@@ -283,3 +283,11 @@ if ! brew list | grep -q "starship"; then
 else
   echo "Starship is already installed."
 fi
+
+# Install zoxide
+if ! brew list | grep -q "zoxide"; then
+  echo "Installing zoxide..."
+  brew install zoxide
+else
+  echo "zoxide is already installed."
+fi
