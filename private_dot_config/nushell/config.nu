@@ -3,10 +3,14 @@
 # version = "0.108.0"
 
 # Load Starship prompt
-use ~/.cache/starship/init.nu
+if (("~/.cache/starship/init.nu" | path expand) | path exists) {
+    use ~/.cache/starship/init.nu
+}
 
 # Load zoxide
-source ~/.zoxide.nu
+if (("~/.zoxide.nu" | path expand) | path exists) {
+    source ~/.zoxide.nu
+}
 
 # Aliases
 # Laravel specific
