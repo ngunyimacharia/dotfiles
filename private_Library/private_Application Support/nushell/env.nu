@@ -17,16 +17,15 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend [
 ])
 
 # 1Password SSH agent
-$env.SSH_AUTH_SOCK = ($env.HOME | path join ".1password" "agent.sock")
+$env.SSH_AUTH_SOCK = ($env.HOME | path join "Library" "Group Containers" "2BUA8C4S2C.com.1password" "t" "agent.sock")
 
 # Android SDK configuration
-$env.ANDROID_SDK_ROOT = "/home/raven/Android/Sdk"
-$env.ANDROID_HOME = "/home/raven/Android/Sdk"
+$env.ANDROID_HOME = ($env.HOME | path join "Library" "Android" "sdk")
 $env.PATH = ($env.PATH | split row (char esep) | prepend [
-    ($env.ANDROID_SDK_ROOT | path join "emulator")
-    ($env.ANDROID_SDK_ROOT | path join "platform-tools")
+    ($env.ANDROID_HOME | path join "emulator")
+    ($env.ANDROID_HOME | path join "platform-tools")
 ])
-$env.JAVA_HOME = "/usr/lib/jvm/java-21-openjdk"
+$env.JAVA_HOME = "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
 
 # NVM Directory
 $env.NVM_DIR = ($env.HOME | path join ".nvm")
