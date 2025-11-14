@@ -8,6 +8,8 @@ $env.SUDO_EDITOR = $env.EDITOR
 
 # Path configuration
 $env.PATH = ($env.PATH | split row (char esep) | prepend [
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
     ($env.HOME | path join ".config" "composer" "vendor" "bin")
     ($env.HOME | path join ".local" "share" "mise" "installs" "node" "22.10.0" "bin")
     ($env.HOME | path join ".cargo" "bin")
@@ -33,10 +35,14 @@ $env.NVM_DIR = ($env.HOME | path join ".nvm")
 # Starship prompt
 try {
     mkdir ~/.cache/starship
-    starship init nu | save -f ~/.cache/starship/init.nu
+    if (which starship | is-not-empty) {
+        starship init nu | save -f ~/.cache/starship/init.nu
+    }
 } catch { |e| }
 
 # Zoxide (replaces cd command)
 try {
-    zoxide init nushell --cmd cd | save -f ~/.zoxide.nu
+    if (which zoxide | is-not-empty) {
+        zoxide init nushell --cmd cd | save -f ~/.zoxide.nu
+    }
 } catch { |e| }
