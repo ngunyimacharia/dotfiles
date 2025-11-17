@@ -1,0 +1,15 @@
+# Ghostty Configuration
+
+# Shell
+{{- if eq .chezmoi.os "darwin" }}
+command = /opt/homebrew/bin/nu
+{{- else if eq .chezmoi.os "linux" }}
+command = /usr/bin/nu
+{{- end }}
+
+# Theme
+theme = "Aura" 
+
+# Font configuration
+font-family="Fira Code"
+adjust-cell-height=50%
