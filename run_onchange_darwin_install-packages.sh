@@ -15,7 +15,7 @@ else
 fi
 
 # Install Visual Studio Code
-if ! brew list --cask | grep -q "visual-studio-code"; then
+if ! test -d "/Applications/Visual Studio Code.app"; then
   echo "Installing Visual Studio Code..."
   brew install --cask visual-studio-code
 else
@@ -245,7 +245,7 @@ fi
 
 
 # Install Android Studio
-if ! brew list --cask | grep -q "android-studio"; then
+if ! test -d "/Applications/Android Studio.app"; then
   echo "Installing Android Studio..."
   brew install --cask android-studio
 else
@@ -261,7 +261,7 @@ else
 fi
 
 # Install Beekeeper Studio
-if ! brew list --cask | grep -q "beekeeper-studio"; then
+if ! test -d "/Applications/Beekeeper Studio.app"; then
   echo "Installing Beekeeper Studio..."
   brew install --cask beekeeper-studio
 else
@@ -298,4 +298,27 @@ if ! brew list | grep -q "nushell"; then
   brew install nushell
 else
   echo "Nushell is already installed."
+fi
+
+# Configure Nushell as default shell
+NUSHELL_PATH="/opt/homebrew/bin/nu"
+if [ -f "$NUSHELL_PATH" ]; then
+  # Add Nushell to /etc/shells if not already there
+  if ! grep -q "$NUSHELL_PATH" /etc/shells; then
+    echo "Adding Nushell to /etc/shells..."
+    echo "$NUSHELL_PATH" | sudo tee -a /etc/shells >/dev/null
+  else
+    echo "Nushell already in /etc/shells."
+  fi
+  
+  # Change default shell if current shell is not Nushell
+  if [ "$SHELL" != "$NUSHELL_PATH" ]; then
+    echo "Changing default shell to Nushell..."
+    chsh -s "$NUSHELL_PATH"
+    echo "Shell changed to Nushell. Please restart your terminal or log out/in for changes to take effect."
+  else
+    echo "Nushell is already the default shell."
+  fi
+else
+  echo "Nushell binary not found at expected location."
 fi
