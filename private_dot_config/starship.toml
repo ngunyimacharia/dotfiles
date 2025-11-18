@@ -1,4 +1,7 @@
 # ~/.config/starship.toml
 
 [aws]
-disabled=true
+format = 'on [$symbol($profile )(\($region\) )]($style)'
+symbol = "☁️  "
+style = "bold yellow"
+disabled = false
