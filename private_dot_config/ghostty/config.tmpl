@@ -4,7 +4,7 @@
 {{- if eq .chezmoi.os "darwin" }}
 command = /opt/homebrew/bin/nu
 {{- else if eq .chezmoi.os "linux" }}
-command = /usr/bin/nu
+command = /home/raven/.local/bin/nu
 {{- end }}
 
 # Theme
