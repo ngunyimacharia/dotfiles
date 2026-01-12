@@ -252,6 +252,23 @@ else
   echo "Android Studio is already installed."
 fi
 
+# Install FiraCode Nerd Font
+if ! brew list --cask | grep -q "font-fira-code-nerd-font"; then
+  echo "Installing FiraCode Nerd Font..."
+  brew tap homebrew/cask-fonts
+  brew install --cask font-fira-code-nerd-font
+else
+  echo "FiraCode Nerd Font is already installed."
+fi
+
+# Install Kitty
+if ! brew list | grep -q "kitty"; then
+  echo "Installing Kitty..."
+  brew install kitty
+else
+  echo "Kitty is already installed."
+fi
+
 # Install Ghostty
 if ! brew list --cask | grep -q "ghostty"; then
   echo "Installing Ghostty..."

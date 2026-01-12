@@ -400,6 +400,36 @@ else
   echo "Android Studio is already installed."
 fi
 
+# Install FiraCode Nerd Font
+if ! fc-list | grep -qi "FiraCode Nerd Font"; then
+  echo "Installing FiraCode Nerd Font..."
+  mkdir -p ~/.local/share/fonts
+  cd ~/.local/share/fonts
+  FIRACODE_VERSION=$(curl -s "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo FiraCode.zip "https://github.com/ryanoasis/nerd-fonts/releases/download/v${FIRACODE_VERSION}/FiraCode.zip"
+  unzip -o FiraCode.zip -d FiraCode
+  rm FiraCode.zip
+  fc-cache -fv
+  cd -
+  echo "FiraCode Nerd Font installed successfully."
+else
+  echo "FiraCode Nerd Font is already installed."
+fi
+
+# Install Kitty
+if ! command -v kitty >/dev/null 2>&1; then
+  echo "Installing Kitty..."
+  curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
+  # Create desktop integration
+  ln -sf ~/.local/kitty.app/bin/kitty ~/.local/bin/
+  # Place the kitty.desktop file somewhere it can be found by the OS
+  cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+  # Update the paths to the kitty icon in the kitty.desktop file
+  sed -i "s|Icon=kitty|Icon=/home/$USER/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty.desktop
+else
+  echo "Kitty is already installed."
+fi
+
 # Install Ghostty
 if ! snap list | grep -q "ghostty"; then
   echo "Installing Ghostty..."
