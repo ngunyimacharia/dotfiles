@@ -29,11 +29,33 @@ if command -v composer >/dev/null 2>&1; then
   else
     echo "Laravel Takeout is already installed."
   fi
+
+  composer global show "laravel/installer" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing Laravel Installer..."
+    composer global require laravel/installer
+  else
+    echo "Laravel Installer is already installed."
+  fi
 else
   echo "Composer not available, skipping Laravel Takeout installation."
 fi
 
 # Utilities
+if ! dpkg -l | grep "^ii" | grep -q "caffeine"; then
+  echo "Installing caffeine ..."
+  sudo apt install caffeine
+else
+  echo "caffeine is already installed."
+fi
+
+if ! dpkg -l | grep "^ii" | grep -q "flameshot"; then
+  echo "Installing flameshot ..."
+  sudo apt install flameshot
+else
+  echo "flameshot is already installed."
+fi
+
 if ! dpkg -l | grep "^ii" | grep -q "xclip"; then
   echo "Installing xclip ..."
 
@@ -101,6 +123,13 @@ else
 fi
 
 # Development Tools
+
+if ! dpkg -l | grep "^ii" | grep -q "python3-venv"; then
+  echo "Installing python3-venv..."
+  sudo apt install python3-venv
+else
+  echo "python3-venv is already installed."
+fi
 
 # Install Golang
 if ! command -v go >/dev/null 2>&1; then
@@ -326,6 +355,13 @@ else
   echo "Discord is already installed."
 fi
 
+if ! snap list | grep -q "gh"; then
+  echo "Installing GitHub CLI..."
+  sudo snap install gh
+else
+  echo "GitHub CLI is already installed."
+fi
+
 # Install Zoom via Flatpak
 if ! flatpak list | grep -q "us.zoom.Zoom"; then
   echo "Installing Zoom..."
@@ -373,9 +409,8 @@ which freeze >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "freeze already installed."
 else
-  echo "Freeze is not installed. Opening browser for download..."
-  xdg-open https://github.com/charmbracelet/freeze/releases &
-  disown
+  echo "Installing freeze..."
+  sudo apt install freeze
 fi
 
 # Install Beekeeper Studio
