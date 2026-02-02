@@ -1,15 +1,36 @@
-# Ghostty Configuration
+# Everforest theme for Ghostty
+theme = ""
 
-# Shell
+# Everforest color palette
+background = "#2d353b"
+foreground = "#d3c6aa"
+
+# Black, Red, Green, Yellow, Blue, Magenta, Cyan, White
+palette = 0=#2d353b
+palette = 1=#e67e80
+palette = 2=#a7c080
+palette = 3=#dbbc7f
+palette = 4=#7fbbb3
+palette = 5=#d699b6
+palette = 6=#83c092
+palette = 7=#d3c6aa
+
+# Bright colors
+palette = 8=#9da9a0
+palette = 9=#e67e80
+palette = 10=#a7c080
+palette = 11=#dbbc7f
+palette = 12=#7fbbb3
+palette = 13=#d699b6
+palette = 14=#83c092
+palette = 15=#d3c6aa
+
+# Keep existing configuration from your template
 {{- if eq .chezmoi.os "darwin" }}
 command = /opt/homebrew/bin/nu
 {{- else if eq .chezmoi.os "linux" }}
 command = /home/raven/.local/bin/nu
 {{- end }}
 
-# Theme
-theme = "Aura" 
-
-# Font configuration
-font-family="Fira Code"
-adjust-cell-height=50%
+font-family = "Fira Code"
+adjust-cell-height = 50%
