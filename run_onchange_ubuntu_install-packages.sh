@@ -49,19 +49,19 @@ else
   echo "caffeine is already installed."
 fi
 
-if ! dpkg -l | grep "^ii" | grep -q "flameshot"; then
-  echo "Installing flameshot ..."
-  sudo apt install flameshot
-else
-  echo "flameshot is already installed."
-fi
-
 if ! dpkg -l | grep "^ii" | grep -q "xclip"; then
   echo "Installing xclip ..."
 
   sudo apt install xclip
 else
   echo "xclip is already installed."
+fi
+
+if ! dpkg -l | grep "^ii" | grep -q "gnome-browser-connector"; then
+  echo "Installing gnome-browser-connector ..."
+  sudo apt install gnome-browser-connector
+else
+  echo "gnome-browser-connector is already installed."
 fi
 
 if ! dpkg -l | grep "^ii" | grep -q "libfuse2"; then
@@ -149,6 +149,30 @@ else
   echo "ripgrep is already installed."
 fi
 
+# Install MySQL client
+if ! dpkg -l | grep "^ii" | grep -q "mysql-client"; then
+  echo "Installing MySQL client..."
+  sudo apt install mysql-client
+else
+  echo "MySQL client is already installed."
+fi
+
+# Install Redis client tools
+if ! dpkg -l | grep "^ii" | grep -q "redis-tools"; then
+  echo "Installing Redis client tools..."
+  sudo apt install redis-tools
+else
+  echo "Redis client tools are already installed."
+fi
+
+# Install PostgreSQL client
+if ! dpkg -l | grep "^ii" | grep -q "postgresql-client"; then
+  echo "Installing PostgreSQL client..."
+  sudo apt install postgresql-client
+else
+  echo "PostgreSQL client is already installed."
+fi
+
 # Install fzf
 which fzf >/dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -178,6 +202,24 @@ else
   echo "build-essential is already installed."
 fi
 
+# Install Flatpak if not present
+if ! command -v flatpak >/dev/null 2>&1; then
+  echo "Installing Flatpak..."
+  sudo apt update
+  sudo apt install flatpak
+fi
+
+# Configure flathub remote properly
+if flatpak remote-list | grep -q flathub; then
+  echo "Flathub remote already exists."
+else
+  echo "Adding flathub remote..."
+  # Download GPG key first, then add remote
+  curl -o /tmp/flathub.gpg https://dl.flathub.org/repo/flathub.gpg
+  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo --gpg-import /tmp/flathub.gpg
+  rm -f /tmp/flathub.gpg
+fi
+
 # Install Spotify
 if ! flatpak list | grep -q "com.spotify.Client"; then
   echo "Installing Spotify..."
@@ -203,6 +245,16 @@ if ! dpkg -l | grep "^ii" | grep -q "neovim"; then
 else
   echo "Neovim is already installed."
 fi
+
+# Install GNOME Tweaks
+if ! dpkg -l | grep "^ii" | grep -q "gnome-tweaks"; then
+  echo "Installing GNOME Tweaks..."
+  sudo apt install gnome-tweaks
+else
+  echo "GNOME Tweaks is already installed."
+fi
+
+
 
 # Install VSCode
 if ! command -v code >/dev/null 2>&1; then
@@ -343,8 +395,14 @@ else
 fi
 # Communication tools
 
-if ! snap list | grep -q "slack"; then
-  sudo snap install slack
+if ! dpkg -l | grep "^ii" | grep -q "slack-desktop"; then
+  echo "Opening Slack deb download page..."
+  if command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
+  else
+    echo "xdg-open not available. Open this URL manually:"
+    echo "https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
+  fi
 else
   echo "Slack is already installed."
 fi
@@ -399,18 +457,21 @@ fi
 # Install tree-sitter CLI (required for nvim-treesitter)
 if ! command -v tree-sitter >/dev/null 2>&1; then
   echo "Installing tree-sitter CLI..."
-  npm install -g tree-sitter-cli
+  sudo npm install -g tree-sitter-cli
 else
   echo "tree-sitter CLI is already installed."
 fi
 
-# No package manager available
+# Install freeze from GitHub releases
 which freeze >/dev/null 2>&1
 if [ $? -eq 0 ]; then
   echo "freeze already installed."
 else
   echo "Installing freeze..."
-  sudo apt install freeze
+  FREEZE_VERSION=$(curl -s "https://api.github.com/repos/charmbracelet/freeze/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo freeze.deb "https://github.com/charmbracelet/freeze/releases/download/v${FREEZE_VERSION}/freeze_${FREEZE_VERSION}_amd64.deb"
+  sudo dpkg -i freeze.deb
+  rm freeze.deb
 fi
 
 # Install Beekeeper Studio
@@ -481,6 +542,37 @@ else
   echo "LocalSend is already installed."
 fi
 
+# Install Handy dependencies (Linux text input helpers)
+if ! dpkg -l | grep "^ii" | grep -q "xdotool"; then
+  echo "Installing xdotool..."
+  sudo apt install xdotool
+else
+  echo "xdotool is already installed."
+fi
+
+if ! dpkg -l | grep "^ii" | grep -q "wtype"; then
+  echo "Installing wtype..."
+  sudo apt install wtype
+else
+  echo "wtype is already installed."
+fi
+
+# Install Handy
+if ! command -v handy >/dev/null 2>&1; then
+  echo "Installing Handy..."
+  HANDY_VERSION=$(curl -s "https://api.github.com/repos/cjpais/Handy/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  HANDY_ARCH=$(dpkg --print-architecture)
+  if [ "$HANDY_ARCH" = "amd64" ]; then
+    curl -Lo /tmp/handy.deb "https://github.com/cjpais/Handy/releases/download/v${HANDY_VERSION}/Handy_${HANDY_VERSION}_amd64.deb"
+    sudo dpkg -i /tmp/handy.deb
+    rm /tmp/handy.deb
+  else
+    echo "Handy Linux release is available for amd64 only; skipping."
+  fi
+else
+  echo "Handy is already installed."
+fi
+
 # Install OpenCode
 which opencode >/dev/null 2>&1
 if [ $? -eq 0 ]; then
@@ -505,6 +597,12 @@ if [ $? -eq 0 ]; then
 else
   echo "Installing zoxide..."
   curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  # Add to PATH if not already present
+  if ! echo $PATH | grep -q "$HOME/.local/bin"; then
+    echo "Adding ~/.local/bin to PATH in .bashrc..."
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
 fi
 
 # Install Nushell
@@ -521,4 +619,97 @@ else
   chmod +x $HOME/.local/bin/nu
   rm -rf /tmp/nu.tar.gz "/tmp/nu-${NUSHELL_VERSION}-x86_64-unknown-linux-gnu"
   echo "Nushell installed to $HOME/.local/bin/nu"
+fi
+
+# GNOME Extensions and Settings (only if running GNOME)
+if [ -n "$DISPLAY" ] && command -v gnome-shell &> /dev/null; then
+  echo ""
+  echo "🖥️  Setting up GNOME extensions and settings..."
+  
+  # Check if we should install extensions (only if gnome-shell is running)
+  if pgrep -x "gnome-shell" > /dev/null 2>&1; then
+    echo "GNOME Shell detected, installing extensions..."
+    /home/raven/.local/share/chezmoi/gnome-install-extensions.sh
+  else
+    echo "GNOME Shell not running, skipping extension installation."
+    echo "Run this script again in a GNOME session to install extensions."
+  fi
+else
+  echo "⚠️  GNOME not detected. Skipping GNOME configuration."
+fi
+
+# Install TUI Applications for Enhanced Terminal Experience
+echo ""
+echo "🖥️ Installing enhanced TUI applications..."
+
+# Install btop - System monitor with beautiful graphs
+if ! dpkg -l | grep -q "^ii.*btop"; then
+    echo "Installing btop..."
+    sudo apt install btop
+else
+    echo "btop is already installed."
+fi
+
+# Install fastfetch - Fast system information display
+if ! command -v fastfetch >/dev/null 2>&1; then
+    echo "Installing fastfetch..."
+    sudo add-apt-repository ppa:zhangsongcui3371/fastfetch -y
+    sudo apt update
+    sudo apt install fastfetch
+else
+    echo "fastfetch is already installed."
+fi
+
+# Install bat - Enhanced cat with syntax highlighting
+if ! command -v bat >/dev/null 2>&1; then
+    echo "Installing bat..."
+    BAT_VERSION=$(curl -s "https://api.github.com/repos/sharkdp/bat/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo bat.tar.gz "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+    tar -xf bat.tar.gz -C /tmp
+    sudo cp /tmp/bat-v${BAT_VERSION}-x86_64-unknown-linux-musl/bat /usr/local/bin/
+    sudo chmod +x /usr/local/bin/bat
+    rm bat.tar.gz
+    sudo apt install -y bat
+else
+    echo "bat is already installed."
+fi
+
+# Install lsd - Enhanced ls with icons and colors
+if ! command -v lsd >/dev/null 2>&1; then
+    echo "Installing lsd..."
+    sudo apt install lsd
+else
+    echo "lsd is already installed."
+fi
+
+# Install delta - Enhanced git diff viewer
+if ! command -v delta >/dev/null 2>&1; then
+    echo "Installing delta..."
+    sudo apt install git-delta
+else
+    echo "delta is already installed."
+fi
+
+echo ""
+echo "✅ TUI applications installation complete!"
+echo "📋 Installed tools:"
+echo "  • btop - System monitoring"
+echo "  • fastfetch - System information"
+echo "  • bat - Enhanced cat"
+echo "  • lsd - Enhanced ls"
+echo "  • delta - Enhanced git diff"
+
+# GNOME Extensions and Settings (only if running GNOME)
+if [ -n "$DISPLAY" ] && command -v gnome-shell &> /dev/null; then
+  echo ""
+  echo "🖥️  Setting up GNOME extensions and settings..."
+  
+  # Check if we should install extensions (only if gnome-shell is running)
+  if pgrep -x "gnome-shell" > /dev/null 2>&1; then
+    echo "GNOME Shell detected, installing extensions..."
+    /home/raven/.local/share/chezmoi/gnome-install-extensions.sh
+  else
+    echo "GNOME Shell not running, skipping extension installation."
+    echo "Run this script again in a GNOME session to install extensions."
+  fi
 fi
