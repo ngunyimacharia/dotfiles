@@ -18,7 +18,12 @@ export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agen
 
 
 
-# Aliases
+# Enhanced Terminal Aliases (via TUI Apps)
+# These will be added automatically when TUI apps are installed
+# cat=bat, ls=lsd, top=btop
+
+# Laravel specific
+alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
 
 # Laravel specific
 alias a='php artisan'
