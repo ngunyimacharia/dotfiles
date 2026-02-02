@@ -6,3 +6,21 @@
 .config/nvim/lazyvim.json
 
 README.md
+AGENTS.md
+
+# Ignore helper scripts stored at repo root
+add-tui-aliases-bash.sh
+add-tui-aliases-nushell.sh
+btop.tar.gz
+bin
+create-enhanced-bashrc.sh
+gnome-install-extensions.sh
+gnome
+intelephense
+Library
+systemd
+tui-aliases.sh
+tui-apps-install.sh
+tui-apps-setup.sh
+tui-configs
+themes
