@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# Everforest Theme Switcher for Chezmoi Dotfiles
+# Usage: ./bin/switch-theme [theme-name]
+
+set -e
+
+THEME_DIR="$HOME/.local/share/chezmoi/themes"
+CURRENT_THEME_FILE="$HOME/.local/share/chezmoi/.current_theme"
+AVAILABLE_THEMES=$(ls "$THEME_DIR" | grep -v "current_theme")
+
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 [theme-name]"
+    echo ""
+    echo "Available themes:"
+    for theme in $AVAILABLE_THEMES; do
+        if [ "$theme" = "$(cat "$CURRENT_THEME_FILE" 2>/dev/null)" ]; then
+            echo "  $theme (current)"
+        else
+            echo "  $theme"
+        fi
+    done
+    echo ""
+    echo "Example: $0 everforest"
+}
+
+# Function to apply theme
+apply_theme() {
+    local theme="$1"
+    
+    if [ ! -d "$THEME_DIR/$theme" ]; then
+        echo "Error: Theme '$theme' not found"
+        echo "Available themes: $AVAILABLE_THEMES"
+        exit 1
+    fi
+    
+    echo "Switching to $theme theme..."
+    
+    # Save current theme
+    echo "$theme" > "$CURRENT_THEME_FILE"
+    
+    # Update Neovim configuration
+    if [ -f "$THEME_DIR/$theme/neovim.lua" ]; then
+        echo "Updating Neovim theme..."
+        cp "$THEME_DIR/$theme/neovim.lua" "$HOME/.local/share/chezmoi/private_dot_config/nvim/lua/plugins/theme.lua"
+    fi
+    
+    # Update Ghostty configuration
+    if [ -f "$THEME_DIR/$theme/ghostty.config" ]; then
+        echo "Updating Ghostty theme..."
+        cp "$THEME_DIR/$theme/ghostty.config" "$HOME/.local/share/chezmoi/private_dot_config/ghostty/config.tmpl"
+    fi
+
+    # Update Kitty configuration
+    if [ -f "$THEME_DIR/$theme/kitty.conf" ]; then
+        echo "Updating Kitty theme..."
+        cp "$THEME_DIR/$theme/kitty.conf" "$HOME/.local/share/chezmoi/private_dot_config/kitty/kitty.conf.tmpl"
+    fi
+    
+    # Update Starship configuration
+    if [ -f "$THEME_DIR/$theme/starship.toml" ]; then
+        echo "Updating Starship theme..."
+        cp "$THEME_DIR/$theme/starship.toml" "$HOME/.local/share/chezmoi/private_dot_config/starship.toml"
+    fi
+    
+    # Update Zellij configuration
+    if [ -f "$THEME_DIR/$theme/zellij.kdl" ]; then
+        echo "Updating Zellij theme..."
+        mkdir -p "$HOME/.config/zellij"
+        cp "$THEME_DIR/$theme/zellij.kdl" "$HOME/.config/zellij/theme.kdl"
+        # Add theme reference to main config if it exists
+        if [ -f "$HOME/.config/zellij/config.kdl" ]; then
+            if ! grep -q "theme" "$HOME/.config/zellij/config.kdl"; then
+                echo "" >> "$HOME/.config/zellij/config.kdl"
+                echo "theme \"everforest\"" >> "$HOME/.config/zellij/config.kdl"
+            else
+                sed -i 's/theme ".*"/theme "everforest"/g' "$HOME/.config/zellij/config.kdl"
+            fi
+        fi
+    fi
+    
+    # Apply changes with chezmoi
+    echo "Applying changes with chezmoi..."
+    chezmoi apply
+    
+    echo "Theme '$theme' applied successfully!"
+    echo "Please restart your terminal and any running applications to see the changes."
+}
+
+# Main logic
+case "${1:-}" in
+    "")
+        show_usage
+        ;;
+    --help|-h)
+        show_usage
+        ;;
+    *)
+        apply_theme "$1"
+        ;;
+esac
