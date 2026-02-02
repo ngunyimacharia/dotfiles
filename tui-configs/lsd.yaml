@@ -1,0 +1,22 @@
+# lsd configuration
+
+# General settings
+date: "+%Y-%m-%d"
+time-style: "12-hour"
+icons: auto
+
+# Color scheme (Everforest)
+classic: false
+theme: everforest-dark
+
+# Display settings
+permissions: owner,group
+symlinks: symlink
+
+# File type icons
+size: large
+inode: true
+
+# Git integration
+git-repo-no-icon: false
+git-repo-status: true
