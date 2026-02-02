@@ -1,0 +1,38 @@
+# fastfetch configuration
+
+# General settings
+logo = "none"
+colors = true
+
+# Display information
+show_cpu = true
+show_gpu = true
+show_memory = true
+show_disk = true
+show_network = true
+show_processes = 5
+show_uptime = true
+show_battery = true
+
+# Color scheme (matching Everforest)
+color_keys = {
+  title = "#a7c080"
+  key = "#d3c6aa"
+  element = "#7fbbb3"
+  subtitle = "#859289"
+}
+
+color_values = {
+  cpu_temp = "#e69875"
+  cpu_usage = "#d3c6aa"
+  cpu_temp_low = "#a7c080"
+  cpu_usage_low = "#d3c6aa"
+  memory_usage = "#7fbbb3"
+  memory_usage_low = "#a7c080"
+  battery_low = "#e67e80"
+  battery_mid = "#dbbc7f"
+  battery_high = "#a7c080"
+}
+
+# Format customization
+format_output = "{title}\n{subtitle}\n{separator}\n{key} {value}"
