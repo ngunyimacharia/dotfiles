@@ -1,7 +1,299 @@
 # ~/.config/starship.toml
 
-[aws]
-format = 'on [$symbol($profile )(\($region\) )]($style)'
-symbol = "☁️  "
-style = "bold yellow"
+"$schema" = "https://starship.rs/config-schema.json"
+
+# ~/.config/starship.toml
+
+# Everforest theme for Starship
+format = """
+$os\
+$username\
+$directory\
+$aws\
+$git_branch\
+$git_status\
+$git_state\
+$git_metrics\
+$nodejs\
+$python\
+$rust\
+$golang\
+$lua\
+$php\
+$cmd_duration\
+$fill\
+$time
+$character
+"""
+
+[os]
 disabled = false
+style = "bold #a7c080"
+
+[os.symbols]
+Alpaquita = " "
+Alpine = " "
+AlmaLinux = " "
+Amazon = " "
+Android = " "
+AOSC = " "
+Arch = " "
+Artix = " "
+CachyOS = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Elementary = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+Ios = "󰀷 "
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+Nobara = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+RockyLinux = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Void = " "
+Windows = "󰍲 "
+Zorin = " "
+
+[username]
+show_always = true
+style_user = "bold #a7c080"
+style_root = "bold #e67e80"
+format = "[$user]($style) "
+
+[directory]
+truncation_length = 1
+truncate_to_repo = true
+style = "bold #7fbbb3"
+format = "[$path]($style) "
+read_only = " 󰌾"
+
+[git_branch]
+symbol = " "
+style = "bold #d699b6"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+style = "bold #d3c6aa"
+format = "([$all_status$ahead_behind]($style) )"
+
+[git_state]
+style = "bold #e67e80"
+format = "([$state( $progress_current/$progress_total)]($style) )"
+
+[git_metrics]
+disabled = false
+format = "([+$added]($added_style) [-$deleted]($deleted_style) )"
+
+[cmd_duration]
+min_time = 500
+style = "bold #7fbbb3"
+format = "took [$duration]($style) "
+
+[aws]
+symbol = " "
+style = "bold #a7c080"
+format = "[$symbol]($style)[$profile@$region]($style) "
+
+[nodejs]
+symbol = " "
+style = "bold #a7c080"
+format = "[$symbol$version]($style) "
+
+[python]
+symbol = " "
+style = "bold #7fbbb3"
+format = "[$symbol$version]($style) "
+
+[rust]
+symbol = "󱘗 "
+style = "bold #e69875"
+format = "[$symbol$version]($style) "
+
+[golang]
+symbol = " "
+style = "bold #83c092"
+format = "[$symbol$version]($style) "
+
+[lua]
+symbol = " "
+style = "bold #7fbbb3"
+format = "[$symbol$version]($style) "
+
+[php]
+symbol = " "
+style = "bold #d3c6aa"
+format = "[$symbol$version]($style) "
+
+[buf]
+symbol = " "
+
+[bun]
+symbol = " "
+
+[c]
+symbol = " "
+
+[cpp]
+symbol = " "
+
+[cmake]
+symbol = " "
+
+[conda]
+symbol = " "
+
+[crystal]
+symbol = " "
+
+[dart]
+symbol = " "
+
+[deno]
+symbol = " "
+
+[docker_context]
+symbol = " "
+
+[elixir]
+symbol = " "
+
+[elm]
+symbol = " "
+
+[fennel]
+symbol = " "
+
+[fortran]
+symbol = " "
+
+[fossil_branch]
+symbol = " "
+
+[gcloud]
+symbol = " "
+
+[git_commit]
+tag_symbol = "  "
+
+[gradle]
+symbol = " "
+
+[guix_shell]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[haxe]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+[hostname]
+ssh_symbol = " "
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[kotlin]
+symbol = " "
+
+[memory_usage]
+symbol = "󰍛 "
+
+[meson]
+symbol = "󰔷 "
+
+[nim]
+symbol = "󰆥 "
+
+[nix_shell]
+symbol = " "
+
+[ocaml]
+symbol = " "
+
+[package]
+symbol = "󰏗 "
+
+[perl]
+symbol = " "
+
+[pijul_channel]
+symbol = " "
+
+[pixi]
+symbol = "󰏗 "
+
+[rlang]
+symbol = "󰟔 "
+
+[ruby]
+symbol = " "
+
+[scala]
+symbol = " "
+
+[status]
+symbol = " "
+
+[swift]
+symbol = " "
+
+[xmake]
+symbol = " "
+
+[zig]
+symbol = " "
+
+[fill]
+symbol = " "
+
+[time]
+disabled = false
+style = "bold #a7c080"
+format = "[$time]($style)"
+time_format = "%I:%M %p"
+
+[character]
+success_symbol = "❯"
+error_symbol = "❯"
+vicmd_symbol = "❯"
+
+# Simple color palette (no custom colors for now to avoid parsing issues)
+# [palette]
+# green = "#a7c080"
+# blue = "#7fbbb3" 
+# purple = "#d699b6"
+# red = "#e67e80"
