@@ -1,0 +1,44 @@
+# ~/.config/starship.toml
+
+# ~/.config/starship.toml
+
+# Everforest theme for Starship
+format = """
+$os\
+$username\
+$directory\
+$git_branch\
+$character
+"""
+
+[os]
+disabled = false
+style = "bold green"
+
+[username]
+show_always = true
+style_user = "#a7c080"
+style_root = "#e67e80"
+format = "[$user]($style) "
+
+[directory]
+truncation_length = 3
+truncate_to_repo = false
+style = "#7fbbb3"
+format = "[$path]($style) "
+
+[git_branch]
+style = "#d699b6"
+format = "on [$symbol$branch]($style) "
+
+[character]
+success_symbol = "❯"
+error_symbol = "❯"
+vicmd_symbol = "❯"
+
+# Simple color palette (no custom colors for now to avoid parsing issues)
+# [palette]
+# green = "#a7c080"
+# blue = "#7fbbb3" 
+# purple = "#d699b6"
+# red = "#e67e80"
