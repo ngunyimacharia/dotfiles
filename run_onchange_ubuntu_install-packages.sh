@@ -413,11 +413,12 @@ else
   echo "Discord is already installed."
 fi
 
-if ! snap list | grep -q "gh"; then
-  echo "Installing GitHub CLI..."
-  sudo snap install gh
-else
+if command -v gh >/dev/null 2>&1; then
   echo "GitHub CLI is already installed."
+else
+  echo "Installing GitHub CLI (apt)..."
+  sudo apt update
+  sudo apt install gh
 fi
 
 # Install Zoom via Flatpak
