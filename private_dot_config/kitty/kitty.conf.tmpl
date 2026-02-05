@@ -32,3 +32,23 @@ shell /home/raven/.local/bin/nu
 {{- end }}
 
 font_family Fira Code
+font_size 16.0
+adjust_line_height 2
+
+# Tab bar styling
+tab_bar_min_tabs            1
+tab_bar_edge                bottom
+tab_bar_style               powerline
+tab_powerline_style         slanted
+tab_title_template          {title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}
+
+# Colors
+active_tab_foreground   #2d353b
+active_tab_background   #a7c080
+inactive_tab_foreground #d3c6aa
+inactive_tab_background #3a4148
+
+# Spacing
+tab_bar_margin_height 2.0
+tab_bar_margin_width 8.0
+tab_bar_background #2d353b
