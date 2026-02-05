@@ -7,6 +7,8 @@ try {
 } catch {
 }
 
+$env.PATH = ($env.PATH | prepend ($"($env.HOME)/.local/kitty.app/bin"))
+
 # Load Starship prompt
 if (("~/.cache/starship/init.nu" | path expand) | path exists) {
   use ~/.cache/starship/init.nu
