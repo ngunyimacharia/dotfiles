@@ -1,0 +1,42 @@
+#!/bin/sh
+
+set -eu
+
+if ! command -v handy >/dev/null 2>&1; then
+  echo "Handy is not installed; skipping."
+  exit 0
+fi
+
+if ! command -v gsettings >/dev/null 2>&1; then
+  echo "gsettings is not available; this requires GNOME."
+  exit 1
+fi
+
+binding=${1:-"<Control>space"}
+name=${2:-"Handy Toggle"}
+path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/handy-toggle/"
+schema="org.gnome.settings-daemon.plugins.media-keys"
+
+current=$(gsettings get "$schema" custom-keybindings)
+current=${current#@as }
+
+updated=$(python3 - <<'PY' "$current" "$path"
+import ast
+import sys
+
+current = ast.literal_eval(sys.argv[1])
+path = sys.argv[2]
+
+if path not in current:
+    current.append(path)
+
+print(current)
+PY
+)
+
+gsettings set "$schema" custom-keybindings "$updated"
+gsettings set "${schema}.custom-keybinding:${path}" name "$name"
+gsettings set "${schema}.custom-keybinding:${path}" command "pkill -USR2 -n handy"
+gsettings set "${schema}.custom-keybinding:${path}" binding "$binding"
+
+echo "Set GNOME shortcut: $binding -> $name"
