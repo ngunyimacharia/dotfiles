@@ -200,6 +200,14 @@ else
   echo "ripgrep is already installed."
 fi
 
+# Install AWS CLI
+if ! brew list | grep -q "awscli"; then
+  echo "Installing AWS CLI..."
+  brew install awscli
+else
+  echo "AWS CLI is already installed."
+fi
+
 # Install fzf
 if ! brew list | grep -q "fzf"; then
   echo "Installing fzf..."

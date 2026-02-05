@@ -149,6 +149,14 @@ else
   echo "ripgrep is already installed."
 fi
 
+# Install AWS CLI
+if ! snap list | grep -q "^aws-cli"; then
+  echo "Installing AWS CLI..."
+  sudo snap install aws-cli --classic
+else
+  echo "AWS CLI is already installed."
+fi
+
 # Install MySQL client
 if ! dpkg -l | grep "^ii" | grep -q "mysql-client"; then
   echo "Installing MySQL client..."
