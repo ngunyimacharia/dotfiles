@@ -72,6 +72,28 @@ else
   echo "libfuse2 is already installed."
 fi
 
+if ! dpkg -l | grep "^ii" | grep -q "appimagelauncher"; then
+  echo "Installing AppImageLauncher..."
+  if apt-cache show appimagelauncher >/dev/null 2>&1; then
+    sudo apt install appimagelauncher
+  else
+    APPIMAGE_ARCH=$(dpkg --print-architecture)
+    APPIMAGE_DEB_URL=$(curl -fsSL "https://api.github.com/repos/TheAssassin/AppImageLauncher/releases/latest" | grep -o "https://[^"]*appimagelauncher_[^"]*_${APPIMAGE_ARCH}.deb" | head -n 1)
+
+    if [ -n "$APPIMAGE_DEB_URL" ]; then
+      APPIMAGE_DEB_PATH="/tmp/appimagelauncher_${APPIMAGE_ARCH}.deb"
+      echo "AppImageLauncher not found in apt repositories. Installing from GitHub release..."
+      curl -fL "$APPIMAGE_DEB_URL" -o "$APPIMAGE_DEB_PATH"
+      sudo dpkg -i "$APPIMAGE_DEB_PATH" || sudo apt-get install -f -y
+      rm -f "$APPIMAGE_DEB_PATH"
+    else
+      echo "No compatible AppImageLauncher .deb release found for architecture: $APPIMAGE_ARCH"
+    fi
+  fi
+else
+  echo "AppImageLauncher is already installed."
+fi
+
 if ! dpkg -l | grep "^ii" | grep -q "variety"; then
   echo "Installing Variety wallpaper manager..."
   sudo apt install variety
