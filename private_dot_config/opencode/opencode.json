@@ -6,6 +6,11 @@
       "type": "local",
       "command": ["npx", "-y", "@upstash/context7-mcp"],
       "enabled": true
+    },
+    "ray": {
+      "type": "remote",
+      "url": "http://127.0.0.1:2411",
+      "enabled": true
     }
   },
   "model": "opencode/sonic",
