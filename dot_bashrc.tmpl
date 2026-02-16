@@ -2,6 +2,17 @@
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
 
+# Terminal compatibility fallback
+case "$TERM" in
+  xterm-kitty|xterm-ghostty)
+    if command -v infocmp >/dev/null 2>&1; then
+      infocmp "$TERM" >/dev/null 2>&1 || export TERM="xterm-256color"
+    else
+      export TERM="xterm-256color"
+    fi
+    ;;
+esac
+
 # Path edits
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"

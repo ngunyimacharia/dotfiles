@@ -6,6 +6,20 @@
 $env.EDITOR = "nvim"
 $env.SUDO_EDITOR = $env.EDITOR
 
+# Terminal compatibility fallback
+let current_term = ($env.TERM? | default "")
+if ($current_term in ["xterm-kitty" "xterm-ghostty"]) {
+    let infocmp_available = (try { which infocmp | is-not-empty } catch { false })
+    if $infocmp_available {
+        let terminfo_ok = (try { (^infocmp $current_term | complete).exit_code == 0 } catch { false })
+        if (not $terminfo_ok) {
+            $env.TERM = "xterm-256color"
+        }
+    } else {
+        $env.TERM = "xterm-256color"
+    }
+}
+
 # Android SDK configuration
 $env.ANDROID_SDK_ROOT = "/home/raven/Android/Sdk"
 $env.ANDROID_HOME = "/home/raven/Android/Sdk"
