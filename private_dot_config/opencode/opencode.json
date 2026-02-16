@@ -9,7 +9,7 @@
     },
     "ray": {
       "type": "remote",
-      "url": "http://127.0.0.1:2411",
+      "url": "http://127.0.0.1:2411/mcp",
       "enabled": true
     }
   },
