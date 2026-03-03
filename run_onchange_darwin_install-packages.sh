@@ -123,12 +123,12 @@ else
   echo "tree-sitter CLI is already installed."
 fi
 
-# Install Zellij
-if ! brew list | grep -q "zellij"; then
-  echo "Installing Zellij..."
-  brew install zellij
+# Install tmux
+if ! brew list | grep -q "tmux"; then
+  echo "Installing tmux..."
+  brew install tmux
 else
-  echo "Zellij is already installed."
+  echo "tmux is already installed."
 fi
 
 # Install Slack
