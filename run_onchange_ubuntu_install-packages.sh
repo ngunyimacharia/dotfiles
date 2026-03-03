@@ -57,6 +57,21 @@ else
   echo "xclip is already installed."
 fi
 
+# OpenCode notifier dependencies (Linux)
+if ! dpkg -l | grep "^ii" | grep -q "libnotify-bin"; then
+  echo "Installing libnotify-bin (notify-send)..."
+  sudo apt install libnotify-bin
+else
+  echo "libnotify-bin is already installed."
+fi
+
+if ! dpkg -l | grep "^ii" | grep -q "pulseaudio-utils"; then
+  echo "Installing pulseaudio-utils (paplay)..."
+  sudo apt install pulseaudio-utils
+else
+  echo "pulseaudio-utils is already installed."
+fi
+
 if ! dpkg -l | grep "^ii" | grep -q "gnome-browser-connector"; then
   echo "Installing gnome-browser-connector ..."
   sudo apt install gnome-browser-connector
@@ -412,16 +427,13 @@ else
   echo "LazyDocker is already installed."
 fi
 
-# Install Zellij
-which zellij >/dev/null 2>&1
+# Install tmux
+which tmux >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo "Installing Zellij..."
-  curl -Lo zellij.tar.gz "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz"
-  tar xf zellij.tar.gz zellij
-  sudo install zellij /usr/local/bin
-  rm zellij.tar.gz zellij
+  echo "Installing tmux..."
+  sudo apt install tmux
 else
-  echo "Zellij is already installed."
+  echo "tmux is already installed."
 fi
 # Communication tools
 
