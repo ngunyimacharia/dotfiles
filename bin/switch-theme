@@ -64,22 +64,6 @@ apply_theme() {
         cp "$THEME_DIR/$theme/starship.toml" "$HOME/.local/share/chezmoi/private_dot_config/starship.toml"
     fi
     
-    # Update Zellij configuration
-    if [ -f "$THEME_DIR/$theme/zellij.kdl" ]; then
-        echo "Updating Zellij theme..."
-        mkdir -p "$HOME/.config/zellij"
-        cp "$THEME_DIR/$theme/zellij.kdl" "$HOME/.config/zellij/theme.kdl"
-        # Add theme reference to main config if it exists
-        if [ -f "$HOME/.config/zellij/config.kdl" ]; then
-            if ! grep -q "theme" "$HOME/.config/zellij/config.kdl"; then
-                echo "" >> "$HOME/.config/zellij/config.kdl"
-                echo "theme \"everforest\"" >> "$HOME/.config/zellij/config.kdl"
-            else
-                sed -i 's/theme ".*"/theme "everforest"/g' "$HOME/.config/zellij/config.kdl"
-            fi
-        fi
-    fi
-    
     # Apply changes with chezmoi
     echo "Applying changes with chezmoi..."
     chezmoi apply
