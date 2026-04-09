@@ -46,12 +46,6 @@ apply_theme() {
         cp "$THEME_DIR/$theme/neovim.lua" "$HOME/.local/share/chezmoi/private_dot_config/nvim/lua/plugins/theme.lua"
     fi
     
-    # Update Ghostty configuration
-    if [ -f "$THEME_DIR/$theme/ghostty.config" ]; then
-        echo "Updating Ghostty theme..."
-        cp "$THEME_DIR/$theme/ghostty.config" "$HOME/.local/share/chezmoi/private_dot_config/ghostty/config.tmpl"
-    fi
-
     # Update Kitty configuration
     if [ -f "$THEME_DIR/$theme/kitty.conf" ]; then
         echo "Updating Kitty theme..."

@@ -569,14 +569,6 @@ else
   echo "Kitty is already installed."
 fi
 
-# Install Ghostty
-if ! snap list | grep -q "ghostty"; then
-  echo "Installing Ghostty..."
-  sudo snap install ghostty --classic
-else
-  echo "Ghostty is already installed."
-fi
-
 # Install LocalSend via Flatpak
 if ! flatpak list | grep -q "org.localsend.localsend_app"; then
   echo "Installing LocalSend..."

@@ -277,14 +277,6 @@ else
   echo "Kitty is already installed."
 fi
 
-# Install Ghostty
-if ! brew list --cask | grep -q "ghostty"; then
-  echo "Installing Ghostty..."
-  brew install --cask ghostty
-else
-  echo "Ghostty is already installed."
-fi
-
 # Install Beekeeper Studio
 if ! test -d "/Applications/Beekeeper Studio.app"; then
   echo "Installing Beekeeper Studio..."

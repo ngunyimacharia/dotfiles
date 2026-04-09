@@ -8,7 +8,7 @@ $env.SUDO_EDITOR = $env.EDITOR
 
 # Terminal compatibility fallback
 let current_term = ($env.TERM? | default "")
-if ($current_term in ["xterm-kitty" "xterm-ghostty"]) {
+if ($current_term in ["xterm-kitty"]) {
     let infocmp_available = (try { which infocmp | is-not-empty } catch { false })
     if $infocmp_available {
         let terminfo_ok = (try { (^infocmp $current_term | complete).exit_code == 0 } catch { false })
