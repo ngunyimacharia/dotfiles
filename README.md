@@ -42,7 +42,7 @@ This repository uses **Nushell** as the default shell, providing:
 #### Terminal & Shell
 
 - **Nushell**: Modern shell with structured data pipelines as default shell
-- **Ghostty**: GPU-accelerated terminal emulator configured to use Nushell
+- **Kitty**: GPU-accelerated terminal emulator configured to use Nushell
 - **Starship**: Fast, minimal prompt with Nushell integration
 - **Zoxide**: Smart directory jumping integrated with Nushell
 - **Bash**: Fallback shell configuration via `.bashrc` template for compatibility
@@ -58,7 +58,7 @@ This repository uses **Nushell** as the default shell, providing:
 
 Custom `.desktop` files in `dot_local/share/applications/` override default application launchers for better compatibility:
 
-- **LazyDocker** (`lazydocker.desktop`): Custom launcher that opens lazydocker in a dedicated Ghostty terminal window
+- **LazyDocker** (`lazydocker.desktop`): Custom launcher that opens lazydocker in a dedicated Kitty terminal window
 
 #### Docker Icon
 
@@ -137,7 +137,7 @@ These scripts:
 │       ├── applications/       # Custom .desktop entries
 │       └── icons/              # Custom icons
 ├── private_dot_config/         # User configuration files
-│   ├── ghostty/               # Ghostty terminal config
+│   ├── kitty/                 # Kitty terminal config
 │   ├── nushell/               # Nushell shell configuration
 │   │   ├── config.nu          # Shell config and aliases
 │   │   └── env.nu.tmpl        # Environment variables (templated)
@@ -165,7 +165,7 @@ These scripts:
 ### Terminal & Shell
 
 - Nushell: Modern shell with structured data support
-- Ghostty: Modern GPU-accelerated terminal configured with Nushell
+- Kitty: Modern GPU-accelerated terminal configured with Nushell
 - Starship: Minimal, fast shell prompt
 - Zoxide: Smart directory navigation
 
@@ -186,7 +186,7 @@ The `.chezmoiignore` file ensures platform-appropriate configuration:
 
 ### Nushell Usage
 
-Nushell is configured as the default shell in Ghostty. Key features:
+Nushell is configured as the default shell in Kitty. Key features:
 
 **Smart Navigation:**
 
