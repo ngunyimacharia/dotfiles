@@ -28,6 +28,7 @@ $env.JAVA_HOME = "/usr/lib/jvm/java-21-openjdk"
 # Path configuration
 $env.PATH = ($env.PATH | split row (char esep) | prepend [
     "/usr/local/bin"
+    ($env.HOME | path join ".composer" "vendor" "bin")
     ($env.HOME | path join ".config" "composer" "vendor" "bin")
     ($env.HOME | path join ".local" "share" "mise" "installs" "node" "22.10.0" "bin")
     ($env.HOME | path join ".cargo" "bin")
