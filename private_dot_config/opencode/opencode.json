@@ -3,8 +3,7 @@
   "autoupdate": true,
   "plugin": [
     "@mohak34/opencode-notifier@latest",
-    "@plannotator/opencode@latest",
-    "superpowers@git+https://github.com/obra/superpowers.git"
+    "@plannotator/opencode@latest"
   ],
   "mcp": {
     "context7": {
