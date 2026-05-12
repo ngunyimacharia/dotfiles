@@ -28,3 +28,18 @@ $env.config = {
   edit_mode: emacs
   buffer_editor: "nvim"
 }
+
+# Laravel Cloud CLI completions
+def "nu-complete cloud commands" [] {
+  try {
+    ^cloud list --raw
+    | lines
+    | parse -r '^(?<command>\S+)\s+(?<description>.*)$'
+    | each { |row| {value: $row.command, description: ($row.description | str trim)} }
+  } catch { [] }
+}
+
+extern "cloud" [
+  command?: string@"nu-complete cloud commands"
+  ...args: string
+]

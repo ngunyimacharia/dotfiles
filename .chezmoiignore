@@ -2,6 +2,10 @@
 .local
 {{ end -}}
 
+{{ if ne .chezmoi.os "darwin" -}}
+Library/Application Support/nushell/config.nu
+{{ end -}}
+
 .config/nvim/lazy-lock.json
 .config/nvim/lazyvim.json
 
@@ -17,7 +21,6 @@ create-enhanced-bashrc.sh
 gnome-install-extensions.sh
 gnome
 intelephense
-Library
 systemd
 tui-aliases.sh
 tui-apps-install.sh
