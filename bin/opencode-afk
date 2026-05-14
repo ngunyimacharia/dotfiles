@@ -34,12 +34,6 @@ while [ $# -gt 0 ]; do
 done
 
 # --- Model Selection ---
-MODEL_FILE="${HOME}/.config/opencode/afk-model"
-
-if [ -z "$MODEL" ] && [ "$SELECT_MODEL" = false ] && [ -f "$MODEL_FILE" ]; then
-  MODEL=$(cat "$MODEL_FILE")
-fi
-
 if [ -z "$MODEL" ] || [ "$SELECT_MODEL" = true ]; then
   echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Fetching available models..."
   model_list=$(opencode models 2>/dev/null)
@@ -67,10 +61,6 @@ if [ -z "$MODEL" ] || [ "$SELECT_MODEL" = true ]; then
     echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') No model selected. Exiting." >&2
     exit 1
   fi
-
-  mkdir -p "$(dirname "$MODEL_FILE")"
-  echo "$MODEL" > "$MODEL_FILE"
-  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Model saved: $MODEL"
 fi
 
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Using model: $MODEL"
@@ -200,9 +190,9 @@ Please implement this ticket fully. Make all necessary code changes, run tests i
 log_line "[INFO] \$(date '+%Y-%m-%d %H:%M:%S') Starting ticket"
 
 if [ "\${STREAM_OUTPUT:-0}" = "1" ]; then
-  opencode run --model "\$model" "\$full_prompt"
+  opencode run --interactive --model "\$model" "\$full_prompt"
 else
-  opencode run --model "\$model" "\$full_prompt" >> "\$LOG" 2>&1
+  opencode run --interactive --model "\$model" "\$full_prompt" >> "\$LOG" 2>&1
 fi
 
 if [ "\$?" -eq 0 ]; then
