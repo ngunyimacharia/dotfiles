@@ -1,0 +1,51 @@
+#!/bin/sh
+
+set -eu
+
+MODE="${1:-both}"
+TARGET_DIR="$HOME/.config/opencode"
+
+MANAGED_TARGETS="
+$TARGET_DIR/AGENTS.md
+$TARGET_DIR/config.json
+$TARGET_DIR/opencode.json
+$TARGET_DIR/agents
+$TARGET_DIR/command
+$TARGET_DIR/prompts
+$TARGET_DIR/plugins
+"
+
+pull() {
+  for target in $MANAGED_TARGETS; do
+    if [ -e "$target" ]; then
+      chezmoi add "$target"
+    fi
+  done
+}
+
+push() {
+  chezmoi apply "$TARGET_DIR/AGENTS.md" \
+    "$TARGET_DIR/config.json" \
+    "$TARGET_DIR/opencode.json" \
+    "$TARGET_DIR/agents" \
+    "$TARGET_DIR/command" \
+    "$TARGET_DIR/prompts" \
+    "$TARGET_DIR/plugins"
+}
+
+case "$MODE" in
+  pull)
+    pull
+    ;;
+  push)
+    push
+    ;;
+  both)
+    pull
+    push
+    ;;
+  *)
+    printf 'Usage: %s [pull|push|both]\n' "$0" >&2
+    exit 1
+    ;;
+esac
