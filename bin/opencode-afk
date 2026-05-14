@@ -37,8 +37,8 @@ echo "Scanning for AFK tickets..."
 TICKET_LIST=$(mktemp)
 find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_file; do
   # Skip if already done/closed/complete
-  status_line=$(grep -i "^Status:" "$issue_file" 2>/dev/null | head -n 1 || echo "")
-  status_val=$(echo "$status_line" | sed 's/^[[:space:]]*Status:[[:space:]]*//i' | tr '[:upper:]' '[:lower:]')
+  # Status is under ## Status heading (value on next non-empty line)
+  status_val=$(awk '/^##[[:space:]]+Status[[:space:]]*$/ {found=1; next} found && NF {print tolower($0); exit}' "$issue_file")
 
   case "$status_val" in
     *done*|*closed*|*complete*|*resolved*) continue ;;
@@ -108,7 +108,10 @@ Please implement this ticket fully. Make all necessary code changes, run tests i
       echo "[$(date '+%Y-%m-%d %H:%M:%S')] Completed: $ticket"
       # Update status to done
       tmpfile=$(mktemp)
-      sed 's/^[[:space:]]*Status:.*/Status: done/' "$ticket" > "$tmpfile"
+      awk '
+        /^##[[:space:]]+Status[[:space:]]*$/ { print; getline; print "done"; next }
+        { print }
+      ' "$ticket" > "$tmpfile"
       mv "$tmpfile" "$ticket"
     else
       echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed (exit $exit_code): $ticket"
