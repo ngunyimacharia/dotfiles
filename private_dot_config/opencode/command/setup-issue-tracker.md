@@ -34,11 +34,100 @@ Interview the user one question at a time:
 
 Use these detailed conventions when drafting the output files.
 
-{{ includeTemplate "private_dot_config/opencode/command/setup-issue-tracker.parts/issue-tracker-github.md" . }}
+For GitHub issue tracker output, generate content in this shape:
 
-{{ includeTemplate "private_dot_config/opencode/command/setup-issue-tracker.parts/issue-tracker-jira.md" . }}
+```md
+# Issue tracker: GitHub
 
-{{ includeTemplate "private_dot_config/opencode/command/setup-issue-tracker.parts/issue-tracker-local.md" . }}
+Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+
+## Conventions
+
+- **Create an issue**: `gh issue create --title "..." --body "..."`
+  - Use a heredoc for multi-line bodies when needed.
+- **Read an issue**: `gh issue view <number> --comments`
+- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`
+- **Comment on an issue**: `gh issue comment <number> --body "..."`
+- **Apply labels**: `gh issue edit <number> --add-label "..."`
+- **Remove labels**: `gh issue edit <number> --remove-label "..."`
+- **Close an issue**: `gh issue close <number> --comment "..."`
+
+Infer the repo from `git remote -v` when possible. `gh` usually handles this automatically inside a clone.
+
+## When a skill says "publish to the issue tracker"
+
+Create a GitHub issue.
+
+## When a skill says "fetch the relevant ticket"
+
+Run `gh issue view <number> --comments`.
+```
+
+
+For Jira issue tracker output, generate content in this shape:
+
+```md
+# Issue tracker: Jira
+
+Issues and PRDs for this repo live in Jira. Use the Atlassian CLI (`acli`) for all operations.
+
+## Conventions
+
+- **Authenticate first**: `acli jira auth login`
+- **Create an issue**: `acli jira workitem create --project <key> --type <type> --summary "..." --description "..."`
+- **Read an issue**: `acli jira workitem view <issue-key>`
+- **Search issues**: `acli jira workitem search --jql "project = <key> AND status != Done"`
+- **Comment on an issue**: `acli jira workitem comment create <issue-key> --comment "..."`
+- **Edit an issue**: `acli jira workitem edit <issue-key> --summary "..." --description "..."`
+- **Transition an issue**: `acli jira workitem transition <issue-key> --transition "..."`
+
+Use the configured Jira site, project key, and default issue type for this repo.
+
+## When a skill says "publish to the issue tracker"
+
+Create a Jira issue in the configured project.
+
+## When a skill says "fetch the relevant ticket"
+
+Run `acli jira workitem view <issue-key>`.
+```
+
+
+For local markdown issue tracker output, generate content in this shape:
+
+````md
+# Issue tracker: Local Markdown
+
+Issues and PRDs for this repo live as markdown files under `.scratch/`.
+
+## Conventions
+
+- One feature per directory: `.scratch/<feature-slug>/`
+- The PRD is `.scratch/<feature-slug>/PRD.md`
+- Implementation issues are `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`
+- Triage state is recorded as a `Status:` line near the top of each issue file
+- Comments and conversation history append under a `## Comments` heading
+
+## Example layout
+
+```text
+.scratch/
+  checkout-redesign/
+    PRD.md
+    issues/
+      01-cart-summary.md
+      02-payment-form.md
+```
+
+## When a skill says "publish to the issue tracker"
+
+Create a new file in the appropriate `.scratch/<feature-slug>/` location, creating directories if needed.
+
+## When a skill says "fetch the relevant ticket"
+
+Read the referenced markdown file directly.
+````
+
 
 Generate a separate triage labels file in this exact shape:
 
