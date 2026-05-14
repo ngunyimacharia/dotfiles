@@ -18,13 +18,13 @@ $TARGET_DIR/plugins
 pull() {
   for target in $MANAGED_TARGETS; do
     if [ -e "$target" ]; then
-      chezmoi add "$target"
+      chezmoi add --secrets ignore "$target"
     fi
   done
 }
 
 push() {
-  chezmoi apply "$TARGET_DIR/AGENTS.md" \
+  chezmoi apply --force "$TARGET_DIR/AGENTS.md" \
     "$TARGET_DIR/config.json" \
     "$TARGET_DIR/opencode.json" \
     "$TARGET_DIR/agents" \
