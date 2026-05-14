@@ -1,39 +1,110 @@
 #!/bin/sh
 
-# opencode-afk: Automatically process AFK tickets using opencode
-# Scans .scratch/*/issues/*.md for AFK tickets, runs up to 3 concurrently
-# Usage: Run from a project root that contains a .scratch/ directory
+# opencode-afk: Automatically process one AFK ticket using opencode
+# Scans .scratch/*/issues/*.md, selects one eligible AFK ticket, and runs it
+# Usage: opencode-afk [--model <model>] [--select-model]
 
 set -e
 set -m
 
-# Config
+# --- CLI Args ---
+SELECT_MODEL=false
+MODEL=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --model)
+      if [ $# -lt 2 ] || [ -z "$2" ]; then
+        echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') --model requires a value" >&2
+        exit 1
+      fi
+      MODEL="$2"
+      shift 2
+      ;;
+    --select-model)
+      SELECT_MODEL=true
+      shift
+      ;;
+    *)
+      echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Unknown option: $1" >&2
+      echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Usage: opencode-afk [--model <model>] [--select-model]" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# --- Model Selection ---
+MODEL_FILE="${HOME}/.config/opencode/afk-model"
+
+if [ -z "$MODEL" ] && [ "$SELECT_MODEL" = false ] && [ -f "$MODEL_FILE" ]; then
+  MODEL=$(cat "$MODEL_FILE")
+fi
+
+if [ -z "$MODEL" ] || [ "$SELECT_MODEL" = true ]; then
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Fetching available models..."
+  model_list=$(opencode models 2>/dev/null)
+
+  if [ -z "$model_list" ]; then
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Could not fetch model list from opencode. Is opencode configured?" >&2
+    exit 1
+  fi
+
+  # Try fzf first
+  if command -v fzf >/dev/null 2>&1; then
+    MODEL=$(echo "$model_list" | fzf --prompt="Select model for AFK: " --height=20 --reverse)
+  else
+    # POSIX fallback: numbered menu
+    models_tmp=$(mktemp)
+    echo "$model_list" | awk '{ print NR ") " $0 }' > "$models_tmp"
+    cat "$models_tmp"
+    printf "\nEnter number: "
+    read -r num
+    MODEL=$(sed -n "${num}p" "$models_tmp" | sed 's/^[0-9]*) //')
+    rm -f "$models_tmp"
+  fi
+
+  if [ -z "$MODEL" ]; then
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') No model selected. Exiting." >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$MODEL_FILE")"
+  echo "$MODEL" > "$MODEL_FILE"
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Model saved: $MODEL"
+fi
+
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Using model: $MODEL"
+
+# --- Config ---
 PROMPT_FILE="${HOME}/.config/opencode/prompts/afk-prompt.md"
-LOG_DIR=".scratch/.opencode-afk-logs"
+BASE_DIR="$(pwd)"
+LOG_DIR="${BASE_DIR}/.scratch/.opencode-afk-logs"
+SENTINEL_DIR="${LOG_DIR}/sentinels"
 MAX_CONCURRENT=3
+TMUX_READY_TIMEOUT=10
 
 # Check prompt file exists
 if [ ! -f "$PROMPT_FILE" ]; then
-  echo "Error: Prompt file not found at $PROMPT_FILE" >&2
+  echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Prompt file not found at $PROMPT_FILE" >&2
   exit 1
 fi
 
-PROMPT=$(cat "$PROMPT_FILE")
-
 # Check for .scratch directory
 if [ ! -d ".scratch" ]; then
-  echo "No .scratch directory found in current directory ($(pwd))"
+  echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') No .scratch directory found in current directory ($(pwd))"
   exit 0
 fi
 
 # Get recent commits for context
 COMMITS=$(git log -n 5 --format="%H%n%ad%n%B---" --date=short 2>/dev/null || echo "No commits found")
 
-# Create log dir
+# Create dirs
 mkdir -p "$LOG_DIR"
+rm -rf "$SENTINEL_DIR"
+mkdir -p "$SENTINEL_DIR"
 
-# Build list of pending AFK tickets
-echo "Scanning for AFK tickets..."
+# --- Select one pending AFK ticket ---
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Scanning for AFK tickets..."
 TICKET_LIST=$(mktemp)
 find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_file; do
   # Skip if already done/closed/complete
@@ -46,83 +117,324 @@ find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_
 
   # Check if AFK
   if grep -q "Executor:[[:space:]]*\`\?AFK\`\?" "$issue_file" 2>/dev/null; then
-    echo "$issue_file"
+    # Convert to absolute path
+    echo "${BASE_DIR}/${issue_file}"
   fi
 done > "$TICKET_LIST"
 
 if [ ! -s "$TICKET_LIST" ]; then
-  echo "No pending AFK tickets found."
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') No pending AFK tickets found."
   rm -f "$TICKET_LIST"
   exit 0
 fi
 
-TICKET_COUNT=$(wc -l < "$TICKET_LIST" | tr -d ' ')
-echo "Found $TICKET_COUNT AFK ticket(s):"
-while read -r ticket; do
-  echo "  - $ticket"
-done < "$TICKET_LIST"
+SELECTED_TICKET=$(sed -n '1p' "$TICKET_LIST")
+printf '%s\n' "$SELECTED_TICKET" > "$TICKET_LIST"
+TICKET_COUNT=1
+
+feature_slug=$(basename "$(dirname "$(dirname "$SELECTED_TICKET")")")
+issue_name=$(basename "$SELECTED_TICKET" .md)
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Selected 1 AFK ticket:"
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   - $feature_slug/$issue_name"
 echo ""
 
-# Process tickets with max concurrency
-while read -r ticket <&3; do
-  [ -z "$ticket" ] && continue
+# --- Detect tmux ---
+IN_TMUX=false
+if [ -n "$TMUX" ]; then
+  IN_TMUX=true
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Tmux detected: launching tickets in new windows"
+else
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') No tmux detected: launching tickets as background processes"
+fi
+echo ""
 
-  # Wait if we have MAX_CONCURRENT jobs running
-  while [ "$(jobs -r | wc -l | tr -d ' ')" -ge "$MAX_CONCURRENT" ]; do
-    sleep 1
-  done
+# --- Create helper script for tmux mode ---
+HELPER="${SENTINEL_DIR}/_run-ticket.sh"
+cat > "$HELPER" <<EOF
+#!/bin/sh
 
-  (
-    feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
-    issue_name=$(basename "$ticket" .md)
-    log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
+meta_file="\$1"
+. "\$meta_file"
 
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: $ticket"
+log_line() {
+  if [ "\${STREAM_OUTPUT:-0}" = "1" ]; then
+    printf '%s\n' "\$1"
+  else
+    printf '%s\n' "\$1" >> "\$LOG"
+  fi
+}
 
-    ticket_content=$(cat "$ticket")
+mark_failed() {
+  if [ ! -f "\$DONE" ] && [ ! -f "\$FAILED" ]; then
+    touch "\$FAILED"
+  fi
+}
 
-    # Construct the full prompt
-    full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
+trap 'log_line "[WARN] \$(date '+"'"'%Y-%m-%d %H:%M:%S'"'"') Ticket interrupted"; mark_failed; exit 130' INT TERM
+
+ticket_content=\$(cat "\$TICKET")
+prompt=\$(cat "$PROMPT_FILE")
+commits=\$(cat "\$COMMITS_FILE")
+model="$MODEL"
+
+full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
 
 Previous commits for context:
-${COMMITS}
+\${commits}
 
 ---
 
-Ticket file: ${ticket}
+Ticket file: \${TICKET}
 
-${ticket_content}
+\${ticket_content}
 
 ---
 
 Predefined instructions:
-${PROMPT}
+\${prompt}
 
 ---
 
 Please implement this ticket fully. Make all necessary code changes, run tests if applicable, and commit the result using conventional commit format. Do not ask for clarification. Do not pause for approval. Just execute."
 
-    opencode run "$full_prompt" > "$log_file" 2>&1
-    exit_code=$?
-    if [ "$exit_code" -eq 0 ]; then
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Completed: $ticket"
-      # Update status to done
-      tmpfile=$(mktemp)
-      awk '
-        /^##[[:space:]]+Status[[:space:]]*$/ { print; getline; print "done"; next }
-        { print }
-      ' "$ticket" > "$tmpfile"
-      mv "$tmpfile" "$ticket"
-    else
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed (exit $exit_code): $ticket"
-      echo "  See log: $log_file"
+log_line "[INFO] \$(date '+%Y-%m-%d %H:%M:%S') Starting ticket"
+
+if [ "\${STREAM_OUTPUT:-0}" = "1" ]; then
+  opencode run --model "\$model" "\$full_prompt"
+else
+  opencode run --model "\$model" "\$full_prompt" >> "\$LOG" 2>&1
+fi
+
+if [ "\$?" -eq 0 ]; then
+  end_epoch=\$(date +%s)
+  duration=\$(( end_epoch - START_EPOCH ))
+  log_line "[INFO] \$(date '+%Y-%m-%d %H:%M:%S') Ticket completed successfully (duration: \$(( duration / 60 ))m \$(( duration % 60 ))s)"
+  touch "\$DONE"
+else
+  end_epoch=\$(date +%s)
+  duration=\$(( end_epoch - START_EPOCH ))
+  log_line "[ERROR] \$(date '+%Y-%m-%d %H:%M:%S') Ticket failed (duration: \$(( duration / 60 ))m \$(( duration % 60 ))s)"
+  touch "\$FAILED"
+  exit 1
+fi
+EOF
+chmod +x "$HELPER"
+
+# Write commits to shared file
+COMMITS_FILE="${SENTINEL_DIR}/commits.txt"
+printf '%s' "$COMMITS" > "$COMMITS_FILE"
+
+# --- Cleanup trap ---
+cleanup() {
+  echo ""
+  echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') Interrupted. Cleaning up..."
+
+  if [ "$IN_TMUX" = true ]; then
+    while read -r ticket; do
+      [ -z "$ticket" ] && continue
+      feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
+      issue_name=$(basename "$ticket" .md)
+      window_name="afk:${feature_slug}-${issue_name}"
+      tmux kill-window -t "$window_name" 2>/dev/null || true
+    done < "$TICKET_LIST"
+  else
+    if [ -f "$PIDS_FILE" ]; then
+      while read -r pid; do
+        kill "$pid" 2>/dev/null || true
+      done < "$PIDS_FILE"
     fi
-  ) &
+  fi
+
+  rm -rf "$SENTINEL_DIR"
+  rm -f "$TICKET_LIST"
+  rm -f "$PIDS_FILE" 2>/dev/null
+  exit 130
+}
+
+trap cleanup INT TERM
+
+# --- Launch tickets ---
+PIDS_FILE=$(mktemp)
+
+while read -r ticket <&3; do
+  [ -z "$ticket" ] && continue
+
+  feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
+  issue_name=$(basename "$ticket" .md)
+  log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
+  done_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.done"
+  failed_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.failed"
+
+  START_EPOCH=$(date +%s)
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Starting: $feature_slug/$issue_name"
+
+  stream_output="0"
+  if [ "$IN_TMUX" = true ]; then
+    stream_output="1"
+  fi
+
+  # Create meta file for this ticket
+  meta_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.meta"
+  cat > "$meta_file" << EOF
+TICKET="$ticket"
+LOG="$log_file"
+DONE="$done_file"
+FAILED="$failed_file"
+COMMITS_FILE="$COMMITS_FILE"
+START_EPOCH="$START_EPOCH"
+START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+STREAM_OUTPUT="$stream_output"
+EOF
+
+  if [ "$IN_TMUX" = true ]; then
+    window_name="afk:${feature_slug}-${issue_name}"
+    pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name")
+
+    ready=false
+    ready_deadline=$(( $(date +%s) + TMUX_READY_TIMEOUT ))
+    while [ "$(date +%s)" -lt "$ready_deadline" ]; do
+      pane_cmd=$(tmux display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null || true)
+      case "$pane_cmd" in
+        sh|bash|zsh|fish|nu)
+          ready=true
+          break
+          ;;
+      esac
+      sleep 1
+    done
+
+    if [ "$ready" != true ]; then
+      echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') Tmux shell readiness timed out for $feature_slug/$issue_name; sending command anyway"
+    fi
+
+    tmux pipe-pane -o -t "$pane_id" "cat >> '$log_file'"
+    tmux send-keys -t "$pane_id" "sh '$HELPER' '$meta_file'" C-m
+  else
+    # Background mode with concurrency limit
+    while [ "$(jobs -r | wc -l | tr -d ' ')" -ge "$MAX_CONCURRENT" ]; do
+      sleep 1
+    done
+
+    (
+      if sh "$HELPER" "$meta_file"; then
+        :
+      else
+        :
+      fi
+    ) &
+    echo $! >> "$PIDS_FILE"
+  fi
 done 3< "$TICKET_LIST"
 
-# Wait for all background jobs to finish
-wait
+# --- Wait for completion ---
+if [ "$IN_TMUX" = true ]; then
+  echo ""
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Waiting for tmux windows to finish..."
+  pending=$TICKET_COUNT
+  while [ "$pending" -gt 0 ]; do
+    sleep 2
+    pending=0
+    while read -r ticket; do
+      [ -z "$ticket" ] && continue
+      feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
+      issue_name=$(basename "$ticket" .md)
+      done_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.done"
+      failed_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.failed"
+      if [ ! -f "$done_file" ] && [ ! -f "$failed_file" ]; then
+        pending=$((pending + 1))
+      fi
+    done < "$TICKET_LIST"
+    if [ "$pending" -gt 0 ]; then
+      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   $pending ticket(s) still running..."
+    fi
+  done
+else
+  echo ""
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Waiting for background processes to finish..."
+  wait
+fi
+
+# --- Results & status updates ---
+echo ""
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') === Results ==="
+success=0
+fail=0
+
+while read -r ticket; do
+  [ -z "$ticket" ] && continue
+  feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
+  issue_name=$(basename "$ticket" .md)
+  done_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.done"
+  failed_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.failed"
+  log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
+
+  if [ -f "$done_file" ]; then
+    meta_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.meta"
+    if [ -f "$meta_file" ]; then
+      start_epoch_val=$(grep "^START_EPOCH=" "$meta_file" | cut -d= -f2 | tr -d '"')
+    else
+      start_epoch_val=""
+    fi
+    if [ -n "$start_epoch_val" ]; then
+      end_epoch=$(date +%s)
+      duration=$(( end_epoch - start_epoch_val ))
+      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   OK   $feature_slug/$issue_name ($(( duration / 60 ))m $(( duration % 60 ))s)"
+    else
+      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   OK   $feature_slug/$issue_name"
+    fi
+    success=$((success + 1))
+
+    # Update status to done
+    tmpfile=$(mktemp)
+    awk '
+      /^##[[:space:]]+Status[[:space:]]*$/ {
+        print
+        in_status = 1
+        next
+      }
+      in_status && !status_written && NF == 0 {
+        print
+        next
+      }
+      in_status && !status_written {
+        print "done"
+        status_written = 1
+        in_status = 0
+        next
+      }
+      { print }
+      END {
+        if (in_status && !status_written) {
+          print "done"
+        }
+      }
+    ' "$ticket" > "$tmpfile"
+    mv "$tmpfile" "$ticket"
+  elif [ -f "$failed_file" ]; then
+    meta_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.meta"
+    if [ -f "$meta_file" ]; then
+      start_epoch_val=$(grep "^START_EPOCH=" "$meta_file" | cut -d= -f2 | tr -d '"')
+    else
+      start_epoch_val=""
+    fi
+    if [ -n "$start_epoch_val" ]; then
+      end_epoch=$(date +%s)
+      duration=$(( end_epoch - start_epoch_val ))
+      echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S')   FAIL $feature_slug/$issue_name ($(( duration / 60 ))m $(( duration % 60 ))s, see $log_file)"
+    else
+      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   FAIL $feature_slug/$issue_name (see $log_file)"
+    fi
+    fail=$((fail + 1))
+  fi
+done < "$TICKET_LIST"
+
+echo ""
+echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Done: $success | Failed: $fail"
+
+# --- Cleanup ---
+rm -rf "$SENTINEL_DIR"
+rm -f "$TICKET_LIST"
+rm -f "$PIDS_FILE"
+
 echo ""
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] All AFK tickets processed."
-
-rm -f "$TICKET_LIST"
