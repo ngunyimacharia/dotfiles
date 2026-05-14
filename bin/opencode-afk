@@ -1,0 +1,125 @@
+#!/bin/sh
+
+# opencode-afk: Automatically process AFK tickets using opencode
+# Scans .scratch/*/issues/*.md for AFK tickets, runs up to 3 concurrently
+# Usage: Run from a project root that contains a .scratch/ directory
+
+set -e
+set -m
+
+# Config
+PROMPT_FILE="${HOME}/.config/opencode/prompts/afk-prompt.md"
+LOG_DIR=".scratch/.opencode-afk-logs"
+MAX_CONCURRENT=3
+
+# Check prompt file exists
+if [ ! -f "$PROMPT_FILE" ]; then
+  echo "Error: Prompt file not found at $PROMPT_FILE" >&2
+  exit 1
+fi
+
+PROMPT=$(cat "$PROMPT_FILE")
+
+# Check for .scratch directory
+if [ ! -d ".scratch" ]; then
+  echo "No .scratch directory found in current directory ($(pwd))"
+  exit 0
+fi
+
+# Get recent commits for context
+COMMITS=$(git log -n 5 --format="%H%n%ad%n%B---" --date=short 2>/dev/null || echo "No commits found")
+
+# Create log dir
+mkdir -p "$LOG_DIR"
+
+# Build list of pending AFK tickets
+echo "Scanning for AFK tickets..."
+TICKET_LIST=$(mktemp)
+find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_file; do
+  # Skip if already done/closed/complete
+  status_line=$(grep -i "^Status:" "$issue_file" 2>/dev/null | head -n 1 || echo "")
+  status_val=$(echo "$status_line" | sed 's/^[[:space:]]*Status:[[:space:]]*//i' | tr '[:upper:]' '[:lower:]')
+
+  case "$status_val" in
+    *done*|*closed*|*complete*|*resolved*) continue ;;
+  esac
+
+  # Check if AFK
+  if grep -q "Executor:[[:space:]]*\`\?AFK\`\?" "$issue_file" 2>/dev/null; then
+    echo "$issue_file"
+  fi
+done > "$TICKET_LIST"
+
+if [ ! -s "$TICKET_LIST" ]; then
+  echo "No pending AFK tickets found."
+  rm -f "$TICKET_LIST"
+  exit 0
+fi
+
+TICKET_COUNT=$(wc -l < "$TICKET_LIST" | tr -d ' ')
+echo "Found $TICKET_COUNT AFK ticket(s):"
+while read -r ticket; do
+  echo "  - $ticket"
+done < "$TICKET_LIST"
+echo ""
+
+# Process tickets with max concurrency
+while read -r ticket <&3; do
+  [ -z "$ticket" ] && continue
+
+  # Wait if we have MAX_CONCURRENT jobs running
+  while [ "$(jobs -r | wc -l | tr -d ' ')" -ge "$MAX_CONCURRENT" ]; do
+    sleep 1
+  done
+
+  (
+    feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
+    issue_name=$(basename "$ticket" .md)
+    log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
+
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: $ticket"
+
+    ticket_content=$(cat "$ticket")
+
+    # Construct the full prompt
+    full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
+
+Previous commits for context:
+${COMMITS}
+
+---
+
+Ticket file: ${ticket}
+
+${ticket_content}
+
+---
+
+Predefined instructions:
+${PROMPT}
+
+---
+
+Please implement this ticket fully. Make all necessary code changes, run tests if applicable, and commit the result using conventional commit format. Do not ask for clarification. Do not pause for approval. Just execute."
+
+    opencode run "$full_prompt" > "$log_file" 2>&1
+    exit_code=$?
+    if [ "$exit_code" -eq 0 ]; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Completed: $ticket"
+      # Update status to done
+      tmpfile=$(mktemp)
+      sed 's/^[[:space:]]*Status:.*/Status: done/' "$ticket" > "$tmpfile"
+      mv "$tmpfile" "$ticket"
+    else
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed (exit $exit_code): $ticket"
+      echo "  See log: $log_file"
+    fi
+  ) &
+done 3< "$TICKET_LIST"
+
+# Wait for all background jobs to finish
+wait
+echo ""
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] All AFK tickets processed."
+
+rm -f "$TICKET_LIST"
