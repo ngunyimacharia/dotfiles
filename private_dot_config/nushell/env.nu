@@ -5,6 +5,7 @@
 # Environment variables
 $env.EDITOR = "nvim"
 $env.SUDO_EDITOR = $env.EDITOR
+$env.SHELL = ($env.HOME | path join ".local" "bin" "nu")
 
 # Terminal compatibility fallback
 let current_term = ($env.TERM? | default "")
