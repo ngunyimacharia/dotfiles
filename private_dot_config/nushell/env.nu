@@ -39,9 +39,6 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend [
     ($env.ANDROID_SDK_ROOT | path join "platform-tools")
 ])
 
-# Local aliases
-alias opencode-afk = /Users/raven/.dotfiles/bin/opencode-afk
-
 # 1Password SSH agent
 $env.SSH_AUTH_SOCK = ($env.HOME | path join ".1password" "agent.sock")
 
