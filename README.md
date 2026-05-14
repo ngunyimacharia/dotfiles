@@ -39,6 +39,46 @@ This repository uses **Nushell** as the default shell, providing:
 - AI assistance with OpenCode integration
 - Custom keymaps and autocmds
 
+#### OpenCode AFK
+
+[opencode-afk](bin/opencode-afk) automatically processes AFK (Away From Keyboard) tickets from `.scratch/*/issues/` directories. It scans for pending AFK tickets and processes up to 3 concurrently using opencode.
+
+**Usage:**
+
+```bash
+# Process all pending AFK tickets
+opencode-afk
+
+# Select a model interactively
+opencode-afk --select-model
+
+# Use a specific model
+opencode-afk --model claude-sonnet-4-20250514
+```
+
+**Example Output:**
+
+```
+$ opencode-afk
+Using model: claude-sonnet-4-20250514
+Scanning for AFK tickets...
+Found 2 AFK ticket(s):
+  - test-feature-a/01-implement-endpoint
+  - test-feature-b/02-update-docs
+
+Waiting for background processes to finish...
+
+=== Results ===
+  OK   test-feature-a/01-implement-endpoint
+  OK   test-feature-b/02-update-docs
+
+Done: 2 | Failed: 0
+```
+
+**Customization:**
+
+Customize AFK behavior by editing `~/.config/opencode/prompts/afk-prompt.md`. This prompt file defines the instructions given to opencode for each ticket.
+
 #### Terminal & Shell
 
 - **Nushell**: Modern shell with structured data pipelines as default shell
