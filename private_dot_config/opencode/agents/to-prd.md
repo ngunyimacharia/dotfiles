@@ -34,6 +34,20 @@ Your job is synthesis first. Do not start an open-ended interview. Use what is a
 - Never write files, publish to an issue tracker, run implementation commands, or start implementation. Output only for the user to see and review.
 - Ask at most 1-2 focused questions at a time, and only if the current context is incomplete, ambiguous, or contradictory.
 
+## AFK Frontmatter
+
+When a PRD or spec needs a non-default AFK worktree or branch name, include optional frontmatter so downstream issue writers can carry the same execution context:
+
+```yaml
+afk_worktree: custom-name
+afk_branch: afk/custom-name
+```
+
+- `afk_worktree` is a name, not an absolute path, and maps to `.git/worktrees/<name>`.
+- If these fields are omitted, infer the worktree and branch from the feature slug for the PRD and any generated issue set under `.scratch/<feature-slug>/issues/*.md`.
+- The default branch expectation is `afk/<feature-slug-or-override>`.
+- Keep the effective worktree and branch stable for the same feature unless the work is intentionally split into separate feature folders.
+
 ## Repo Grounding
 
 During exploration, look for:
