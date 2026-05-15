@@ -20,12 +20,24 @@ Read-only summary of AFK work. Do not modify, delete, commit, or change any file
 
 5. **Handle missing summaries explicitly**: If an issue file has no `## AFK Summary` block, report it as missing a summary. Do not fall back to raw AFK logs on the default path.
 
-6. **Produce summary**: Output a structured report containing:
-   - Completed work: ticket references, status, and AFK summary details
-   - Failed or blocked work: ticket references, status, and blocker details
-   - Interrupted or incomplete work: ticket references, status, and last known state
-   - Missing summaries: issue references with no `## AFK Summary` block
-   - Any repeated attempts or patterns visible across issue summaries
+6. **Gate raw log reads behind permission**: Never inspect `.scratch/.opencode-afk-logs/` unless the user grants permission for this invocation. Ask every time before reading raw logs, even if a prior run already allowed it.
+
+7. **Only ask for raw logs for these reasons**:
+   - Missing summaries
+   - Incomplete details
+   - Contradictory summaries
+   - Explicit user request for deeper investigation
+
+8. **Make the permission request specific**: State the intended log scope and the reason before any raw log access. Example scope: a named issue, a time window, or a specific subset of `.scratch/.opencode-afk-logs/`.
+
+9. **Fallback when permission is absent or denied**: Continue with issue-file-only output and explicitly note that raw logs were not inspected.
+
+10. **Produce summary**: Output a structured report containing:
+    - Completed work: ticket references, status, and AFK summary details
+    - Failed or blocked work: ticket references, status, and blocker details
+    - Interrupted or incomplete work: ticket references, status, and last known state
+    - Missing summaries: issue references with no `## AFK Summary` block
+    - Any repeated attempts or patterns visible across issue summaries
 
 ## Constraints
 
@@ -33,4 +45,5 @@ Read-only summary of AFK work. Do not modify, delete, commit, or change any file
 - Do not change ticket statuses
 - Do not commit or stage any changes
 - Do not scan `.scratch/.opencode-afk-logs/` on the default path
+- Do not scan `.scratch/.opencode-afk-logs/` unless permission was granted for the current invocation
 - Report only; take no action beyond reading and summarizing
