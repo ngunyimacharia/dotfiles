@@ -45,25 +45,25 @@ assert_empty() {
 sh -n "$helper_script"
 
 : > "$tmux_calls"
-env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set running >/dev/null 2>&1
-assert_contains 'tmux set-window-option -q -t . @opencode_status_icon ▶' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_green},bold' "$tmux_calls"
+env TMUX=1 TMUX_PANE=%42 PATH="$stub_bin:$PATH" "$helper_script" set running >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t %42 @opencode_status_icon ▶' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t %42 @opencode_status_style fg=#{@everforest_green},bold' "$tmux_calls"
 
 : > "$tmux_calls"
-env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set waiting >/dev/null 2>&1
-assert_contains 'tmux set-window-option -q -t . @opencode_status_icon …' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_yellow},bold' "$tmux_calls"
+env TMUX=1 OPENCODE_TMUX_TARGET=@7 TMUX_PANE=%42 PATH="$stub_bin:$PATH" "$helper_script" set waiting >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t @7 @opencode_status_icon …' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t @7 @opencode_status_style fg=#{@everforest_yellow},bold' "$tmux_calls"
 
 : > "$tmux_calls"
-env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set idle >/dev/null 2>&1
-assert_contains 'tmux set-window-option -q -t . @opencode_status_icon •' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_grey2}' "$tmux_calls"
+env TMUX=1 TMUX_PANE=%42 PATH="$stub_bin:$PATH" "$helper_script" set idle >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t %42 @opencode_status_icon •' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t %42 @opencode_status_style fg=#{@everforest_grey2}' "$tmux_calls"
 
 : > "$tmux_calls"
-env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" clear >/dev/null 2>&1
-assert_contains 'tmux set-window-option -q -u -t . @opencode_status_icon' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -u -t . @opencode_status_label' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -u -t . @opencode_status_style' "$tmux_calls"
+env TMUX=1 TMUX_PANE=%42 PATH="$stub_bin:$PATH" "$helper_script" clear >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -u -t %42 @opencode_status_icon' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -u -t %42 @opencode_status_label' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -u -t %42 @opencode_status_style' "$tmux_calls"
 
 : > "$tmux_calls"
 outside_output="$tmp_root/outside-output.log"

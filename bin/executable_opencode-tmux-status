@@ -7,12 +7,14 @@ if [ -z "${TMUX:-}" ]; then
 fi
 
 set_window_option() {
-  tmux set-window-option -q -t . "$@" >/dev/null 2>&1 || true
+  tmux set-window-option -q -t "$tmux_target" "$@" >/dev/null 2>&1 || true
 }
 
 clear_window_option() {
-  tmux set-window-option -q -u -t . "$1" >/dev/null 2>&1 || true
+  tmux set-window-option -q -u -t "$tmux_target" "$1" >/dev/null 2>&1 || true
 }
+
+tmux_target="${OPENCODE_TMUX_TARGET:-${TMUX_PANE:-.}}"
 
 status_icon() {
   case "$1" in

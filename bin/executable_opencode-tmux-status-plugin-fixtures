@@ -14,6 +14,10 @@ PLUGIN_PATH="$plugin_script" node --input-type=module <<'EOF'
 import fs from "node:fs"
 
 const pluginSource = fs.readFileSync(process.env.PLUGIN_PATH, "utf8")
+
+process.env.TMUX = "1"
+process.env.TMUX_PANE = "%42"
+
 const { TmuxStatusPlugin } = await import(`data:text/javascript,${encodeURIComponent(pluginSource)}`)
 
 const calls = []
@@ -37,8 +41,6 @@ const assertArray = (actual, expected, label) => {
   }
 }
 
-process.env.TMUX = "1"
-
 const hooks = await TmuxStatusPlugin({
   $: recordCommand,
   api: {
@@ -59,9 +61,9 @@ await hooks.event({ event: { type: "session.status", properties: { status: { typ
 await hooks.event({ event: { type: "session.idle" } })
 
 assertArray(calls, [
-  "opencode-tmux-status set running",
-  "opencode-tmux-status set waiting",
-  "opencode-tmux-status set idle",
+  "env OPENCODE_TMUX_TARGET=%42 opencode-tmux-status set running",
+  "env OPENCODE_TMUX_TARGET=%42 opencode-tmux-status set waiting",
+  "env OPENCODE_TMUX_TARGET=%42 opencode-tmux-status set idle",
 ], "tmux command mapping")
 
 if (typeof disposeHandler !== "function") {
@@ -70,7 +72,7 @@ if (typeof disposeHandler !== "function") {
 
 calls.length = 0
 await disposeHandler()
-assertArray(calls, ["opencode-tmux-status clear"], "dispose cleanup")
+assertArray(calls, ["env OPENCODE_TMUX_TARGET=%42 opencode-tmux-status clear"], "dispose cleanup")
 
 calls.length = 0
 delete process.env.TMUX
