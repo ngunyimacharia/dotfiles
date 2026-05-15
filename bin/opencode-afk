@@ -400,6 +400,47 @@ log_blocked_ticket() {
   done
 }
 
+validate_scratch_safety() {
+  gitignore_file="${BASE_DIR}/.gitignore"
+
+  if [ ! -f "$gitignore_file" ]; then
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') .scratch is present but not ignored: no .gitignore found" >&2
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Add '.scratch/' to .gitignore before running opencode-afk" >&2
+    return 1
+  fi
+
+  scratch_ignored=false
+  while IFS= read -r line; do
+    case "$line" in
+      '#'*|'') continue ;;
+    esac
+    case "$line" in
+      *'.scratch'*|*'.scratch/'*)
+        scratch_ignored=true
+        break
+        ;;
+    esac
+  done < "$gitignore_file"
+
+  if [ "$scratch_ignored" = false ]; then
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') .scratch is present but not ignored in .gitignore" >&2
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Add '.scratch/' to .gitignore before running opencode-afk" >&2
+    return 1
+  fi
+
+  tracked_files=$(git -C "$BASE_DIR" ls-files '.scratch/**' 2>/dev/null || true)
+  if [ -n "$tracked_files" ]; then
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') .scratch is ignored but contains tracked files:" >&2
+    printf '%s\n' "$tracked_files" | while IFS= read -r tracked_file; do
+      echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S')   - $tracked_file" >&2
+    done
+    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Untrack .scratch files before running opencode-afk" >&2
+    return 1
+  fi
+
+  return 0
+}
+
 # Check prompt file exists
 if [ ! -f "$PROMPT_FILE" ]; then
   echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Prompt file not found at $PROMPT_FILE" >&2
@@ -410,6 +451,11 @@ fi
 if [ ! -d ".scratch" ]; then
   echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') No .scratch directory found in current directory ($(pwd))"
   exit 0
+fi
+
+# Validate .scratch safety before proceeding
+if ! validate_scratch_safety; then
+  exit 1
 fi
 
 # Get recent commits for context
@@ -603,6 +649,9 @@ if [ "\$?" -eq 0 ]; then
   mark_ticket_done
   log_line "[INFO] \$(date '+%Y-%m-%d %H:%M:%S') Ticket completed successfully (duration: \$(( duration / 60 ))m \$(( duration % 60 ))s)"
   touch "\$DONE"
+  if [ "\${IN_TMUX:-false}" = "true" ] && [ -n "\${TMUX_WINDOW_NUM:-}" ]; then
+    tmux kill-window -t "afk:\${TMUX_WINDOW_NUM}" 2>/dev/null || true
+  fi
 else
   end_epoch=\$(date +%s)
   duration=\$(( end_epoch - START_EPOCH ))
@@ -618,18 +667,17 @@ COMMITS_FILE="${SENTINEL_DIR}/commits.txt"
 printf '%s' "$COMMITS" > "$COMMITS_FILE"
 
 # --- Cleanup trap ---
+TMUX_WINDOWS_FILE=$(mktemp)
+
 cleanup() {
   echo ""
   echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') Interrupted. Cleaning up..."
 
   if [ "$IN_TMUX" = true ]; then
-    while read -r ticket; do
-      [ -z "$ticket" ] && continue
-      feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
-      issue_name=$(basename "$ticket" .md)
-      window_name="afk:${feature_slug}-${issue_name}"
-      tmux kill-window -t "$window_name" 2>/dev/null || true
-    done < "$TICKET_LIST"
+    while read -r win_name; do
+      [ -z "$win_name" ] && continue
+      tmux kill-window -t "$win_name" 2>/dev/null || true
+    done < "$TMUX_WINDOWS_FILE"
   else
     if [ -f "$PIDS_FILE" ]; then
       while read -r pid; do
@@ -641,6 +689,7 @@ cleanup() {
   rm -rf "$SENTINEL_DIR"
   rm -f "$TICKET_LIST"
   rm -f "$PIDS_FILE" 2>/dev/null
+  rm -f "$TMUX_WINDOWS_FILE" 2>/dev/null
   exit 130
 }
 
@@ -648,6 +697,7 @@ trap cleanup INT TERM
 
 # --- Launch tickets ---
 PIDS_FILE=$(mktemp)
+TMUX_WINDOW_NUM=0
 
 while read -r ticket <&3; do
   [ -z "$ticket" ] && continue
@@ -664,6 +714,7 @@ while read -r ticket <&3; do
   stream_output="0"
   if [ "$IN_TMUX" = true ]; then
     stream_output="1"
+    TMUX_WINDOW_NUM=$((TMUX_WINDOW_NUM + 1))
   fi
 
   # Create meta file for this ticket
@@ -677,10 +728,13 @@ COMMITS_FILE="$COMMITS_FILE"
 START_EPOCH="$START_EPOCH"
 START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
 STREAM_OUTPUT="$stream_output"
+IN_TMUX="$IN_TMUX"
+TMUX_WINDOW_NUM="$TMUX_WINDOW_NUM"
 EOF
 
   if [ "$IN_TMUX" = true ]; then
-    window_name="afk:${feature_slug}-${issue_name}"
+    window_name="afk:${TMUX_WINDOW_NUM}"
+    echo "$window_name" >> "$TMUX_WINDOWS_FILE"
     pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name" sh "$HELPER" "$meta_file")
     tmux pipe-pane -o -t "$pane_id" "cat >> '$log_file'"
   else
