@@ -119,6 +119,52 @@ ticket_label() {
   printf '%s\n' "$feature_slug/$issue_name"
 }
 
+ticket_feature_slug() {
+  ticket_file="$1"
+  basename "$(dirname "$(dirname "$ticket_file")")"
+}
+
+ticket_issue_name() {
+  ticket_file="$1"
+  basename "$ticket_file" .md
+}
+
+shell_quote() {
+  value="$1"
+  escaped=$(printf '%s' "$value" | sed "s/'/'\\''/g")
+  printf "'%s'" "$escaped"
+}
+
+parse_ticket_frontmatter_override() {
+  ticket_file="$1"
+  frontmatter_key="$2"
+
+  awk -v key="$frontmatter_key" '
+    NR == 1 {
+      if ($0 !~ /^---[[:space:]]*$/) {
+        exit
+      }
+      in_frontmatter = 1
+      next
+    }
+
+    in_frontmatter && /^---[[:space:]]*$/ {
+      exit
+    }
+
+    in_frontmatter {
+      line = $0
+      sub(/^[[:space:]]+/, "", line)
+      if (line ~ "^" key ":[[:space:]]*") {
+        sub("^" key ":[[:space:]]*", "", line)
+        sub(/[[:space:]]+$/, "", line)
+        print line
+        exit
+      }
+    }
+  ' "$ticket_file"
+}
+
 select_tickets_with_fzf() {
   eligible_file="$1"
   display_file=$(mktemp)
@@ -423,6 +469,17 @@ commits=\$(cat "\$COMMITS_FILE")
 model="$MODEL"
 issue_ref="\${ISSUE_REF}"
 run_id="\${RUN_ID}"
+source_checkout="\${SOURCE_CHECKOUT}"
+feature_slug="\${FEATURE_SLUG}"
+ticket_path="\${TICKET}"
+default_worktree_name="\${DEFAULT_WORKTREE_NAME}"
+default_worktree_path="\${DEFAULT_WORKTREE_PATH}"
+default_branch="\${DEFAULT_BRANCH}"
+afk_worktree_override="\${AFK_WORKTREE_OVERRIDE:-none}"
+afk_branch_override="\${AFK_BRANCH_OVERRIDE:-none}"
+effective_worktree_name="\${EFFECTIVE_WORKTREE_NAME}"
+effective_worktree_path="\${EFFECTIVE_WORKTREE_PATH}"
+effective_branch="\${EFFECTIVE_BRANCH}"
 
 full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
 
@@ -432,6 +489,28 @@ Previous commits for context:
 ---
 
 Ticket file: \${TICKET}
+
+Ticket path: \${ticket_path}
+
+Feature slug: \${feature_slug}
+
+Source checkout path: \${source_checkout}
+
+Default worktree name: \${default_worktree_name}
+
+Default worktree path: \${default_worktree_path}
+
+Default branch: \${default_branch}
+
+AFK worktree override: \${afk_worktree_override}
+
+AFK branch override: \${afk_branch_override}
+
+Effective worktree name: \${effective_worktree_name}
+
+Effective worktree path: \${effective_worktree_path}
+
+Effective branch: \${effective_branch}
 
 Issue reference: \${issue_ref}
 
@@ -476,23 +555,34 @@ chmod +x "$HELPER"
 COMMITS_FILE="${SENTINEL_DIR}/commits.txt"
 printf '%s' "$COMMITS" > "$COMMITS_FILE"
 
-
-
-# --- Launch tickets ---
+QUEUE_DIR="${SENTINEL_DIR}/queues"
+FEATURE_ORDER_FILE="${SENTINEL_DIR}/feature-order.txt"
+SCHEDULER="${SENTINEL_DIR}/_schedule-tickets.sh"
 PIDS_FILE=$(mktemp)
+FEATURE_SEEN_FILE=$(mktemp)
 TMUX_WINDOW_NUM=0
+
+mkdir -p "$QUEUE_DIR"
+: > "$FEATURE_ORDER_FILE"
 
 while read -r ticket <&3; do
   [ -z "$ticket" ] && continue
 
-  feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
-  issue_name=$(basename "$ticket" .md)
+  feature_slug=$(ticket_feature_slug "$ticket")
+  issue_name=$(ticket_issue_name "$ticket")
   issue_ref="${feature_slug}/${issue_name}"
   log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
   done_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.done"
   failed_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.failed"
+  default_worktree_name="$feature_slug"
+  default_worktree_path="${BASE_DIR}/.git/worktrees/${default_worktree_name}"
+  default_branch="afk/${default_worktree_name}"
+  afk_worktree_override=$(parse_ticket_frontmatter_override "$ticket" "afk_worktree")
+  afk_branch_override=$(parse_ticket_frontmatter_override "$ticket" "afk_branch")
+  effective_worktree_name=${afk_worktree_override:-$default_worktree_name}
+  effective_worktree_path="${BASE_DIR}/.git/worktrees/${effective_worktree_name}"
+  effective_branch=${afk_branch_override:-$default_branch}
 
-  START_EPOCH=$(date +%s)
   echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Starting: $feature_slug/$issue_name"
 
   stream_output="0"
@@ -501,37 +591,156 @@ while read -r ticket <&3; do
     TMUX_WINDOW_NUM=$((TMUX_WINDOW_NUM + 1))
   fi
 
-  # Create meta file for this ticket
   meta_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.meta"
-  cat > "$meta_file" << EOF
-TICKET="$ticket"
-LOG="$log_file"
-DONE="$done_file"
-FAILED="$failed_file"
-COMMITS_FILE="$COMMITS_FILE"
-START_EPOCH="$START_EPOCH"
-START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
-STREAM_OUTPUT="$stream_output"
-IN_TMUX="$IN_TMUX"
-TMUX_WINDOW_NUM="$TMUX_WINDOW_NUM"
-RUN_ID="$RUN_ID"
-ISSUE_REF="$issue_ref"
+  cat > "$meta_file" <<EOF
+TICKET=$(shell_quote "$ticket")
+LOG=$(shell_quote "$log_file")
+DONE=$(shell_quote "$done_file")
+FAILED=$(shell_quote "$failed_file")
+COMMITS_FILE=$(shell_quote "$COMMITS_FILE")
+START_EPOCH=$(shell_quote "$(date +%s)")
+START_TIME=$(shell_quote "$(date '+%Y-%m-%d %H:%M:%S')")
+STREAM_OUTPUT=$(shell_quote "$stream_output")
+IN_TMUX=$(shell_quote "$IN_TMUX")
+TMUX_WINDOW_NUM=$(shell_quote "$TMUX_WINDOW_NUM")
+RUN_ID=$(shell_quote "$RUN_ID")
+ISSUE_REF=$(shell_quote "$issue_ref")
+FEATURE_SLUG=$(shell_quote "$feature_slug")
+SOURCE_CHECKOUT=$(shell_quote "$BASE_DIR")
+DEFAULT_WORKTREE_NAME=$(shell_quote "$default_worktree_name")
+DEFAULT_WORKTREE_PATH=$(shell_quote "$default_worktree_path")
+DEFAULT_BRANCH=$(shell_quote "$default_branch")
+AFK_WORKTREE_OVERRIDE=$(shell_quote "$afk_worktree_override")
+AFK_BRANCH_OVERRIDE=$(shell_quote "$afk_branch_override")
+EFFECTIVE_WORKTREE_NAME=$(shell_quote "$effective_worktree_name")
+EFFECTIVE_WORKTREE_PATH=$(shell_quote "$effective_worktree_path")
+EFFECTIVE_BRANCH=$(shell_quote "$effective_branch")
 EOF
 
-  if [ "$IN_TMUX" = true ]; then
-    window_name="afk:${TMUX_WINDOW_NUM}"
-    pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name" sh "$HELPER" "$meta_file")
-    tmux pipe-pane -o -t "$pane_id" "cat >> '$log_file'"
-  else
-    # Background mode with concurrency limit
-    while [ "$(jobs -r | wc -l | tr -d ' ')" -ge "$MAX_CONCURRENT" ]; do
-      sleep 1
-    done
+  queue_file="${QUEUE_DIR}/${feature_slug}.queue"
+  printf '%s\n' "$meta_file" >> "$queue_file"
 
-    nohup sh "$HELPER" "$meta_file" >/dev/null 2>&1 &
-    echo $! >> "$PIDS_FILE"
+  if ! grep -qx "$feature_slug" "$FEATURE_SEEN_FILE"; then
+    printf '%s\n' "$feature_slug" >> "$FEATURE_SEEN_FILE"
+    printf '%s\n' "$feature_slug" >> "$FEATURE_ORDER_FILE"
   fi
 done 3< "$TICKET_LIST"
+
+rm -f "$FEATURE_SEEN_FILE"
+
+cat > "$SCHEDULER" <<'EOF'
+#!/bin/sh
+
+set -e
+
+HELPER=__HELPER__
+QUEUE_DIR=__QUEUE_DIR__
+FEATURE_ORDER_FILE=__FEATURE_ORDER_FILE__
+MAX_CONCURRENT=__MAX_CONCURRENT__
+IN_TMUX=__IN_TMUX__
+WINDOW_COUNT=0
+
+launch_ticket() {
+  feature_slug="$1"
+  meta_file="$2"
+  . "$meta_file"
+
+  if [ "$IN_TMUX" = true ]; then
+    WINDOW_COUNT=$((WINDOW_COUNT + 1))
+    window_name="afk:${WINDOW_COUNT}"
+    pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name" sh "$HELPER" "$meta_file")
+    tmux pipe-pane -o -t "$pane_id" "cat >> '$LOG'"
+  else
+    nohup sh "$HELPER" "$meta_file" >/dev/null 2>&1 &
+  fi
+
+  active_file="${QUEUE_DIR}/$feature_slug.active"
+  printf '%s\n' "$meta_file" > "$active_file"
+}
+
+pop_next_meta() {
+  queue_file="${QUEUE_DIR}/$1.queue"
+  next_meta=$(awk 'NR == 1 { print; exit }' "$queue_file")
+  [ -n "$next_meta" ] || return 1
+
+  tmpfile=$(mktemp)
+  awk 'NR > 1 { print }' "$queue_file" > "$tmpfile"
+  mv "$tmpfile" "$queue_file"
+  printf '%s\n' "$next_meta"
+}
+
+queues_remaining() {
+  while IFS= read -r feature_slug; do
+    [ -z "$feature_slug" ] && continue
+    queue_file="${QUEUE_DIR}/$feature_slug.queue"
+    active_file="${QUEUE_DIR}/$feature_slug.active"
+    if [ -s "$queue_file" ] || [ -f "$active_file" ]; then
+      return 0
+    fi
+  done < "$FEATURE_ORDER_FILE"
+
+  return 1
+}
+
+while :; do
+  active_count=0
+  progress=false
+
+  while IFS= read -r feature_slug; do
+    [ -z "$feature_slug" ] && continue
+    active_file="${QUEUE_DIR}/$feature_slug.active"
+    if [ -f "$active_file" ]; then
+      meta_file=$(cat "$active_file")
+      . "$meta_file"
+      if [ -f "$DONE" ] || [ -f "$FAILED" ]; then
+        rm -f "$active_file"
+        progress=true
+      else
+        active_count=$((active_count + 1))
+      fi
+    fi
+  done < "$FEATURE_ORDER_FILE"
+
+  while [ "$active_count" -lt "$MAX_CONCURRENT" ] && queues_remaining; do
+    launched=false
+    while IFS= read -r feature_slug; do
+      [ -z "$feature_slug" ] && continue
+      active_file="${QUEUE_DIR}/$feature_slug.active"
+      queue_file="${QUEUE_DIR}/$feature_slug.queue"
+
+      [ -f "$active_file" ] && continue
+      [ -s "$queue_file" ] || continue
+
+      meta_file=$(pop_next_meta "$feature_slug") || continue
+      launch_ticket "$feature_slug" "$meta_file"
+      active_count=$((active_count + 1))
+      launched=true
+      progress=true
+      if [ "$active_count" -ge "$MAX_CONCURRENT" ]; then
+        break
+      fi
+    done < "$FEATURE_ORDER_FILE"
+
+    [ "$launched" = true ] || break
+  done
+
+  queues_remaining || break
+  [ "$progress" = true ] || sleep 1
+done
+EOF
+
+sed -i '' \
+  -e "s|__HELPER__|$(shell_quote "$HELPER")|g" \
+  -e "s|__QUEUE_DIR__|$(shell_quote "$QUEUE_DIR")|g" \
+  -e "s|__FEATURE_ORDER_FILE__|$(shell_quote "$FEATURE_ORDER_FILE")|g" \
+  -e "s|__MAX_CONCURRENT__|$(shell_quote "$MAX_CONCURRENT")|g" \
+  -e "s|__IN_TMUX__|$(shell_quote "$IN_TMUX")|g" \
+  "$SCHEDULER"
+
+chmod +x "$SCHEDULER"
+
+nohup sh "$SCHEDULER" >/dev/null 2>&1 &
+echo $! > "$PIDS_FILE"
 
 echo ""
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Launch complete. Exiting without waiting for ticket completion."
