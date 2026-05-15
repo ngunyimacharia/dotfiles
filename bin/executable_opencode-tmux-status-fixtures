@@ -1,0 +1,83 @@
+#!/bin/sh
+
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+helper_script="$repo_root/bin/executable_opencode-tmux-status"
+
+if [ ! -x "$helper_script" ]; then
+  echo "[ERROR] helper not found at $helper_script" >&2
+  exit 1
+fi
+
+tmp_root=$(mktemp -d)
+trap 'rm -rf "$tmp_root"' EXIT INT TERM HUP
+
+stub_bin="$tmp_root/bin"
+tmux_calls="$tmp_root/tmux-calls.log"
+
+mkdir -p "$stub_bin"
+
+cat > "$stub_bin/tmux" <<EOF
+#!/bin/sh
+printf '%s\n' "tmux \$*" >> "$tmux_calls"
+EOF
+chmod +x "$stub_bin/tmux"
+
+assert_contains() {
+  needle="$1"
+  file_path="$2"
+  if ! awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] missing expected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+assert_empty() {
+  file_path="$1"
+  if [ -s "$file_path" ]; then
+    echo "[ERROR] expected empty file: $file_path" >&2
+    exit 1
+  fi
+}
+
+sh -n "$helper_script"
+
+: > "$tmux_calls"
+env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set running >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t . @opencode_status_icon ▶' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_label running' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_bg_dim},bg=#{@everforest_green},bold' "$tmux_calls"
+
+: > "$tmux_calls"
+env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set waiting >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t . @opencode_status_icon …' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_label waiting' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_bg_dim},bg=#{@everforest_yellow},bold' "$tmux_calls"
+
+: > "$tmux_calls"
+env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set idle >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -t . @opencode_status_icon •' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_label idle' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_fg},bg=#{@everforest_bg3}' "$tmux_calls"
+
+: > "$tmux_calls"
+env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" clear >/dev/null 2>&1
+assert_contains 'tmux set-window-option -q -u -t . @opencode_status_icon' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -u -t . @opencode_status_label' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -u -t . @opencode_status_style' "$tmux_calls"
+
+: > "$tmux_calls"
+outside_output="$tmp_root/outside-output.log"
+env -u TMUX PATH="$stub_bin:$PATH" "$helper_script" set running > "$outside_output" 2>&1
+assert_empty "$tmux_calls"
+assert_empty "$outside_output"
+
+: > "$tmux_calls"
+unsupported_output="$tmp_root/unsupported-output.log"
+env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" nope bad > "$unsupported_output" 2>&1
+assert_empty "$tmux_calls"
+assert_empty "$unsupported_output"
+
+echo "opencode-tmux-status fixture verification passed."
