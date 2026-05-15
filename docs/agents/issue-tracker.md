@@ -28,3 +28,11 @@ Create a new file in the appropriate `.scratch/<feature-slug>/` location, creati
 ## When a skill says "fetch the relevant ticket"
 
 Read the referenced markdown file directly.
+
+## Automated Code Test Expectations
+
+Every implementation issue must include automated code test expectations in its Verification section:
+
+- Name the automated code tests to add or run.
+- If no automated code test is appropriate, the issue must explicitly say so and provide fallback verification (manual steps, demo, logs, etc.).
+- This convention distinguishes automated code tests from manual checks or non-code verification.
