@@ -335,7 +335,7 @@ EOF
 
     if [ -s "$unmet_dependencies" ]; then
       echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Skipping blocked AFK ticket: $(ticket_label "$issue_file") ($issue_file)" >&2
-      while IFS='\t' read -r dependency_path dependency_reason; do
+      while IFS="$(printf '\t')" read -r dependency_path dependency_reason; do
         [ -z "$dependency_path" ] && continue
 
         case "$dependency_reason" in
