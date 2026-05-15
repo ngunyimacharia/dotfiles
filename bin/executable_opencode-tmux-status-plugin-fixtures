@@ -1,0 +1,82 @@
+#!/bin/sh
+
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+plugin_script="$repo_root/private_dot_config/opencode/tmux-status.js"
+
+if [ ! -f "$plugin_script" ]; then
+  echo "[ERROR] plugin not found at $plugin_script" >&2
+  exit 1
+fi
+
+PLUGIN_PATH="$plugin_script" node --input-type=module <<'EOF'
+import fs from "node:fs"
+
+const pluginSource = fs.readFileSync(process.env.PLUGIN_PATH, "utf8")
+const { TmuxStatusPlugin } = await import(`data:text/javascript,${encodeURIComponent(pluginSource)}`)
+
+const calls = []
+let disposeHandler = null
+
+const recordCommand = async (strings, ...values) => {
+  calls.push(String.raw(strings, ...values))
+}
+
+const assertEqual = (actual, expected, label) => {
+  if (actual !== expected) {
+    throw new Error(`${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+  }
+}
+
+const assertArray = (actual, expected, label) => {
+  const actualJson = JSON.stringify(actual)
+  const expectedJson = JSON.stringify(expected)
+  if (actualJson !== expectedJson) {
+    throw new Error(`${label}: expected ${expectedJson}, got ${actualJson}`)
+  }
+}
+
+process.env.TMUX = "1"
+
+const hooks = await TmuxStatusPlugin({
+  $: recordCommand,
+  api: {
+    lifecycle: {
+      onDispose(fn) {
+        disposeHandler = fn
+        return () => {
+          disposeHandler = null
+        }
+      },
+    },
+  },
+})
+
+await hooks.event({ event: { type: "session.status", status: { type: "busy" } } })
+await hooks.event({ event: { type: "session.status", status: { type: "retry" } } })
+await hooks.event({ event: { type: "session.status", status: { type: "idle" } } })
+await hooks.event({ event: { type: "session.idle" } })
+
+assertArray(calls, [
+  "opencode-tmux-status set running",
+  "opencode-tmux-status set waiting",
+  "opencode-tmux-status set idle",
+], "tmux command mapping")
+
+if (typeof disposeHandler !== "function") {
+  throw new Error("expected a dispose handler to be registered")
+}
+
+calls.length = 0
+await disposeHandler()
+assertArray(calls, ["opencode-tmux-status clear"], "dispose cleanup")
+
+calls.length = 0
+delete process.env.TMUX
+await hooks.event({ event: { type: "session.status", status: { type: "busy" } } })
+assertArray(calls, [], "outside tmux no-op")
+
+assertEqual(true, true, "fixture completed")
+console.log("opencode tmux status plugin fixture verification passed.")
+EOF
