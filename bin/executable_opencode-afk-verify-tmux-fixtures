@@ -211,7 +211,7 @@ assert_not_contains "new-window -n afk:01-first-ticket" "$tmux_calls"
 
 echo "[INFO] tmux behavior verification passed."
 
-echo "[INFO] Running helper success-only autoclose verification..."
+echo "[INFO] Running helper verification..."
 
 helper_test_dir="$tmp_root/helper-test"
 mkdir -p "$helper_test_dir/sentinels" "$helper_test_dir/logs"
@@ -379,9 +379,6 @@ if [ "$?" -eq 0 ]; then
   mark_ticket_done
   log_line "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Ticket completed successfully (duration: $(( duration / 60 ))m $(( duration % 60 ))s)"
   touch "$DONE"
-  if [ "${IN_TMUX:-false}" = "true" ] && [ -n "${TMUX_WINDOW_NUM:-}" ]; then
-    tmux kill-window -t "afk:${TMUX_WINDOW_NUM}" 2>/dev/null || true
-  fi
 else
   end_epoch=$(date +%s)
   duration=$(( end_epoch - START_EPOCH ))
@@ -397,7 +394,6 @@ chmod +x "$helper_script"
 env PATH="$tmp_root:$temp_bin:$PATH" HOME="$temp_home" sh "$helper_script" "$meta_file"
 
 assert_contains "Ticket completed successfully" "$test_log"
-assert_contains "tmux kill-window -t afk:42" "$helper_tmux_calls"
 if [ ! -f "$test_failed" ]; then
   echo "[INFO] success path: no failed sentinel (correct)"
 else
@@ -405,9 +401,9 @@ else
   exit 1
 fi
 
-echo "[INFO] Helper success autoclose verification passed."
+echo "[INFO] Helper success verification passed."
 
-echo "[INFO] Running helper failure no-autoclose verification..."
+echo "[INFO] Running helper failure verification..."
 
 : > "$helper_tmux_calls"
 rm -f "$test_done" "$test_failed" "$test_log"
@@ -440,14 +436,7 @@ if [ -f "$test_done" ]; then
   exit 1
 fi
 
-if awk -v needle="kill-window" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$helper_tmux_calls"; then
-  echo "[ERROR] failure path: unexpected kill-window call" >&2
-  exit 1
-else
-  echo "[INFO] failure path: no kill-window call (correct)"
-fi
-
-echo "[INFO] Helper failure no-autoclose verification passed."
+echo "[INFO] Helper failure verification passed."
 
 echo "[INFO] Running background mode verification (no tmux windows)..."
 
@@ -511,4 +500,4 @@ wait "$cleanup_pid" 2>/dev/null || true
 
 echo "[INFO] Safe fixture cleanup regression passed."
 
-echo "Tmux behavior fixture verification passed for window naming, success-only autoclose, background mode, and safe cleanup."
+echo "Tmux behavior fixture verification passed for window naming, background mode, and safe cleanup."
