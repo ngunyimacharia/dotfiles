@@ -225,11 +225,11 @@ select_tickets_with_menu() {
     ticket_count=$((ticket_count + 1))
     label=$(ticket_label "$ticket")
     printf '%s\t%s\t%s\n' "$ticket_count" "$ticket" "$label" >> "$display_file"
-    printf '%s) %s\n' "$ticket_count" "$label"
+    printf '%s) %s\n' "$ticket_count" "$label" >&2
   done < "$eligible_file"
 
-  printf 'a) Select all\n'
-  printf '\nEnter selection(s): '
+  printf 'a) Select all\n' >&2
+  printf '\nEnter selection(s): ' >&2
   read -r raw_selection
 
   selection=$(printf '%s\n' "$raw_selection" | tr ',' ' ')
@@ -281,6 +281,125 @@ rewrite_ticket_list() {
   mv "$tmpfile" "$target_file"
 }
 
+normalize_dependency_ref() {
+  dependency_ref="$1"
+  dependency_ref=$(printf '%s' "$dependency_ref" | sed "s/^[[:space:]]*//; s/[[:space:]]*$//")
+  dependency_ref=${dependency_ref#- }
+  dependency_ref=${dependency_ref#\`}
+  dependency_ref=${dependency_ref%\`}
+  dependency_ref=$(printf '%s' "$dependency_ref" | sed "s/^[[:space:]]*//; s/[[:space:]]*$//")
+
+  case "$(printf '%s' "$dependency_ref" | tr '[:upper:]' '[:lower:]')" in
+    none)
+      printf '%s\n' ""
+      ;;
+    *)
+      printf '%s\n' "$dependency_ref"
+      ;;
+  esac
+}
+
+resolve_dependency_path() {
+  dependency_ref="$1"
+
+  case "$dependency_ref" in
+    /*)
+      printf '%s\n' "$dependency_ref"
+      ;;
+    ./*)
+      printf '%s/%s\n' "$BASE_DIR" "${dependency_ref#./}"
+      ;;
+    *)
+      printf '%s/%s\n' "$BASE_DIR" "$dependency_ref"
+      ;;
+  esac
+}
+
+get_blocking_dependencies() {
+  ticket_file="$1"
+
+  awk '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+
+    function emit_dependency(value) {
+      value = trim(value)
+      sub(/^[[:space:]]*-[[:space:]]*/, "", value)
+      value = trim(value)
+      gsub(/^`+/, "", value)
+      gsub(/`+$/, "", value)
+      value = trim(value)
+
+      if (tolower(value) != "none" && value != "") {
+        print value
+      }
+    }
+
+    BEGIN {
+      in_dependencies = 0
+      in_blocking = 0
+    }
+
+    /^##[[:space:]]+Dependencies[[:space:]]*$/ {
+      in_dependencies = 1
+      in_blocking = 0
+      next
+    }
+
+    in_dependencies && /^##[[:space:]]+/ {
+      exit
+    }
+
+    in_dependencies && /^[[:space:]]*Blocking:[[:space:]]*$/ {
+      in_blocking = 1
+      next
+    }
+
+    in_dependencies && /^[[:space:]]*Related:[[:space:]]*$/ {
+      in_blocking = 0
+      next
+    }
+
+    in_blocking && /^[[:space:]]*-[[:space:]]*/ {
+      emit_dependency($0)
+    }
+  ' "$ticket_file"
+}
+
+get_unmet_blocking_dependencies() {
+  ticket_file="$1"
+
+  get_blocking_dependencies "$ticket_file" | while read -r dependency_ref; do
+    [ -z "$dependency_ref" ] && continue
+
+    dependency_path=$(resolve_dependency_path "$dependency_ref")
+
+    if [ ! -f "$dependency_path" ]; then
+      printf '%s (missing)\n' "$dependency_ref"
+      continue
+    fi
+
+    dependency_status=$(get_ticket_status "$dependency_path")
+    if ! is_terminal_status "$dependency_status"; then
+      printf '%s (status: %s)\n' "$dependency_ref" "$dependency_status"
+    fi
+  done
+}
+
+log_blocked_ticket() {
+  ticket_file="$1"
+  blocked_dependencies="$2"
+
+  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Skipping blocked AFK ticket: $(ticket_label "$ticket_file") ($ticket_file)" >&2
+  printf '%s\n' "$blocked_dependencies" | while read -r blocked_dependency; do
+    [ -z "$blocked_dependency" ] && continue
+    echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   - $blocked_dependency" >&2
+  done
+}
+
 # Check prompt file exists
 if [ ! -f "$PROMPT_FILE" ]; then
   echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Prompt file not found at $PROMPT_FILE" >&2
@@ -312,47 +431,11 @@ find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_
   fi
 
   if is_ready_for_agent_status "$status_val" || has_afk_executor "$issue_file"; then
-    unmet_dependencies=$(mktemp)
-    while IFS= read -r dependency_path; do
-      [ -z "$dependency_path" ] && continue
-
-      dependency_file=$(resolve_dependency_path "$dependency_path")
-      if [ ! -f "$dependency_file" ]; then
-        printf '%s\t%s\n' "$dependency_path" "missing" >> "$unmet_dependencies"
-        continue
-      fi
-
-      dependency_status=$(get_ticket_status "$dependency_file")
-      if ! is_terminal_status "$dependency_status"; then
-        if [ -z "$dependency_status" ]; then
-          dependency_status="unknown"
-        fi
-        printf '%s\t%s\n' "$dependency_path" "$dependency_status" >> "$unmet_dependencies"
-      fi
-    done <<EOF
-$(get_blocking_dependencies "$issue_file")
-EOF
-
-    if [ -s "$unmet_dependencies" ]; then
-      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Skipping blocked AFK ticket: $(ticket_label "$issue_file") ($issue_file)" >&2
-      while IFS="$(printf '\t')" read -r dependency_path dependency_reason; do
-        [ -z "$dependency_path" ] && continue
-
-        case "$dependency_reason" in
-          missing)
-            echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   unmet dependency: $dependency_path (missing)" >&2
-            ;;
-          *)
-            echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   unmet dependency: $dependency_path (status: $dependency_reason)" >&2
-            ;;
-        esac
-      done < "$unmet_dependencies"
-
-      rm -f "$unmet_dependencies"
+    blocked_dependencies=$(get_unmet_blocking_dependencies "$issue_file")
+    if [ -n "$blocked_dependencies" ]; then
+      log_blocked_ticket "$issue_file" "$blocked_dependencies"
       continue
     fi
-
-    rm -f "$unmet_dependencies"
 
     # Convert to absolute path
     echo "${BASE_DIR}/${issue_file}"
