@@ -6,27 +6,31 @@ Read-only summary of AFK work. Do not modify, delete, commit, or change any file
 
 ## Steps
 
-1. **Collect AFK logs**: Inspect `.scratch/.opencode-afk-logs/` for all log files. Extract session outcomes, visible commits, notable changes, and any blocker mentions.
+1. **Collect issue files first**: Inspect `.scratch/*/issues/*.md` as the default source of truth for AFK work.
 
-2. **Collect issue tickets**: Inspect `.scratch/*/issues/*.md` for all local markdown tickets. Read the `Status:` line near the top of each file.
+2. **Read issue metadata**: For each issue file, read the `Status:` line near the top and every `## AFK Summary` block in the file.
 
-3. **Filter to terminal states only**: Include only tickets with completed, failed, or interrupted statuses. Exclude all pending, in-progress, or non-terminal tickets from the summary.
+3. **Report every recorded attempt**: Treat each `## AFK Summary` block as one AFK attempt. Include repeated attempts on the same issue, even when they reference the same ticket or outcome.
 
-4. **Match logs to tickets**: Correlate AFK log entries with their corresponding issue tickets by feature slug, issue number, or ticket title.
+4. **Group the report by outcome**:
+   - Completed or successful work
+   - Failed or blocked work
+   - Interrupted or incomplete work
+   - Issues with missing `## AFK Summary` blocks
 
-5. **Surface unmatched logs**: For any AFK log entries that do not match a known ticket, report them as unmatched so they are not silently lost.
+5. **Handle missing summaries explicitly**: If an issue file has no `## AFK Summary` block, report it as missing a summary. Do not fall back to raw AFK logs on the default path.
 
 6. **Produce summary**: Output a structured report containing:
-   - Completed work: ticket references, commits, and notable changes
-   - Failed work: ticket references, error context, and blockers
-   - Interrupted work: ticket references and last known state
-   - Unmatched logs: log entries with no corresponding ticket
-   - Any common blockers or patterns across sessions
+   - Completed work: ticket references, status, and AFK summary details
+   - Failed or blocked work: ticket references, status, and blocker details
+   - Interrupted or incomplete work: ticket references, status, and last known state
+   - Missing summaries: issue references with no `## AFK Summary` block
+   - Any repeated attempts or patterns visible across issue summaries
 
 ## Constraints
 
 - Read-only: do not edit, delete, move, or create any files
 - Do not change ticket statuses
 - Do not commit or stage any changes
-- Do not run cleanup or deletion operations
+- Do not scan `.scratch/.opencode-afk-logs/` on the default path
 - Report only; take no action beyond reading and summarizing
