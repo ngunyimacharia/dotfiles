@@ -41,7 +41,14 @@ This repository uses **Nushell** as the default shell, providing:
 
 #### OpenCode AFK
 
-[opencode-afk](bin/opencode-afk) automatically processes AFK (Away From Keyboard) tickets from `.scratch/*/issues/` directories. It scans for pending AFK tickets and processes up to 3 concurrently using opencode.
+[opencode-afk](bin/opencode-afk) automatically processes AFK (Away From Keyboard) tickets from `.scratch/*/issues/` directories. It scans for pending AFK tickets and launches them concurrently using opencode.
+
+**Pre-execution validation:**
+
+Before scanning for tickets, `opencode-afk` validates that `.scratch` is properly configured:
+- `.scratch` must be listed in `.gitignore` (or equivalent) to ensure it stays local-only
+- No files under `.scratch/**` may be tracked by git
+- If `.scratch` does not exist, the command exits cleanly with a warning (no-op)
 
 **Usage:**
 
@@ -60,20 +67,31 @@ opencode-afk --model claude-sonnet-4-20250514
 
 ```
 $ opencode-afk
-Using model: claude-sonnet-4-20250514
-Scanning for AFK tickets...
-Found 2 AFK ticket(s):
-  - test-feature-a/01-implement-endpoint
-  - test-feature-b/02-update-docs
+[INFO] 2026-05-15 10:00:00 Using model: claude-sonnet-4-20250514
+[INFO] 2026-05-15 10:00:01 Scanning for AFK tickets...
+[INFO] 2026-05-15 10:00:01 Selected 2 AFK ticket(s):
+[INFO] 2026-05-15 10:00:01   - test-feature-a/01-implement-endpoint
+[INFO] 2026-05-15 10:00:01   - test-feature-b/02-update-docs
 
-Waiting for background processes to finish...
+[INFO] 2026-05-15 10:00:01 Tmux detected: launching tickets in new windows
 
-=== Results ===
-  OK   test-feature-a/01-implement-endpoint
-  OK   test-feature-b/02-update-docs
+[INFO] 2026-05-15 10:00:01 Starting: test-feature-a/01-implement-endpoint
+[INFO] 2026-05-15 10:00:01 Starting: test-feature-b/02-update-docs
 
-Done: 2 | Failed: 0
+[INFO] 2026-05-15 10:00:02 Launch complete. Exiting without waiting for ticket completion.
 ```
+
+**How it works:**
+
+- **tmux mode**: When run inside tmux, each ticket launches in a new numbered window (`afk:1`, `afk:2`, etc.) for easy scanning. Logs are written to `.scratch/.opencode-afk-logs/` with descriptive filenames (e.g., `feature-slug-issue-name.log`).
+- **Background mode**: Outside tmux, tickets run as background processes with a concurrency limit of 3.
+- **Autoclose**: Successful tmux windows close automatically after logging completion. Failed or interrupted windows remain open for debugging.
+- **Launch-and-log**: `opencode-afk` launches tickets and exits immediately without waiting for all work to finish or printing a final aggregate result. Logs are the source of truth after launch.
+
+**After AFK runs:**
+
+- Use the `/afk-summary` slash command to get a read-only summary of completed, failed, and interrupted work from tickets and logs. Pending work is excluded.
+- Use the `/afk-cleanup` slash command to safely remove completed scratch tickets and their logs. This command is confirmation-gated and conservative: it preserves all pending work and shows a deletion plan before executing.
 
 **Customization:**
 
