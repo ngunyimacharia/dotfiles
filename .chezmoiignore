@@ -16,7 +16,6 @@ AGENTS.md
 add-tui-aliases-bash.sh
 add-tui-aliases-nushell.sh
 btop.tar.gz
-bin
 create-enhanced-bashrc.sh
 gnome-install-extensions.sh
 gnome

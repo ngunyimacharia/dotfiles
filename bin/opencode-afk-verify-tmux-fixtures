@@ -1,0 +1,514 @@
+#!/bin/sh
+
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+script_path="$repo_root/bin/opencode-afk"
+
+if [ ! -x "$script_path" ]; then
+  echo "[ERROR] opencode-afk script not found at $script_path" >&2
+  exit 1
+fi
+
+tmp_root=$(mktemp -d)
+trap 'rm -rf "$tmp_root"' EXIT INT TERM HUP
+
+temp_home="$tmp_root/home"
+temp_bin="$tmp_root/bin"
+temp_root="$tmp_root/root"
+fixture_cleanup_dir="$tmp_root/fixture-cleanup"
+
+mkdir -p "$temp_home/.config/opencode/prompts" "$temp_bin" "$temp_root/.scratch/tmux-behavior/issues" "$fixture_cleanup_dir"
+
+cat > "$temp_root/.gitignore" <<'EOF'
+.scratch/
+EOF
+
+cd "$temp_root" && git init -q && git config user.email "test@test.com" && git config user.name "Test" && git add .gitignore && git commit -q -m "init"
+
+cat > "$temp_home/.config/opencode/prompts/afk-prompt.md" <<'EOF'
+Verification prompt
+EOF
+
+tmux_calls="$tmp_root/tmux-calls.log"
+opencode_calls="$tmp_root/opencode-calls.log"
+
+cat > "$temp_bin/tmux" <<TMUX_EOF
+#!/bin/sh
+
+tmux_calls_file="$tmux_calls"
+
+record_call() {
+  printf '%s\n' "tmux \$*" >> "\$tmux_calls_file"
+}
+
+case "\$1" in
+  new-window)
+    shift
+    window_name=""
+    format=""
+    while [ \$# -gt 0 ]; do
+      case "\$1" in
+        -n)
+          window_name="\$2"
+          shift 2
+          ;;
+        -P)
+          shift
+          ;;
+        -F)
+          format="\$2"
+          shift 2
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+    record_call "new-window -n \${window_name}"
+    if [ "\$format" = '#{pane_id}' ]; then
+      printf '%s\n' "%1"
+    fi
+    ;;
+  pipe-pane)
+    shift
+    target=""
+    while [ \$# -gt 0 ]; do
+      case "\$1" in
+        -o)
+          shift
+          ;;
+        -t)
+          target="\$2"
+          shift 2
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+    record_call "pipe-pane -t \${target}"
+    ;;
+  kill-window)
+    shift
+    target=""
+    while [ \$# -gt 0 ]; do
+      case "\$1" in
+        -t)
+          target="\$2"
+          shift 2
+          ;;
+        *)
+          shift
+          ;;
+      esac
+    done
+    record_call "kill-window -t \${target}"
+    ;;
+  *)
+    record_call "\$*"
+    ;;
+esac
+TMUX_EOF
+
+cat > "$temp_bin/opencode" <<'OPENCODE_EOF'
+#!/bin/sh
+
+opencode_calls_file="$opencode_calls"
+printf '%s\n' "opencode $*" >> "$opencode_calls_file"
+
+case "$1" in
+  run)
+    exit 0
+    ;;
+  models)
+    echo "fixture-model"
+    exit 0
+    ;;
+esac
+
+exit 0
+OPENCODE_EOF
+
+chmod +x "$temp_bin/tmux" "$temp_bin/opencode"
+
+cat > "$temp_bin/fzf" <<'EOF'
+#!/bin/sh
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --with-nth=*|--multi|--prompt=*|--height=*|--reverse)
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+awk -F '\t' '$1 == "__ALL__" { print; exit }'
+EOF
+chmod +x "$temp_bin/fzf"
+
+create_issue() {
+  root="$1"
+  relative_path="$2"
+  status_line="$3"
+  body="$4"
+
+  issue_path="$root/$relative_path"
+  mkdir -p "$(dirname "$issue_path")"
+  {
+    printf '# %s\n\n' "$(basename "$relative_path" .md)"
+    printf '%s\n\n' "$status_line"
+    printf '%s\n' "$body"
+  } > "$issue_path"
+}
+
+create_issue "$temp_root" ".scratch/tmux-behavior/issues/01-first-ticket.md" "Status: ready-for-agent" '## Summary
+
+First ticket fixture.'
+
+create_issue "$temp_root" ".scratch/tmux-behavior/issues/02-second-ticket.md" "Status: ready-for-agent" '## Summary
+
+Second ticket fixture.'
+
+assert_contains() {
+  needle="$1"
+  file_path="$2"
+  if ! awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] missing expected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+assert_not_contains() {
+  needle="$1"
+  file_path="$2"
+  if awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] unexpected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+echo "[INFO] Running tmux behavior verification..."
+
+sh -n "$script_path"
+
+output_log="$tmp_root/tmux-run.log"
+: > "$tmux_calls"
+: > "$opencode_calls"
+
+(
+  cd "$temp_root" && env TMUX=1 PATH="$temp_bin:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+) > "$output_log" 2>&1 || true
+
+assert_contains "Selected 2 AFK ticket(s):" "$output_log"
+assert_contains "new-window -n afk:1" "$tmux_calls"
+assert_contains "new-window -n afk:2" "$tmux_calls"
+assert_not_contains "new-window -n afk:tmux-behavior" "$tmux_calls"
+assert_not_contains "new-window -n afk:01-first-ticket" "$tmux_calls"
+
+echo "[INFO] tmux behavior verification passed."
+
+echo "[INFO] Running helper success-only autoclose verification..."
+
+helper_test_dir="$tmp_root/helper-test"
+mkdir -p "$helper_test_dir/sentinels" "$helper_test_dir/logs"
+
+helper_script="$helper_test_dir/_run-ticket.sh"
+meta_file="$helper_test_dir/test-ticket.meta"
+test_ticket="$helper_test_dir/test-ticket.md"
+test_log="$helper_test_dir/logs/test-ticket.log"
+test_done="$helper_test_dir/sentinels/test-ticket.done"
+test_failed="$helper_test_dir/sentinels/test-ticket.failed"
+helper_tmux_calls="$tmp_root/helper-tmux-calls.log"
+
+cat > "$test_ticket" <<'EOF'
+# test-ticket
+
+Status: ready-for-agent
+
+## Summary
+
+Test ticket for helper verification.
+EOF
+
+cat > "$meta_file" << EOF
+TICKET="$test_ticket"
+LOG="$test_log"
+DONE="$test_done"
+FAILED="$test_failed"
+COMMITS_FILE="/dev/null"
+START_EPOCH="$(date +%s)"
+START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+STREAM_OUTPUT="0"
+IN_TMUX="true"
+TMUX_WINDOW_NUM="42"
+EOF
+
+cat > "$tmp_root/tmux" <<HELPER_TMUX_EOF
+#!/bin/sh
+helper_tmux_calls_file="$helper_tmux_calls"
+printf '%s\n' "tmux \$*" >> "\$helper_tmux_calls_file"
+HELPER_TMUX_EOF
+chmod +x "$tmp_root/tmux"
+
+cat > "$tmp_root/helper-opencode-success" <<'EOF'
+#!/bin/sh
+case "$1" in
+  run) exit 0 ;;
+  models) echo "fixture-model" ;;
+esac
+exit 0
+EOF
+chmod +x "$tmp_root/helper-opencode-success"
+
+cat > "$tmp_root/helper-opencode-fail" <<'EOF'
+#!/bin/sh
+case "$1" in
+  run) exit 1 ;;
+  models) echo "fixture-model" ;;
+esac
+exit 0
+EOF
+chmod +x "$tmp_root/helper-opencode-fail"
+
+cat > "$helper_script" <<'HELPER_EOF'
+#!/bin/sh
+
+meta_file="$1"
+. "$meta_file"
+
+log_line() {
+  if [ "${STREAM_OUTPUT:-0}" = "1" ]; then
+    printf '%s\n' "$1"
+  else
+    printf '%s\n' "$1" >> "$LOG"
+  fi
+}
+
+mark_ticket_done() {
+  tmpfile=$(mktemp)
+
+  if awk '
+    tolower($0) ~ /^status:[[:space:]]*/ {
+      print "Status: done"
+      updated = 1
+      next
+    }
+    { print }
+    END { exit updated ? 0 : 1 }
+  ' "$TICKET" > "$tmpfile"; then
+    mv "$tmpfile" "$TICKET"
+    return
+  fi
+
+  rm -f "$tmpfile"
+  tmpfile=$(mktemp)
+  awk '
+    /^##[[:space:]]+Status[[:space:]]*$/ {
+      print
+      in_status = 1
+      next
+    }
+    in_status && !status_written && NF == 0 {
+      print
+      next
+    }
+    in_status && !status_written {
+      print "done"
+      status_written = 1
+      in_status = 0
+      next
+    }
+    { print }
+    END {
+      if (in_status && !status_written) {
+        print "done"
+      }
+    }
+  ' "$TICKET" > "$tmpfile"
+  mv "$tmpfile" "$TICKET"
+}
+
+mark_failed() {
+  if [ ! -f "$DONE" ] && [ ! -f "$FAILED" ]; then
+    touch "$FAILED"
+  fi
+}
+
+trap 'log_line "[WARN] $(date +"'"'"'%Y-%m-%d %H:%M:%S'"'"') Ticket interrupted"; mark_failed; exit 130' INT TERM
+
+ticket_content=$(cat "$TICKET")
+prompt=$(cat "$HOME/.config/opencode/prompts/afk-prompt.md")
+commits=$(cat "$COMMITS_FILE" 2>/dev/null || echo "")
+model="fixture-model"
+
+full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
+
+Previous commits for context:
+${commits}
+
+---
+
+Ticket file: ${TICKET}
+
+${ticket_content}
+
+---
+
+Predefined instructions:
+${prompt}
+
+---
+
+Please implement this ticket fully. Make all necessary code changes, run tests if applicable, and commit the result using conventional commit format. Do not ask for clarification. Do not pause for approval. Just execute."
+
+log_line "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Starting ticket"
+
+if [ "${STREAM_OUTPUT:-0}" = "1" ]; then
+  opencode run --interactive --model "$model" "$full_prompt"
+else
+  opencode run --interactive --model "$model" "$full_prompt" >> "$LOG" 2>&1
+fi
+
+if [ "$?" -eq 0 ]; then
+  end_epoch=$(date +%s)
+  duration=$(( end_epoch - START_EPOCH ))
+  mark_ticket_done
+  log_line "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Ticket completed successfully (duration: $(( duration / 60 ))m $(( duration % 60 ))s)"
+  touch "$DONE"
+  if [ "${IN_TMUX:-false}" = "true" ] && [ -n "${TMUX_WINDOW_NUM:-}" ]; then
+    tmux kill-window -t "afk:${TMUX_WINDOW_NUM}" 2>/dev/null || true
+  fi
+else
+  end_epoch=$(date +%s)
+  duration=$(( end_epoch - START_EPOCH ))
+  log_line "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') Ticket failed (duration: $(( duration / 60 ))m $(( duration % 60 ))s)"
+  touch "$FAILED"
+  exit 1
+fi
+HELPER_EOF
+chmod +x "$helper_script"
+
+: > "$helper_tmux_calls"
+
+env PATH="$tmp_root:$temp_bin:$PATH" HOME="$temp_home" sh "$helper_script" "$meta_file"
+
+assert_contains "Ticket completed successfully" "$test_log"
+assert_contains "tmux kill-window -t afk:42" "$helper_tmux_calls"
+if [ ! -f "$test_failed" ]; then
+  echo "[INFO] success path: no failed sentinel (correct)"
+else
+  echo "[ERROR] success path: unexpected failed sentinel" >&2
+  exit 1
+fi
+
+echo "[INFO] Helper success autoclose verification passed."
+
+echo "[INFO] Running helper failure no-autoclose verification..."
+
+: > "$helper_tmux_calls"
+rm -f "$test_done" "$test_failed" "$test_log"
+cp "$tmp_root/helper-opencode-fail" "$tmp_root/opencode"
+
+cat > "$meta_file" << EOF
+TICKET="$test_ticket"
+LOG="$test_log"
+DONE="$test_done"
+FAILED="$test_failed"
+COMMITS_FILE="/dev/null"
+START_EPOCH="$(date +%s)"
+START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+STREAM_OUTPUT="0"
+IN_TMUX="true"
+TMUX_WINDOW_NUM="99"
+EOF
+
+env PATH="$tmp_root:$temp_bin:$PATH" HOME="$temp_home" sh "$helper_script" "$meta_file" || true
+
+if [ -f "$test_failed" ]; then
+  echo "[INFO] failure path: failed sentinel exists (correct)"
+else
+  echo "[ERROR] failure path: missing failed sentinel" >&2
+  exit 1
+fi
+
+if [ -f "$test_done" ]; then
+  echo "[ERROR] failure path: unexpected done sentinel" >&2
+  exit 1
+fi
+
+if awk -v needle="kill-window" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$helper_tmux_calls"; then
+  echo "[ERROR] failure path: unexpected kill-window call" >&2
+  exit 1
+else
+  echo "[INFO] failure path: no kill-window call (correct)"
+fi
+
+echo "[INFO] Helper failure no-autoclose verification passed."
+
+echo "[INFO] Running background mode verification (no tmux windows)..."
+
+: > "$tmux_calls"
+: > "$opencode_calls"
+
+create_issue "$temp_root" ".scratch/tmux-behavior/issues/03-bg-ticket.md" "Status: ready-for-agent" '## Summary
+
+Background mode ticket fixture.'
+
+bg_output_log="$tmp_root/bg-run.log"
+(
+  cd "$temp_root" && printf 'a\n' | env -u TMUX PATH="$temp_bin:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+) > "$bg_output_log" 2>&1 || true
+
+assert_contains "No tmux detected: launching tickets as background processes" "$bg_output_log"
+if awk -v needle="new-window" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$tmux_calls"; then
+  echo "[ERROR] background mode: unexpected new-window call" >&2
+  exit 1
+else
+  echo "[INFO] background mode: no new-window calls (correct)"
+fi
+
+echo "[INFO] Background mode verification passed."
+
+echo "[INFO] Running safe fixture cleanup regression..."
+
+cleanup_script="$repo_root/bin/opencode-afk-cleanup-fixtures"
+if [ ! -x "$cleanup_script" ]; then
+  echo "[ERROR] fixture cleanup script not found at $cleanup_script" >&2
+  exit 1
+fi
+
+sh -c 'trap "exit 0" TERM; while :; do sleep 1 & wait $!; done' opencode-afk-live-process &
+live_pid=$!
+
+sh -c 'trap "exit 0" TERM; while :; do sleep 1 & wait $!; done' fixture-cleanup-target &
+cleanup_pid=$!
+
+printf '%s\n' "$cleanup_pid" > "$fixture_cleanup_dir/pids"
+
+"$cleanup_script" "$fixture_cleanup_dir"
+sleep 1
+
+if kill -0 "$cleanup_pid" 2>/dev/null; then
+  echo "[ERROR] safe cleanup did not terminate recorded fixture pid" >&2
+  kill "$cleanup_pid" 2>/dev/null || true
+  kill "$live_pid" 2>/dev/null || true
+  exit 1
+fi
+
+if ! kill -0 "$live_pid" 2>/dev/null; then
+  echo "[ERROR] safe cleanup killed unrelated opencode-afk-like process" >&2
+  kill "$cleanup_pid" 2>/dev/null || true
+  exit 1
+fi
+
+kill "$live_pid" 2>/dev/null || true
+wait "$live_pid" 2>/dev/null || true
+wait "$cleanup_pid" 2>/dev/null || true
+
+echo "[INFO] Safe fixture cleanup regression passed."
+
+echo "Tmux behavior fixture verification passed for window naming, success-only autoclose, background mode, and safe cleanup."
