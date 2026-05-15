@@ -74,6 +74,7 @@ create_issue() {
 populate_fixture_root() {
   root="$1"
   mkdir -p "$root/.scratch/dependency-aware-opencode-afk/issues"
+  printf '.scratch/\n' > "$root/.gitignore"
 
   create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/01-no-deps.md" "Status: ready-for-agent" '## Summary
 
@@ -218,7 +219,7 @@ run_dependency_matrix() {
   if [ "$expect_fzf" = "yes" ]; then
     sh -n "$script_path"
     (
-      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" "$script_path" --model fixture-model
     ) > "$output_one" 2>&1
     assert_contains "Selected 6 AFK ticket(s):" "$output_one"
     assert_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/06-blocked-by-non-terminal" "$output_one"
@@ -229,7 +230,7 @@ run_dependency_matrix() {
     assert_contains "dependency-aware-opencode-afk/11-downstream-ready" "$output_one"
 
     (
-      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" "$script_path" --model fixture-model
     ) > "$output_two" 2>&1
     assert_contains "Selected 3 AFK ticket(s):" "$output_two"
     assert_contains "dependency-aware-opencode-afk/11-downstream-ready" "$output_two"
@@ -237,7 +238,7 @@ run_dependency_matrix() {
   else
     sh -n "$script_path"
     (
-      cd "$root" && printf 'a\n' | env PATH="$menu_path" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+      cd "$root" && printf 'a\n' | env PATH="$menu_path" HOME="$temp_home" "$script_path" --model fixture-model
     ) > "$output_one" 2>&1
     assert_contains "Selected 6 AFK ticket(s):" "$output_one"
     assert_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/06-blocked-by-non-terminal" "$output_one"
@@ -259,7 +260,112 @@ if [ -n "$fzf_path" ]; then
 fi
 reduced_path=$(reduced_path_without_fzf "$PATH" "$fzf_dir")
 
+run_scratch_safety_tests() {
+  scratch_tmp_root="$tmp_root/scratch-safety"
+  mkdir -p "$scratch_tmp_root"
+
+  echo "[INFO] Running .scratch safety validation tests..."
+
+  # Test 1: Missing .scratch directory - should exit 0 with warning
+  missing_scratch_root="$scratch_tmp_root/missing-scratch"
+  mkdir -p "$missing_scratch_root"
+  output="$tmp_root/missing-scratch.log"
+  if (
+    cd "$missing_scratch_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    assert_contains "No .scratch directory found" "$output"
+  else
+    echo "[ERROR] missing .scratch test should exit 0" >&2
+    exit 1
+  fi
+
+  # Test 2: Ignored and untracked .scratch - should proceed to ticket scanning
+  ignored_scratch_root="$scratch_tmp_root/ignored-scratch"
+  mkdir -p "$ignored_scratch_root/.scratch/feature-a/issues"
+  printf '.scratch/\n' > "$ignored_scratch_root/.gitignore"
+  create_issue "$ignored_scratch_root" ".scratch/feature-a/issues/01-test.md" "Status: ready-for-agent" '## Summary
+
+Ignored scratch test.'
+  output="$tmp_root/ignored-scratch.log"
+  if (
+    cd "$ignored_scratch_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    assert_contains "Selected 1 AFK ticket(s):" "$output"
+    assert_contains "feature-a/01-test" "$output"
+  else
+    echo "[ERROR] ignored .scratch test should exit 0" >&2
+    exit 1
+  fi
+
+  # Test 3: Unignored .scratch - should fail with error
+  unignored_scratch_root="$scratch_tmp_root/unignored-scratch"
+  mkdir -p "$unignored_scratch_root/.scratch/feature-b/issues"
+  printf '*.log\n' > "$unignored_scratch_root/.gitignore"
+  output="$tmp_root/unignored-scratch.log"
+  if (
+    cd "$unignored_scratch_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    echo "[ERROR] unignored .scratch test should exit non-zero" >&2
+    exit 1
+  else
+    assert_contains ".scratch is present but not ignored in .gitignore" "$output"
+  fi
+
+  # Test 4: No .gitignore at all - should fail with error
+  no_gitignore_root="$scratch_tmp_root/no-gitignore"
+  mkdir -p "$no_gitignore_root/.scratch/feature-c/issues"
+  output="$tmp_root/no-gitignore.log"
+  if (
+    cd "$no_gitignore_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    echo "[ERROR] no .gitignore test should exit non-zero" >&2
+    exit 1
+  else
+    assert_contains "no .gitignore found" "$output"
+  fi
+
+  # Test 5: Tracked .scratch/issues/... files - should fail with error
+  tracked_issues_root="$scratch_tmp_root/tracked-issues"
+  mkdir -p "$tracked_issues_root/.scratch/feature-d/issues"
+  printf '.scratch/\n' > "$tracked_issues_root/.gitignore"
+  touch "$tracked_issues_root/.scratch/feature-d/issues/.keep"
+  output="$tmp_root/tracked-issues.log"
+  git -C "$tracked_issues_root" init -q
+  git -C "$tracked_issues_root" add -f .scratch/feature-d
+  if (
+    cd "$tracked_issues_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    echo "[ERROR] tracked .scratch/issues test should exit non-zero" >&2
+    exit 1
+  else
+    assert_contains "contains tracked files" "$output"
+    assert_contains ".scratch/feature-d" "$output"
+  fi
+
+  # Test 6: Tracked .scratch/.opencode-afk-logs/... - should fail with error
+  tracked_logs_root="$scratch_tmp_root/tracked-logs"
+  mkdir -p "$tracked_logs_root/.scratch/.opencode-afk-logs"
+  printf '.scratch/\n' > "$tracked_logs_root/.gitignore"
+  touch "$tracked_logs_root/.scratch/.opencode-afk-logs/.keep"
+  output="$tmp_root/tracked-logs.log"
+  git -C "$tracked_logs_root" init -q
+  git -C "$tracked_logs_root" add -f .scratch/.opencode-afk-logs
+  if (
+    cd "$tracked_logs_root" && env PATH="$temp_bin_fzf:$PATH" HOME="$temp_home" "$script_path" --model fixture-model
+  ) > "$output" 2>&1; then
+    echo "[ERROR] tracked .scratch/.opencode-afk-logs test should exit non-zero" >&2
+    exit 1
+  else
+    assert_contains "contains tracked files" "$output"
+    assert_contains ".scratch/.opencode-afk-logs" "$output"
+  fi
+
+  echo "[INFO] .scratch safety validation tests passed."
+}
+
 run_dependency_matrix "fzf" "$temp_fzf_root" "$temp_bin_fzf:$PATH" "yes"
 run_dependency_matrix "menu" "$temp_menu_root" "$temp_bin_menu:${reduced_path:-$PATH}" "no"
+
+run_scratch_safety_tests
 
 echo "Dependency fixture verification passed for fzf and fallback menu flows."
