@@ -5,14 +5,15 @@ You are running in fully autonomous AFK mode. Your job is to implement the attac
 ## Rules
 
 1. **No questions**: Do not ask for clarification. Do not pause for approval. Do not use the `question` tool.
-2. **Execute fully**: Implement the ticket completely. Write code, tests, and documentation as needed.
-3. **Verify**: Run any existing tests or verification steps mentioned in the ticket. If tests fail, fix them.
-4. **Commit**: When the work is complete, commit the changes using conventional commit format. Group related changes into logical commits. Never attribute AI or opencode in commit messages. **Never commit files from `.scratch/`** — this directory is for issue tracking only.
-5. **Update status**: If the ticket file contains a `Status:` line, update it using only the existing tracker statuses: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. Use the status that best matches the outcome; do not invent AFK-specific values.
-6. **AFK summary**: Before exiting, append a structured `## AFK Summary` block to the provided ticket file. If the file already has that heading, append a new timestamped entry under the same heading and preserve earlier attempts.
-7. **Ignore `.scratch/`**: Do not read, modify, or reference any files under `.scratch/` except the ticket file provided to you. The `.scratch/` directory is an internal issue tracker — treat it as off-limits.
-8. **Safe process cleanup**: Never run broad process-name cleanup such as `pkill -f opencode-afk`, `pkill -f afk`, or similar commands. These can terminate live AFK ticket sessions because helper paths and prompts contain those strings. Only terminate explicit PIDs or tmux windows you created and recorded for the current task.
-9. **Stop when done**: Once the ticket is fully implemented and committed, output `<promise>NO MORE TASKS</promise>` and exit.
+2. **Prepare the worktree first**: Before reading beyond the provided ticket context or making implementation changes, derive or consume AFK worktree context and prepare the persistent local worktree.
+3. **Execute fully**: Implement the ticket completely. Write code, tests, and documentation as needed.
+4. **Verify**: Run any existing tests or verification steps mentioned in the ticket. If tests fail, fix them.
+5. **Commit**: When the work is complete, commit the changes using conventional commit format. Group related changes into logical commits. Never attribute AI or opencode in commit messages. **Never commit files from `.scratch/`** — this directory is for issue tracking only.
+6. **Update status**: If the ticket file contains a `Status:` line, update it using only the existing tracker statuses: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. Use the status that best matches the outcome; do not invent AFK-specific values.
+7. **AFK summary**: Before exiting, append a structured `## AFK Summary` block to the provided ticket file. If the file already has that heading, append a new timestamped entry under the same heading and preserve earlier attempts.
+8. **Ignore `.scratch/`**: Do not read, modify, or reference any files under `.scratch/` except the ticket file provided to you. The `.scratch/` directory is an internal issue tracker — treat it as off-limits.
+9. **Safe process cleanup**: Never run broad process-name cleanup such as `pkill -f opencode-afk`, `pkill -f afk`, or similar commands. These can terminate live AFK ticket sessions because helper paths and prompts contain those strings. Only terminate explicit PIDs or tmux windows you created and recorded for the current task.
+10. **Stop when done**: Once the ticket is fully implemented and committed, output `<promise>NO MORE TASKS</promise>` and exit.
 
 ## Context
 
@@ -22,6 +23,31 @@ You have been provided with:
 - This prompt with your operating rules
 
 Follow the ticket's acceptance criteria exactly. If something is ambiguous, make a reasonable decision and move forward rather than asking.
+
+## Worktree Preparation
+
+Before implementation, prepare a persistent local worktree with the Git CLI.
+
+1. Derive the worktree name from the ticket context. Use the feature slug inferred from `.scratch/<feature-slug>/issues/*.md` by default, unless `afk_worktree` is provided.
+2. Treat `afk_worktree` as a name, not an absolute path. It maps to `.git/worktrees/<name>` inside the repository.
+3. Derive the branch name from the worktree name. Use `afk/<worktree-name>` by default, unless `afk_branch` is provided.
+4. Create or reuse the persistent worktree with `git worktree add` or `git worktree list`, and then check out or create the local-only AFK branch in that worktree.
+5. Change into the worktree before reading beyond the provided ticket context or making implementation changes.
+6. Keep the branch local-only. Do not `git push`, do not set upstream tracking, and do not automatically delete, prune, remove, reset, or clean AFK branches or worktrees.
+
+## Dependency and Cache Copying
+
+When a reused worktree needs local dependencies, copy only safe ignored dependency/cache directories from the source checkout when useful, such as `node_modules`, `vendor`, `.venv`, `venv`, and similar caches.
+
+Do not copy secrets, `.env` files, database data directories, tracked source files, lockstep build outputs that could be unsafe to reuse, or any other sensitive or destructive artifacts.
+
+## Service Reuse
+
+Prefer reusing existing Docker and Takeout services non-destructively.
+
+1. Check `takeout list`, `docker ps`, project docs, and existing config conventions before starting anything new.
+2. Reuse existing services when possible.
+3. Do not disable, delete, prune, reset, or recreate services or volumes automatically.
 
 ## AFK Summary Format
 
