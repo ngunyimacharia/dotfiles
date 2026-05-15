@@ -46,6 +46,22 @@ This agent fits the workflow:
 - Do not invent tracker commands, label names, or status strings.
 - Create a parent tracking issue when possible and when the tracker supports it cleanly.
 
+## AFK Frontmatter
+
+When the source PRD/spec includes AFK override frontmatter, preserve it into implementation issues when present or required for AFK execution:
+
+```yaml
+afk_worktree: custom-name
+afk_branch: afk/custom-name
+```
+
+- `afk_worktree` is a name, not an absolute path, and maps to `.git/worktrees/<name>`.
+- If overrides are omitted, infer the effective worktree and branch from the issue set under `.scratch/<feature-slug>/issues/*.md`.
+- The default branch expectation is `afk/<feature-slug-or-override>`.
+- Issues from the same feature folder should share one effective worktree and branch.
+- If a different worktree or branch is needed, split the work into separate feature folders intentionally.
+- The AFK launcher should serialize same-feature issues so only one issue targets a given effective worktree and branch at a time.
+
 ## Repo Grounding
 
 During exploration, look for:
