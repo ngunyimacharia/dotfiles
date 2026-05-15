@@ -25,10 +25,11 @@ Safe, confirmation-gated cleanup of completed AFK work. This command deletes ter
 5. **Require confirmation**: Ask the user to confirm before proceeding with deletion. Do not delete anything without explicit confirmation, unless the invocation message already includes explicit confirmation (e.g., "yes, proceed" or "--force").
 
 6. **Execute deletion** (only after confirmation):
-   - Delete terminal issue files
-   - Delete matching AFK log files
-   - Delete feature directories only when no pending, missing-status, or non-terminal issue files remain
-   - Preserve all pending tickets and their logs
+    - Delete terminal issue files
+    - Delete matching AFK log files
+    - Delete feature directories only when no pending, missing-status, or non-terminal issue files remain
+    - Preserve all pending tickets and their logs
+    - Do not kill AFK processes as part of log/ticket cleanup
 
 ## Constraints
 
@@ -39,3 +40,4 @@ Safe, confirmation-gated cleanup of completed AFK work. This command deletes ter
 - Never delete logs for pending or non-terminal tickets
 - Always show a dry-run plan before any deletion
 - Require explicit confirmation before executing destructive operations
+- Never run broad process cleanup such as `pkill -f opencode-afk`, `pkill -f afk`, or similar commands. They can terminate live AFK sessions because helper paths and prompts contain those strings.
