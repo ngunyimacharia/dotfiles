@@ -71,7 +71,6 @@ BASE_DIR="$(pwd)"
 LOG_DIR="${BASE_DIR}/.scratch/.opencode-afk-logs"
 SENTINEL_DIR="${LOG_DIR}/sentinels"
 MAX_CONCURRENT=3
-TMUX_READY_TIMEOUT=10
 
 get_ticket_status() {
   ticket_file="$1"
@@ -117,6 +116,75 @@ ticket_label() {
   feature_slug=$(basename "$(dirname "$(dirname "$ticket_file")")")
   issue_name=$(basename "$ticket_file" .md)
   printf '%s\n' "$feature_slug/$issue_name"
+}
+
+resolve_dependency_path() {
+  dependency_path="$1"
+
+  case "$dependency_path" in
+    /*)
+      printf '%s\n' "$dependency_path"
+      ;;
+    ./*)
+      printf '%s/%s\n' "$BASE_DIR" "${dependency_path#./}"
+      ;;
+    *)
+      printf '%s/%s\n' "$BASE_DIR" "$dependency_path"
+      ;;
+  esac
+}
+
+get_blocking_dependencies() {
+  ticket_file="$1"
+
+  awk '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+
+    /^##[[:space:]]+Dependencies[[:space:]]*$/ {
+      in_dependencies = 1
+      next
+    }
+
+    in_dependencies && /^##[[:space:]]+/ {
+      exit
+    }
+
+    in_dependencies && /^Blocking:[[:space:]]*$/ {
+      in_blocking = 1
+      next
+    }
+
+    in_blocking && /^[^[:space:]].*:[[:space:]]*$/ {
+      in_blocking = 0
+      next
+    }
+
+    in_blocking && /^[[:space:]]*-[[:space:]]*/ {
+      dependency = $0
+      sub(/^[[:space:]]*-[[:space:]]*/, "", dependency)
+      dependency = trim(dependency)
+
+      if (dependency == "") {
+        next
+      }
+
+      if (dependency ~ /^`.*`$/) {
+        sub(/^`/, "", dependency)
+        sub(/`$/, "", dependency)
+      }
+
+      dependency = trim(dependency)
+      if (tolower(dependency) == "none") {
+        next
+      }
+
+      print dependency
+    }
+  ' "$ticket_file"
 }
 
 select_tickets_with_fzf() {
@@ -244,6 +312,48 @@ find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_
   fi
 
   if is_ready_for_agent_status "$status_val" || has_afk_executor "$issue_file"; then
+    unmet_dependencies=$(mktemp)
+    while IFS= read -r dependency_path; do
+      [ -z "$dependency_path" ] && continue
+
+      dependency_file=$(resolve_dependency_path "$dependency_path")
+      if [ ! -f "$dependency_file" ]; then
+        printf '%s\t%s\n' "$dependency_path" "missing" >> "$unmet_dependencies"
+        continue
+      fi
+
+      dependency_status=$(get_ticket_status "$dependency_file")
+      if ! is_terminal_status "$dependency_status"; then
+        if [ -z "$dependency_status" ]; then
+          dependency_status="unknown"
+        fi
+        printf '%s\t%s\n' "$dependency_path" "$dependency_status" >> "$unmet_dependencies"
+      fi
+    done <<EOF
+$(get_blocking_dependencies "$issue_file")
+EOF
+
+    if [ -s "$unmet_dependencies" ]; then
+      echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Skipping blocked AFK ticket: $(ticket_label "$issue_file") ($issue_file)" >&2
+      while IFS='\t' read -r dependency_path dependency_reason; do
+        [ -z "$dependency_path" ] && continue
+
+        case "$dependency_reason" in
+          missing)
+            echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   unmet dependency: $dependency_path (missing)" >&2
+            ;;
+          *)
+            echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   unmet dependency: $dependency_path (status: $dependency_reason)" >&2
+            ;;
+        esac
+      done < "$unmet_dependencies"
+
+      rm -f "$unmet_dependencies"
+      continue
+    fi
+
+    rm -f "$unmet_dependencies"
+
     # Convert to absolute path
     echo "${BASE_DIR}/${issue_file}"
   fi
@@ -488,27 +598,8 @@ EOF
 
   if [ "$IN_TMUX" = true ]; then
     window_name="afk:${feature_slug}-${issue_name}"
-    pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name")
-
-    ready=false
-    ready_deadline=$(( $(date +%s) + TMUX_READY_TIMEOUT ))
-    while [ "$(date +%s)" -lt "$ready_deadline" ]; do
-      pane_cmd=$(tmux display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null || true)
-      case "$pane_cmd" in
-        sh|bash|zsh|fish|nu)
-          ready=true
-          break
-          ;;
-      esac
-      sleep 1
-    done
-
-    if [ "$ready" != true ]; then
-      echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') Tmux shell readiness timed out for $feature_slug/$issue_name; sending command anyway"
-    fi
-
+    pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name" sh "$HELPER" "$meta_file")
     tmux pipe-pane -o -t "$pane_id" "cat >> '$log_file'"
-    tmux send-keys -t "$pane_id" "sh '$HELPER' '$meta_file'" C-m
   else
     # Background mode with concurrency limit
     while [ "$(jobs -r | wc -l | tr -d ' ')" -ge "$MAX_CONCURRENT" ]; do
