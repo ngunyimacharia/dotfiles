@@ -41,9 +41,9 @@ This repository uses **Nushell** as the default shell, providing:
 
 #### OpenCode AFK
 
-[opencode-afk](bin/opencode-afk) automatically processes AFK (Away From Keyboard) tickets from `.scratch/*/issues/` directories. It scans for pending AFK tickets and launches them concurrently using opencode.
+[opencode-afk](bin/opencode-afk) automatically processes AFK (Away From Keyboard) tickets from `.scratch/*/issues/` directories. It scans issue files, launches pending work concurrently using opencode, and appends one structured `## AFK Summary` entry per attempt.
 
-Each AFK run is tied to a single issue file and appends one structured `## AFK Summary` entry per attempt. Those issue-file summaries are the source of truth for post-run reporting.
+Those issue-file summaries are the default source of truth for post-run reporting. Raw logs stay as an explicit fallback only when additional detail is needed.
 
 **Pre-execution validation:**
 
@@ -88,7 +88,7 @@ $ opencode-afk
 - **tmux mode**: When run inside tmux, each ticket launches in a new numbered window (`afk:1`, `afk:2`, etc.) for easy scanning. Logs are written to `.scratch/.opencode-afk-logs/` with descriptive filenames (e.g., `feature-slug-issue-name.log`).
 - **Background mode**: Outside tmux, tickets run as background processes with a concurrency limit of 3.
 - **Autoclose**: Successful tmux windows close automatically after logging completion. Failed or interrupted windows remain open for debugging.
-- **Launch-and-log**: `opencode-afk` launches tickets and exits immediately without waiting for all work to finish or printing a final aggregate result. The issue file becomes the summary record for each attempt; raw logs remain an explicit fallback.
+- **Launch-and-log**: `opencode-afk` launches tickets and exits immediately without waiting for all work to finish or printing a final aggregate result. The issue file becomes the summary record for each attempt; raw logs remain fallback-only input.
 
 **After AFK runs:**
 
@@ -96,7 +96,7 @@ $ opencode-afk
 - If issue-file summaries are missing or incomplete, `/afk-summary` asks before reading raw logs from `.scratch/.opencode-afk-logs/`.
 - Use the `/afk-cleanup` slash command to safely remove completed scratch tickets and their logs. This command is confirmation-gated and conservative: it preserves all pending work and shows a deletion plan before executing.
 
-Example `## AFK Summary` block:
+Example `## AFK Summary` block matching `private_dot_config/opencode/prompts/afk-prompt.md`:
 
 ```md
 ## AFK Summary
