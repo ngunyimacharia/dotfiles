@@ -42,9 +42,11 @@ export const TmuxStatusPlugin = async ({ $, api } = {}) => {
   return {
     event: async ({ event }) => {
       if (event.type === "session.status") {
-        if (event.status?.type === "busy") {
+        const status = event.properties?.status
+
+        if (status?.type === "busy") {
           await setStatus($, "running")
-        } else if (event.status?.type === "retry") {
+        } else if (status?.type === "retry") {
           await setStatus($, "waiting")
         }
         return

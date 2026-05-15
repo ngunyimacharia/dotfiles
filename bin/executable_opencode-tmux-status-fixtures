@@ -47,20 +47,17 @@ sh -n "$helper_script"
 : > "$tmux_calls"
 env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set running >/dev/null 2>&1
 assert_contains 'tmux set-window-option -q -t . @opencode_status_icon ▶' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_label running' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_bg_dim},bg=#{@everforest_green},bold' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_green},bold' "$tmux_calls"
 
 : > "$tmux_calls"
 env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set waiting >/dev/null 2>&1
 assert_contains 'tmux set-window-option -q -t . @opencode_status_icon …' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_label waiting' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_bg_dim},bg=#{@everforest_yellow},bold' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_yellow},bold' "$tmux_calls"
 
 : > "$tmux_calls"
 env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" set idle >/dev/null 2>&1
 assert_contains 'tmux set-window-option -q -t . @opencode_status_icon •' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_label idle' "$tmux_calls"
-assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_fg},bg=#{@everforest_bg3}' "$tmux_calls"
+assert_contains 'tmux set-window-option -q -t . @opencode_status_style fg=#{@everforest_grey2}' "$tmux_calls"
 
 : > "$tmux_calls"
 env TMUX=1 PATH="$stub_bin:$PATH" "$helper_script" clear >/dev/null 2>&1
