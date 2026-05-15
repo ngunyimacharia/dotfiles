@@ -53,9 +53,9 @@ const hooks = await TmuxStatusPlugin({
   },
 })
 
-await hooks.event({ event: { type: "session.status", status: { type: "busy" } } })
-await hooks.event({ event: { type: "session.status", status: { type: "retry" } } })
-await hooks.event({ event: { type: "session.status", status: { type: "idle" } } })
+await hooks.event({ event: { type: "session.status", properties: { status: { type: "busy" } } } })
+await hooks.event({ event: { type: "session.status", properties: { status: { type: "retry" } } } })
+await hooks.event({ event: { type: "session.status", properties: { status: { type: "idle" } } } })
 await hooks.event({ event: { type: "session.idle" } })
 
 assertArray(calls, [
@@ -74,7 +74,7 @@ assertArray(calls, ["opencode-tmux-status clear"], "dispose cleanup")
 
 calls.length = 0
 delete process.env.TMUX
-await hooks.event({ event: { type: "session.status", status: { type: "busy" } } })
+await hooks.event({ event: { type: "session.status", properties: { status: { type: "busy" } } } })
 assertArray(calls, [], "outside tmux no-op")
 
 assertEqual(true, true, "fixture completed")

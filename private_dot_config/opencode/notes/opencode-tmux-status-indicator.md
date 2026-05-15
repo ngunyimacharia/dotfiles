@@ -2,13 +2,13 @@
 
 Source of truth:
 - OpenCode plugin docs list `session.status` and `session.idle` as the relevant session hooks.
-- Generated SDK types define `SessionStatus` as `idle | retry | busy`.
+- Generated SDK types define `SessionStatus` as `idle | retry | busy`, carried at `event.properties.status` for `session.status` events.
 - Live probe session: `ses_1d3af481effeW2DIu0VP2vEgAj` from `/var/folders/r7/fdg697857h31gn_d8h8fkmch0000gn/T/opencode/event-probe`.
 
 Verified mapping:
-- Running: `session.status` with `status.type === "busy"`.
-- Waiting: `session.status` with `status.type === "retry"`.
-- Idle/done: `session.idle` remains the terminal completion event; `session.status` with `status.type === "idle"` also appears, but the shipped mapper and notifier still use `session.idle` as the completion signal.
+- Running: `session.status` with `properties.status.type === "busy"`.
+- Waiting: `session.status` with `properties.status.type === "retry"`.
+- Idle/done: `session.idle` remains the terminal completion event; `session.status` with `properties.status.type === "idle"` also appears, but the shipped mapper and notifier still use `session.idle` as the completion signal.
 
 Evidence from the probe log:
 - `session.status` published with `status.type: "busy"` during the active model turn.
