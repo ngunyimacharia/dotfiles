@@ -118,75 +118,6 @@ ticket_label() {
   printf '%s\n' "$feature_slug/$issue_name"
 }
 
-resolve_dependency_path() {
-  dependency_path="$1"
-
-  case "$dependency_path" in
-    /*)
-      printf '%s\n' "$dependency_path"
-      ;;
-    ./*)
-      printf '%s/%s\n' "$BASE_DIR" "${dependency_path#./}"
-      ;;
-    *)
-      printf '%s/%s\n' "$BASE_DIR" "$dependency_path"
-      ;;
-  esac
-}
-
-get_blocking_dependencies() {
-  ticket_file="$1"
-
-  awk '
-    function trim(value) {
-      sub(/^[[:space:]]+/, "", value)
-      sub(/[[:space:]]+$/, "", value)
-      return value
-    }
-
-    /^##[[:space:]]+Dependencies[[:space:]]*$/ {
-      in_dependencies = 1
-      next
-    }
-
-    in_dependencies && /^##[[:space:]]+/ {
-      exit
-    }
-
-    in_dependencies && /^Blocking:[[:space:]]*$/ {
-      in_blocking = 1
-      next
-    }
-
-    in_blocking && /^[^[:space:]].*:[[:space:]]*$/ {
-      in_blocking = 0
-      next
-    }
-
-    in_blocking && /^[[:space:]]*-[[:space:]]*/ {
-      dependency = $0
-      sub(/^[[:space:]]*-[[:space:]]*/, "", dependency)
-      dependency = trim(dependency)
-
-      if (dependency == "") {
-        next
-      }
-
-      if (dependency ~ /^`.*`$/) {
-        sub(/^`/, "", dependency)
-        sub(/`$/, "", dependency)
-      }
-
-      dependency = trim(dependency)
-      if (tolower(dependency) == "none") {
-        next
-      }
-
-      print dependency
-    }
-  ' "$ticket_file"
-}
-
 select_tickets_with_fzf() {
   eligible_file="$1"
   display_file=$(mktemp)
@@ -281,125 +212,6 @@ rewrite_ticket_list() {
   mv "$tmpfile" "$target_file"
 }
 
-normalize_dependency_ref() {
-  dependency_ref="$1"
-  dependency_ref=$(printf '%s' "$dependency_ref" | sed "s/^[[:space:]]*//; s/[[:space:]]*$//")
-  dependency_ref=${dependency_ref#- }
-  dependency_ref=${dependency_ref#\`}
-  dependency_ref=${dependency_ref%\`}
-  dependency_ref=$(printf '%s' "$dependency_ref" | sed "s/^[[:space:]]*//; s/[[:space:]]*$//")
-
-  case "$(printf '%s' "$dependency_ref" | tr '[:upper:]' '[:lower:]')" in
-    none)
-      printf '%s\n' ""
-      ;;
-    *)
-      printf '%s\n' "$dependency_ref"
-      ;;
-  esac
-}
-
-resolve_dependency_path() {
-  dependency_ref="$1"
-
-  case "$dependency_ref" in
-    /*)
-      printf '%s\n' "$dependency_ref"
-      ;;
-    ./*)
-      printf '%s/%s\n' "$BASE_DIR" "${dependency_ref#./}"
-      ;;
-    *)
-      printf '%s/%s\n' "$BASE_DIR" "$dependency_ref"
-      ;;
-  esac
-}
-
-get_blocking_dependencies() {
-  ticket_file="$1"
-
-  awk '
-    function trim(value) {
-      sub(/^[[:space:]]+/, "", value)
-      sub(/[[:space:]]+$/, "", value)
-      return value
-    }
-
-    function emit_dependency(value) {
-      value = trim(value)
-      sub(/^[[:space:]]*-[[:space:]]*/, "", value)
-      value = trim(value)
-      gsub(/^`+/, "", value)
-      gsub(/`+$/, "", value)
-      value = trim(value)
-
-      if (tolower(value) != "none" && value != "") {
-        print value
-      }
-    }
-
-    BEGIN {
-      in_dependencies = 0
-      in_blocking = 0
-    }
-
-    /^##[[:space:]]+Dependencies[[:space:]]*$/ {
-      in_dependencies = 1
-      in_blocking = 0
-      next
-    }
-
-    in_dependencies && /^##[[:space:]]+/ {
-      exit
-    }
-
-    in_dependencies && /^[[:space:]]*Blocking:[[:space:]]*$/ {
-      in_blocking = 1
-      next
-    }
-
-    in_dependencies && /^[[:space:]]*Related:[[:space:]]*$/ {
-      in_blocking = 0
-      next
-    }
-
-    in_blocking && /^[[:space:]]*-[[:space:]]*/ {
-      emit_dependency($0)
-    }
-  ' "$ticket_file"
-}
-
-get_unmet_blocking_dependencies() {
-  ticket_file="$1"
-
-  get_blocking_dependencies "$ticket_file" | while read -r dependency_ref; do
-    [ -z "$dependency_ref" ] && continue
-
-    dependency_path=$(resolve_dependency_path "$dependency_ref")
-
-    if [ ! -f "$dependency_path" ]; then
-      printf '%s (missing)\n' "$dependency_ref"
-      continue
-    fi
-
-    dependency_status=$(get_ticket_status "$dependency_path")
-    if ! is_terminal_status "$dependency_status"; then
-      printf '%s (status: %s)\n' "$dependency_ref" "$dependency_status"
-    fi
-  done
-}
-
-log_blocked_ticket() {
-  ticket_file="$1"
-  blocked_dependencies="$2"
-
-  echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') Skipping blocked AFK ticket: $(ticket_label "$ticket_file") ($ticket_file)" >&2
-  printf '%s\n' "$blocked_dependencies" | while read -r blocked_dependency; do
-    [ -z "$blocked_dependency" ] && continue
-    echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S')   - $blocked_dependency" >&2
-  done
-}
-
 validate_scratch_safety() {
   gitignore_file="${BASE_DIR}/.gitignore"
 
@@ -477,12 +289,6 @@ find ".scratch" -path "*/issues/*.md" -type f 2>/dev/null | while read -r issue_
   fi
 
   if is_ready_for_agent_status "$status_val" || has_afk_executor "$issue_file"; then
-    blocked_dependencies=$(get_unmet_blocking_dependencies "$issue_file")
-    if [ -n "$blocked_dependencies" ]; then
-      log_blocked_ticket "$issue_file" "$blocked_dependencies"
-      continue
-    fi
-
     # Convert to absolute path
     echo "${BASE_DIR}/${issue_file}"
   fi
@@ -649,9 +455,6 @@ if [ "\$?" -eq 0 ]; then
   mark_ticket_done
   log_line "[INFO] \$(date '+%Y-%m-%d %H:%M:%S') Ticket completed successfully (duration: \$(( duration / 60 ))m \$(( duration % 60 ))s)"
   touch "\$DONE"
-  if [ "\${IN_TMUX:-false}" = "true" ] && [ -n "\${TMUX_WINDOW_NUM:-}" ]; then
-    tmux kill-window -t "afk:\${TMUX_WINDOW_NUM}" 2>/dev/null || true
-  fi
 else
   end_epoch=\$(date +%s)
   duration=\$(( end_epoch - START_EPOCH ))
@@ -666,34 +469,7 @@ chmod +x "$HELPER"
 COMMITS_FILE="${SENTINEL_DIR}/commits.txt"
 printf '%s' "$COMMITS" > "$COMMITS_FILE"
 
-# --- Cleanup trap ---
-TMUX_WINDOWS_FILE=$(mktemp)
 
-cleanup() {
-  echo ""
-  echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') Interrupted. Cleaning up..."
-
-  if [ "$IN_TMUX" = true ]; then
-    while read -r win_name; do
-      [ -z "$win_name" ] && continue
-      tmux kill-window -t "$win_name" 2>/dev/null || true
-    done < "$TMUX_WINDOWS_FILE"
-  else
-    if [ -f "$PIDS_FILE" ]; then
-      while read -r pid; do
-        kill "$pid" 2>/dev/null || true
-      done < "$PIDS_FILE"
-    fi
-  fi
-
-  rm -rf "$SENTINEL_DIR"
-  rm -f "$TICKET_LIST"
-  rm -f "$PIDS_FILE" 2>/dev/null
-  rm -f "$TMUX_WINDOWS_FILE" 2>/dev/null
-  exit 130
-}
-
-trap cleanup INT TERM
 
 # --- Launch tickets ---
 PIDS_FILE=$(mktemp)
@@ -734,7 +510,6 @@ EOF
 
   if [ "$IN_TMUX" = true ]; then
     window_name="afk:${TMUX_WINDOW_NUM}"
-    echo "$window_name" >> "$TMUX_WINDOWS_FILE"
     pane_id=$(tmux new-window -P -F '#{pane_id}' -n "$window_name" sh "$HELPER" "$meta_file")
     tmux pipe-pane -o -t "$pane_id" "cat >> '$log_file'"
   else
