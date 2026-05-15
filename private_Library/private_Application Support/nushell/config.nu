@@ -18,7 +18,7 @@ alias a = php artisan
 alias amfs = php artisan migrate:fresh --seed
 alias sail = if ('sail' | path exists) { sh sail } else { sh vendor/bin/sail }
 alias takeout = docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest
-alias opencode-afk = /Users/raven/.dotfiles/bin/opencode-afk
+alias opencode-afk = ~/bin/opencode-afk
 
 # Android emulator (Linux only)
 alias start-emulator = emulator @Pixel_9 -sysdir $env.ANDROID_SDK_ROOT/system-images/android-36.1/google_apis_playstore/x86_64/ &
