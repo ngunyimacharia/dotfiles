@@ -65,6 +65,14 @@ opencode-afk --select-model
 opencode-afk --model claude-sonnet-4-20250514
 ```
 
+**Verification fixture:**
+
+```bash
+bin/opencode-afk-verify-launcher-context-fixtures
+```
+
+This local fixture uses temporary `.scratch/` trees plus stubbed `opencode`, `fzf`, and `git` commands to verify launcher context, frontmatter overrides, same-feature serialization, and the no-worktree-management invariant. It does not start real OpenCode sessions or create real Git worktrees.
+
 **Example Output:**
 
 ```
