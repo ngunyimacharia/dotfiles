@@ -1,0 +1,265 @@
+#!/bin/sh
+
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+script_path="$repo_root/bin/opencode-afk"
+
+if [ ! -x "$script_path" ]; then
+  script_path="$repo_root/bin/opencode-afk"
+fi
+
+tmp_root=$(mktemp -d)
+trap 'rm -rf "$tmp_root"' EXIT INT TERM HUP
+
+temp_home="$tmp_root/home"
+temp_bin_fzf="$tmp_root/bin-fzf"
+temp_bin_menu="$tmp_root/bin-menu"
+temp_fzf_root="$tmp_root/fzf-root"
+temp_menu_root="$tmp_root/menu-root"
+
+mkdir -p "$temp_home/.config/opencode/prompts" "$temp_bin_fzf" "$temp_bin_menu" "$temp_fzf_root/.scratch" "$temp_menu_root/.scratch"
+
+cat > "$temp_home/.config/opencode/prompts/afk-prompt.md" <<'EOF'
+Verification prompt
+EOF
+
+cat > "$temp_bin_fzf/opencode" <<'EOF'
+#!/bin/sh
+
+case "$1" in
+  run)
+    echo "[fake opencode] run $*" >&2
+    exit 0
+    ;;
+  models)
+    echo "fixture-model"
+    exit 0
+    ;;
+esac
+
+echo "[fake opencode] unsupported command: $*" >&2
+exit 0
+EOF
+
+cat > "$temp_bin_fzf/fzf" <<'EOF'
+#!/bin/sh
+
+while [ $# -gt 0 ]; do
+  shift
+done
+
+cat
+EOF
+
+cp "$temp_bin_fzf/opencode" "$temp_bin_menu/opencode"
+
+chmod +x "$temp_bin_fzf/opencode" "$temp_bin_fzf/fzf" "$temp_bin_menu/opencode"
+
+create_issue() {
+  root="$1"
+  relative_path="$2"
+  status_line="$3"
+  body="$4"
+
+  issue_path="$root/$relative_path"
+  mkdir -p "$(dirname "$issue_path")"
+  {
+    printf '# %s\n\n' "$(basename "$relative_path" .md)"
+    printf '%s\n\n' "$status_line"
+    printf '%s\n' "$body"
+  } > "$issue_path"
+}
+
+populate_fixture_root() {
+  root="$1"
+  mkdir -p "$root/.scratch/dependency-aware-opencode-afk/issues"
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/01-no-deps.md" "Status: ready-for-agent" '## Summary
+
+No dependencies fixture.'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/02-blocking-none.md" "Status: ready-for-agent" '## Summary
+
+Blocking none fixture.
+
+## Dependencies
+
+Blocking:
+- None'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/03-terminal-blocker.md" "Status: done" '## Summary
+
+Terminal blocker fixture.'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/04-blocked-by-terminal.md" "Status: ready-for-agent" '## Summary
+
+Blocked by terminal dependency.
+
+## Dependencies
+
+Blocking:
+- `.scratch/dependency-aware-opencode-afk/issues/03-terminal-blocker.md`'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/05-non-terminal-blocker.md" "Status: ready-for-agent" '## Summary
+
+Non-terminal blocker fixture.'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/06-blocked-by-non-terminal.md" "Status: ready-for-agent" '## Summary
+
+Blocked by non-terminal dependency.
+
+## Dependencies
+
+Blocking:
+- `.scratch/dependency-aware-opencode-afk/issues/05-non-terminal-blocker.md`'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/07-missing-blocker.md" "Status: ready-for-agent" '## Summary
+
+Missing blocker fixture.
+
+## Dependencies
+
+Blocking:
+- `.scratch/dependency-aware-opencode-afk/issues/99-missing-blocker.md`'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/08-related-only.md" "Status: ready-for-agent" '## Summary
+
+Related-only fixture.
+
+## Dependencies
+
+Related:
+- `.scratch/dependency-aware-opencode-afk/issues/03-terminal-blocker.md`'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/09-multiple-blockers.md" "Status: ready-for-agent" '## Summary
+
+Multiple blockers fixture.
+
+## Dependencies
+
+Blocking:
+- `.scratch/dependency-aware-opencode-afk/issues/03-terminal-blocker.md`
+- `.scratch/dependency-aware-opencode-afk/issues/05-non-terminal-blocker.md`'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/10-upstream-ready.md" "Status: ready-for-agent" '## Summary
+
+Upstream fixture.'
+
+  create_issue "$root" ".scratch/dependency-aware-opencode-afk/issues/11-downstream-ready.md" "Status: ready-for-agent" '## Summary
+
+Downstream fixture.
+
+## Dependencies
+
+Blocking:
+- `.scratch/dependency-aware-opencode-afk/issues/10-upstream-ready.md`'
+}
+
+assert_contains() {
+  needle="$1"
+  file_path="$2"
+  if ! awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] missing expected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+assert_not_contains() {
+  needle="$1"
+  file_path="$2"
+  if awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] unexpected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+reduced_path_without_fzf() {
+  original_path="$1"
+  fzf_dir="$2"
+
+  old_ifs=$IFS
+  IFS=:
+  set -- $original_path
+  IFS=$old_ifs
+
+  reduced_path=""
+  for entry in "$@"; do
+    [ -z "$entry" ] && continue
+    [ "$entry" = "$fzf_dir" ] && continue
+    if [ -z "$reduced_path" ]; then
+      reduced_path="$entry"
+    else
+      reduced_path="$reduced_path:$entry"
+    fi
+  done
+
+  printf '%s\n' "$reduced_path"
+}
+
+run_dependency_matrix() {
+  flow_name="$1"
+  root="$2"
+  path_prefix="$3"
+  expect_fzf="$4"
+
+  populate_fixture_root "$root"
+
+  output_one="$tmp_root/${flow_name}-run-1.log"
+  output_two="$tmp_root/${flow_name}-run-2.log"
+
+  menu_path="$temp_bin_menu"
+  if [ -n "$reduced_path" ]; then
+    menu_path="$temp_bin_menu:$reduced_path"
+  fi
+
+  if [ "$expect_fzf" = "yes" ]; then
+    sh -n "$script_path"
+    (
+      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+    ) > "$output_one" 2>&1
+    assert_contains "Selected 6 AFK ticket(s):" "$output_one"
+    assert_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/06-blocked-by-non-terminal" "$output_one"
+    assert_contains ".scratch/dependency-aware-opencode-afk/issues/99-missing-blocker.md (missing)" "$output_one"
+    assert_contains ".scratch/dependency-aware-opencode-afk/issues/05-non-terminal-blocker.md (status: ready-for-agent)" "$output_one"
+    assert_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/09-multiple-blockers" "$output_one"
+    assert_contains "dependency-aware-opencode-afk/04-blocked-by-terminal" "$output_one"
+    assert_contains "dependency-aware-opencode-afk/11-downstream-ready" "$output_one"
+
+    (
+      cd "$root" && env PATH="$path_prefix" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+    ) > "$output_two" 2>&1
+    assert_contains "Selected 3 AFK ticket(s):" "$output_two"
+    assert_contains "dependency-aware-opencode-afk/11-downstream-ready" "$output_two"
+    assert_not_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/11-downstream-ready" "$output_two"
+  else
+    sh -n "$script_path"
+    (
+      cd "$root" && printf 'a\n' | env PATH="$menu_path" HOME="$temp_home" GIT_DIR="$repo_root/.git" GIT_WORK_TREE="$repo_root" "$script_path" --model fixture-model
+    ) > "$output_one" 2>&1
+    assert_contains "Selected 6 AFK ticket(s):" "$output_one"
+    assert_contains "Skipping blocked AFK ticket: dependency-aware-opencode-afk/06-blocked-by-non-terminal" "$output_one"
+    assert_contains ".scratch/dependency-aware-opencode-afk/issues/99-missing-blocker.md (missing)" "$output_one"
+    assert_contains "dependency-aware-opencode-afk/01-no-deps" "$output_one"
+    assert_contains "dependency-aware-opencode-afk/04-blocked-by-terminal" "$output_one"
+  fi
+}
+
+if [ ! -f "$repo_root/bin/opencode-afk" ]; then
+  echo "[ERROR] opencode-afk script not found at $repo_root/bin/opencode-afk" >&2
+  exit 1
+fi
+
+fzf_path=$(command -v fzf 2>/dev/null || true)
+fzf_dir=""
+if [ -n "$fzf_path" ]; then
+  fzf_dir=$(dirname "$fzf_path")
+fi
+reduced_path=$(reduced_path_without_fzf "$PATH" "$fzf_dir")
+
+run_dependency_matrix "fzf" "$temp_fzf_root" "$temp_bin_fzf:$PATH" "yes"
+run_dependency_matrix "menu" "$temp_menu_root" "$temp_bin_menu:${reduced_path:-$PATH}" "no"
+
+echo "Dependency fixture verification passed for fzf and fallback menu flows."
