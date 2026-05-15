@@ -2,7 +2,7 @@
 description: Summarize completed, failed, and interrupted AFK work from tickets and logs
 ---
 
-Read-only summary of AFK work. Do not modify, delete, commit, or change any files. This command is strictly informational.
+Read-only summary of AFK work. This command is strictly read-only and strictly informational. It must never clean up, delete, edit, stage, commit, or change anything.
 
 ## Steps
 
@@ -22,17 +22,19 @@ Read-only summary of AFK work. Do not modify, delete, commit, or change any file
 
 6. **Gate raw log reads behind permission**: Never inspect `.scratch/.opencode-afk-logs/` unless the user grants permission for this invocation. Ask every time before reading raw logs, even if a prior run already allowed it.
 
-7. **Only ask for raw logs for these reasons**:
-   - Missing summaries
-   - Incomplete details
-   - Contradictory summaries
-   - Explicit user request for deeper investigation
+7. **Do not ask for cleanup or delegate cleanup**: Never ask the user for confirmation from this summary command, and never hand off to any cleanup command or flow.
 
-8. **Make the permission request specific**: State the intended log scope and the reason before any raw log access. Example scope: a named issue, a time window, or a specific subset of `.scratch/.opencode-afk-logs/`.
+8. **Only ask for raw logs for these reasons**:
+    - Missing summaries
+    - Incomplete details
+    - Contradictory summaries
+    - Explicit user request for deeper investigation
 
-9. **Fallback when permission is absent or denied**: Continue with issue-file-only output and explicitly note that raw logs were not inspected.
+9. **Make the permission request specific**: State the intended log scope and the reason before any raw log access. Example scope: a named issue, a time window, or a specific subset of `.scratch/.opencode-afk-logs/`.
 
-10. **Produce summary**: Output a structured report containing:
+10. **Fallback when permission is absent or denied**: Continue with issue-file-only output and explicitly note that raw logs were not inspected.
+
+11. **Produce summary**: Output a structured report containing:
     - Completed work: ticket references, status, and AFK summary details
     - Failed or blocked work: ticket references, status, and blocker details
     - Interrupted or incomplete work: ticket references, status, and last known state
@@ -44,6 +46,8 @@ Read-only summary of AFK work. Do not modify, delete, commit, or change any file
 - Read-only: do not edit, delete, move, or create any files
 - Do not change ticket statuses
 - Do not commit or stage any changes
+- Do not clean up tmux resources or delete opencode sessions
+- Do not run broad process cleanup or terminate AFK helper processes
 - Do not scan `.scratch/.opencode-afk-logs/` on the default path
 - Do not scan `.scratch/.opencode-afk-logs/` unless permission was granted for the current invocation
 - Report only; take no action beyond reading and summarizing
