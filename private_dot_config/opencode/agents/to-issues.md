@@ -184,7 +184,8 @@ Related:
 
 ## Verification
 
-- <tests, demo, repro steps, or operational checks>
+- Automated code tests: <name the automated code tests to add or run, or explicitly state why no automated code test is appropriate and provide fallback verification>
+- <demo, repro steps, or operational checks if applicable>
 - <what evidence is expected: passing test, screenshot, logs, PR link>
 
 ## Classification
