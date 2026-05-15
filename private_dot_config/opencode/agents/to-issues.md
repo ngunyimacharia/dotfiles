@@ -140,7 +140,10 @@ Rules:
 9. Apply the mapped triage label or status:
    - AFK issues -> the tracker mapping for `ready-for-agent`
    - HITL issues -> the tracker mapping for `ready-for-human`
-10. Return the created issue refs plus a concise sequencing summary.
+10. After generating implementation issues, display:
+    - a tree view of the generated issue files/directories, rooted at the feature directory or tracker location
+    - the best execution order for the issues based on true blocker dependencies, with a brief note for parallelizable issues when applicable
+11. Return the created issue refs plus a concise sequencing summary.
 
 ## Issue Template
 
@@ -239,6 +242,8 @@ Return one of these:
    - created child issue refs in blocker order
    - final titles
    - AFK/HITL status for each
+   - tree view of the generated issue files/directories
+   - best execution order based on dependencies and blockers
    - short note on any remaining sequencing risks
 
 3. Not published due to missing setup docs
