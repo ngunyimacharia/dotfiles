@@ -17,6 +17,7 @@ temp_bin="$tmp_root/bin"
 temp_root="$tmp_root/root"
 activity_log="$tmp_root/activity.log"
 prompt_log="$tmp_root/prompts.log"
+git_log="$tmp_root/git.log"
 
 mkdir -p "$temp_home/.config/opencode/prompts" "$temp_bin" "$temp_root/.scratch/feature-a/issues" "$temp_root/.scratch/feature-b/issues"
 
@@ -55,13 +56,44 @@ esac
 exit 0
 EOF
 
+cat > "$temp_bin/git" <<EOF
+#!/bin/sh
+
+printf 'git %s\n' "\$*" >> "$git_log"
+
+if [ "\$1" = "-C" ]; then
+  shift 2
+fi
+
+case "\$1" in
+  log)
+    cat <<'GIT_LOG'
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2026-05-15
+fix(opencode-afk): serialize same-feature launches
+---
+GIT_LOG
+    exit 0
+    ;;
+  ls-files)
+    exit 0
+    ;;
+  worktree|branch)
+    echo "[ERROR] forbidden git management command invoked: git \$*" >&2
+    exit 99
+    ;;
+esac
+
+exit 0
+EOF
+
 cat > "$temp_bin/fzf" <<'EOF'
 #!/bin/sh
 
 awk 'NR == 1 { print; exit }'
 EOF
 
-chmod +x "$temp_bin/opencode" "$temp_bin/fzf"
+chmod +x "$temp_bin/opencode" "$temp_bin/git" "$temp_bin/fzf"
 
 create_issue() {
   root="$1"
@@ -90,15 +122,21 @@ afk_branch: afk/custom-alpha
 EOF
 )
 
-create_issue "$temp_root" ".scratch/feature-a/issues/01-alpha.md" "$frontmatter_alpha" 'Status: ready-for-agent' '## Summary
+create_issue "$temp_root" ".scratch/feature-a/issues/01-alpha.md" "$frontmatter_alpha" 'Status: ready-for-agent' 'Executor: AFK
+
+## Summary
 
 Alpha ticket with overrides.'
 
-create_issue "$temp_root" ".scratch/feature-a/issues/02-beta.md" '' 'Status: ready-for-agent' '## Summary
+create_issue "$temp_root" ".scratch/feature-a/issues/02-beta.md" '' 'Status: ready-for-agent' 'Executor: AFK
+
+## Summary
 
 Beta ticket in same feature.'
 
-create_issue "$temp_root" ".scratch/feature-b/issues/01-gamma.md" '' 'Status: ready-for-agent' '## Summary
+create_issue "$temp_root" ".scratch/feature-b/issues/01-gamma.md" '' 'Status: ready-for-agent' 'Executor: AFK
+
+## Summary
 
 Gamma ticket in different feature.'
 
@@ -107,6 +145,16 @@ assert_contains() {
   file_path="$2"
   if ! awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
     echo "[ERROR] missing expected output: $needle" >&2
+    echo "[ERROR] in file: $file_path" >&2
+    exit 1
+  fi
+}
+
+assert_not_contains() {
+  needle="$1"
+  file_path="$2"
+  if awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+    echo "[ERROR] unexpected output: $needle" >&2
     echo "[ERROR] in file: $file_path" >&2
     exit 1
   fi
@@ -168,6 +216,7 @@ assert_contains "START feature-a/02-beta" "$activity_log"
 assert_contains "START feature-b/01-gamma" "$activity_log"
 
 assert_order "END feature-a/01-alpha" "START feature-a/02-beta" "$activity_log"
+assert_order "START feature-b/01-gamma" "END feature-a/01-alpha" "$activity_log"
 
 assert_contains "Feature slug: feature-a" "$prompt_log"
 assert_contains "Ticket path: $temp_root/.scratch/feature-a/issues/01-alpha.md" "$prompt_log"
@@ -180,5 +229,11 @@ assert_contains "Effective worktree name: custom-alpha" "$prompt_log"
 assert_contains "Effective branch: afk/custom-alpha" "$prompt_log"
 assert_contains "Feature slug: feature-b" "$prompt_log"
 assert_contains "Default worktree name: feature-b" "$prompt_log"
+
+assert_contains "git log" "$git_log"
+assert_contains "git -C $temp_root ls-files .scratch/**" "$git_log"
+assert_not_contains "worktree" "$git_log"
+assert_not_contains "branch -" "$git_log"
+assert_not_contains "branch --" "$git_log"
 
 echo "Launcher context and serialization verification passed."
