@@ -1,0 +1,75 @@
+#!/bin/sh
+
+set -eu
+
+if [ -z "${TMUX:-}" ]; then
+  exit 0
+fi
+
+set_window_option() {
+  tmux set-window-option -q -t . "$@" >/dev/null 2>&1 || true
+}
+
+clear_window_option() {
+  tmux set-window-option -q -u -t . "$1" >/dev/null 2>&1 || true
+}
+
+status_icon() {
+  case "$1" in
+    running) printf '▶' ;;
+    waiting) printf '…' ;;
+    idle) printf '•' ;;
+    *) return 1 ;;
+  esac
+}
+
+status_label() {
+  case "$1" in
+    running) printf 'running' ;;
+    waiting) printf 'waiting' ;;
+    idle) printf 'idle' ;;
+    *) return 1 ;;
+  esac
+}
+
+status_style() {
+  case "$1" in
+    running) printf 'fg=#{@everforest_bg_dim},bg=#{@everforest_green},bold' ;;
+    waiting) printf 'fg=#{@everforest_bg_dim},bg=#{@everforest_yellow},bold' ;;
+    idle) printf 'fg=#{@everforest_fg},bg=#{@everforest_bg3}' ;;
+    *) return 1 ;;
+  esac
+}
+
+apply_status() {
+  state="$1"
+
+  icon=$(status_icon "$state") || exit 0
+  label=$(status_label "$state") || exit 0
+  style=$(status_style "$state") || exit 0
+
+  set_window_option "@opencode_status_icon" "$icon"
+  set_window_option "@opencode_status_label" "$label"
+  set_window_option "@opencode_status_style" "$style"
+}
+
+case "${1:-}" in
+  set)
+    case "${2:-}" in
+      running|waiting|idle)
+        apply_status "$2"
+        ;;
+      *)
+        exit 0
+        ;;
+    esac
+    ;;
+  clear)
+    clear_window_option "@opencode_status_icon"
+    clear_window_option "@opencode_status_label"
+    clear_window_option "@opencode_status_style"
+    ;;
+  *)
+    exit 0
+    ;;
+esac
