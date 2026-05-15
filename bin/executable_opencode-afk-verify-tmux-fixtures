@@ -3,14 +3,18 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-script_path="$repo_root/bin/opencode-afk"
+script_path="$repo_root/bin/executable_opencode-afk"
+
+if [ ! -x "$script_path" ]; then
+  script_path="$repo_root/bin/opencode-afk"
+fi
 
 if [ ! -x "$script_path" ]; then
   echo "[ERROR] opencode-afk script not found at $script_path" >&2
   exit 1
 fi
 
-tmp_root=$(mktemp -d)
+tmp_root=$(mktemp -d /tmp/opencode-afk-fixtures.XXXXXX)
 trap 'rm -rf "$tmp_root"' EXIT INT TERM HUP
 
 temp_home="$tmp_root/home"
@@ -196,6 +200,8 @@ echo "[INFO] Running tmux behavior verification..."
 sh -n "$script_path"
 
 output_log="$tmp_root/tmux-run.log"
+first_meta="$temp_root/.scratch/.opencode-afk-logs/sentinels/tmux-behavior-01-first-ticket.meta"
+generated_helper="$temp_root/.scratch/.opencode-afk-logs/sentinels/_run-ticket.sh"
 : > "$tmux_calls"
 : > "$opencode_calls"
 
@@ -208,6 +214,10 @@ assert_contains "new-window -n afk:1" "$tmux_calls"
 assert_contains "new-window -n afk:2" "$tmux_calls"
 assert_not_contains "new-window -n afk:tmux-behavior" "$tmux_calls"
 assert_not_contains "new-window -n afk:01-first-ticket" "$tmux_calls"
+assert_contains 'ISSUE_REF="tmux-behavior/01-first-ticket"' "$first_meta"
+assert_contains 'RUN_ID="' "$first_meta"
+assert_contains 'Issue reference: \${issue_ref}' "$generated_helper"
+assert_contains 'Run/session ID: \${run_id}' "$generated_helper"
 
 echo "[INFO] tmux behavior verification passed."
 
@@ -245,6 +255,8 @@ START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
 STREAM_OUTPUT="0"
 IN_TMUX="true"
 TMUX_WINDOW_NUM="42"
+RUN_ID="20260515T120000Z-4242"
+ISSUE_REF="tmux-behavior/test-ticket"
 EOF
 
 cat > "$tmp_root/tmux" <<HELPER_TMUX_EOF
@@ -293,7 +305,7 @@ mark_ticket_done() {
 
   if awk '
     tolower($0) ~ /^status:[[:space:]]*/ {
-      print "Status: done"
+      print "Status: ready-for-human"
       updated = 1
       next
     }
@@ -317,7 +329,7 @@ mark_ticket_done() {
       next
     }
     in_status && !status_written {
-      print "done"
+      print "ready-for-human"
       status_written = 1
       in_status = 0
       next
@@ -325,7 +337,7 @@ mark_ticket_done() {
     { print }
     END {
       if (in_status && !status_written) {
-        print "done"
+        print "ready-for-human"
       }
     }
   ' "$TICKET" > "$tmpfile"
@@ -344,6 +356,8 @@ ticket_content=$(cat "$TICKET")
 prompt=$(cat "$HOME/.config/opencode/prompts/afk-prompt.md")
 commits=$(cat "$COMMITS_FILE" 2>/dev/null || echo "")
 model="fixture-model"
+issue_ref="$ISSUE_REF"
+run_id="$RUN_ID"
 
 full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
 
@@ -353,6 +367,10 @@ ${commits}
 ---
 
 Ticket file: ${TICKET}
+
+Issue reference: ${issue_ref}
+
+Run/session ID: ${run_id}
 
 ${ticket_content}
 
@@ -420,6 +438,8 @@ START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
 STREAM_OUTPUT="0"
 IN_TMUX="true"
 TMUX_WINDOW_NUM="99"
+RUN_ID="20260515T120000Z-9999"
+ISSUE_REF="tmux-behavior/test-ticket"
 EOF
 
 env PATH="$tmp_root:$temp_bin:$PATH" HOME="$temp_home" sh "$helper_script" "$meta_file" || true
@@ -464,7 +484,10 @@ echo "[INFO] Background mode verification passed."
 
 echo "[INFO] Running safe fixture cleanup regression..."
 
-cleanup_script="$repo_root/bin/opencode-afk-cleanup-fixtures"
+cleanup_script="$repo_root/bin/executable_opencode-afk-cleanup-fixtures"
+if [ ! -x "$cleanup_script" ]; then
+  cleanup_script="$repo_root/bin/opencode-afk-cleanup-fixtures"
+fi
 if [ ! -x "$cleanup_script" ]; then
   echo "[ERROR] fixture cleanup script not found at $cleanup_script" >&2
   exit 1

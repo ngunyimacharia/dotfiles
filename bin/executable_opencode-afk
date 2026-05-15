@@ -71,6 +71,7 @@ BASE_DIR="$(pwd)"
 LOG_DIR="${BASE_DIR}/.scratch/.opencode-afk-logs"
 SENTINEL_DIR="${LOG_DIR}/sentinels"
 MAX_CONCURRENT=3
+RUN_ID="$(date -u '+%Y%m%dT%H%M%SZ')-$$"
 
 get_ticket_status() {
   ticket_file="$1"
@@ -95,7 +96,7 @@ get_ticket_status() {
 
 is_terminal_status() {
   case "$1" in
-    *done*|*closed*|*complete*|*resolved*) return 0 ;;
+    *done*|*closed*|*complete*|*resolved*|*ready-for-human*) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -369,7 +370,7 @@ mark_ticket_done() {
 
   if awk '
     tolower(\$0) ~ /^status:[[:space:]]*/ {
-      print "Status: done"
+      print "Status: ready-for-human"
       updated = 1
       next
     }
@@ -393,7 +394,7 @@ mark_ticket_done() {
       next
     }
     in_status && !status_written {
-      print "done"
+      print "ready-for-human"
       status_written = 1
       in_status = 0
       next
@@ -401,7 +402,7 @@ mark_ticket_done() {
     { print }
     END {
       if (in_status && !status_written) {
-        print "done"
+        print "ready-for-human"
       }
     }
   ' "\$TICKET" > "\$tmpfile"
@@ -420,6 +421,8 @@ ticket_content=\$(cat "\$TICKET")
 prompt=\$(cat "$PROMPT_FILE")
 commits=\$(cat "\$COMMITS_FILE")
 model="$MODEL"
+issue_ref="\${ISSUE_REF}"
+run_id="\${RUN_ID}"
 
 full_prompt="You are working in AFK (Away From Keyboard) mode. Do not ask any questions. Do not stop for confirmation. Implement the ticket and commit your changes when done.
 
@@ -429,6 +432,10 @@ Previous commits for context:
 ---
 
 Ticket file: \${TICKET}
+
+Issue reference: \${issue_ref}
+
+Run/session ID: \${run_id}
 
 \${ticket_content}
 
@@ -480,6 +487,7 @@ while read -r ticket <&3; do
 
   feature_slug=$(basename "$(dirname "$(dirname "$ticket")")")
   issue_name=$(basename "$ticket" .md)
+  issue_ref="${feature_slug}/${issue_name}"
   log_file="${LOG_DIR}/${feature_slug}-${issue_name}.log"
   done_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.done"
   failed_file="${SENTINEL_DIR}/${feature_slug}-${issue_name}.failed"
@@ -506,6 +514,8 @@ START_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
 STREAM_OUTPUT="$stream_output"
 IN_TMUX="$IN_TMUX"
 TMUX_WINDOW_NUM="$TMUX_WINDOW_NUM"
+RUN_ID="$RUN_ID"
+ISSUE_REF="$issue_ref"
 EOF
 
   if [ "$IN_TMUX" = true ]; then
