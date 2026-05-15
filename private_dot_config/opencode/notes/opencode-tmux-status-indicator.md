@@ -19,3 +19,11 @@ Cleanup behavior:
 - There is no documented dedicated plugin shutdown hook.
 - Closest safe cleanup is JS runtime teardown hooks such as `process.on("exit")` plus signal handlers, but async cleanup is not guaranteed.
 - In the probe, `process.exit` fired after `server.instance.disposed`; `beforeExit`, `SIGINT`, and `SIGTERM` did not fire, so stale state remains possible on hard termination.
+
+Validation (2026-05-15):
+- `sh -n bin/executable_opencode-tmux-status` passed.
+- `bin/executable_opencode-tmux-status-fixtures` passed.
+- tmux 3.6a smoke-validated the rendered formats with `#{E:@opencode_status_badge}` in `status-right`, `window-status-format`, and `window-status-current-format`.
+- Two tmux windows rendered different OpenCode states at the same time (`running` and `waiting`).
+- A third window with no status rendered no OpenCode badge.
+- Clearing a window removed the badge from `status-right`.
