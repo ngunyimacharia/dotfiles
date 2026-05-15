@@ -65,13 +65,16 @@ case "\$1" in
           shift 2
           ;;
         *)
-          shift
+          break
           ;;
       esac
     done
     record_call "new-window -n \${window_name}"
     if [ "\$format" = '#{pane_id}' ]; then
       printf '%s\n' "%1"
+    fi
+    if [ \$# -gt 0 ]; then
+      "\$@" >/dev/null 2>&1 &
     fi
     ;;
   pipe-pane)
@@ -195,12 +198,35 @@ assert_not_contains() {
   fi
 }
 
+wait_for_contains() {
+  needle="$1"
+  file_path="$2"
+  timeout_seconds="${3:-10}"
+  start_epoch=$(date +%s)
+
+  while :; do
+    if awk -v needle="$needle" 'BEGIN { found = 0 } { if (index($0, needle) > 0) found = 1 } END { exit found ? 0 : 1 }' "$file_path"; then
+      return 0
+    fi
+
+    now=$(date +%s)
+    if [ $((now - start_epoch)) -ge "$timeout_seconds" ]; then
+      echo "[ERROR] timed out waiting for: $needle" >&2
+      echo "[ERROR] in file: $file_path" >&2
+      exit 1
+    fi
+
+    sleep 1
+  done
+}
+
 echo "[INFO] Running tmux behavior verification..."
 
 sh -n "$script_path"
 
 output_log="$tmp_root/tmux-run.log"
 first_meta="$temp_root/.scratch/.opencode-afk-logs/sentinels/tmux-behavior-01-first-ticket.meta"
+second_meta="$temp_root/.scratch/.opencode-afk-logs/sentinels/tmux-behavior-02-second-ticket.meta"
 generated_helper="$temp_root/.scratch/.opencode-afk-logs/sentinels/_run-ticket.sh"
 : > "$tmux_calls"
 : > "$opencode_calls"
@@ -210,12 +236,16 @@ generated_helper="$temp_root/.scratch/.opencode-afk-logs/sentinels/_run-ticket.s
 ) > "$output_log" 2>&1 || true
 
 assert_contains "Selected 2 AFK ticket(s):" "$output_log"
+wait_for_contains "new-window -n afk:1" "$tmux_calls"
+wait_for_contains "new-window -n afk:2" "$tmux_calls"
 assert_contains "new-window -n afk:1" "$tmux_calls"
 assert_contains "new-window -n afk:2" "$tmux_calls"
 assert_not_contains "new-window -n afk:tmux-behavior" "$tmux_calls"
 assert_not_contains "new-window -n afk:01-first-ticket" "$tmux_calls"
-assert_contains 'ISSUE_REF="tmux-behavior/01-first-ticket"' "$first_meta"
-assert_contains 'RUN_ID="' "$first_meta"
+assert_contains "ISSUE_REF='tmux-behavior/01-first-ticket'" "$first_meta"
+assert_contains "ISSUE_REF='tmux-behavior/02-second-ticket'" "$second_meta"
+assert_contains "RUN_ID='" "$first_meta"
+assert_contains "RUN_ID='" "$second_meta"
 assert_contains 'Issue reference: \${issue_ref}' "$generated_helper"
 assert_contains 'Run/session ID: \${run_id}' "$generated_helper"
 
