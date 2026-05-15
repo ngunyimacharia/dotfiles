@@ -1,0 +1,53 @@
+#!/bin/sh
+
+set -eu
+
+usage() {
+  echo "Usage: opencode-afk-cleanup-fixtures <fixture-run-dir>" >&2
+}
+
+case "${1:-}" in
+  ""|-h|--help)
+    usage
+    exit 1
+    ;;
+esac
+
+run_dir=$1
+case "$run_dir" in
+  /tmp/*|/var/tmp/*)
+    ;;
+  *)
+    echo "[ERROR] fixture run dir must be under /tmp or /var/tmp: $run_dir" >&2
+    exit 1
+    ;;
+esac
+
+if [ ! -d "$run_dir" ]; then
+  echo "[ERROR] fixture run dir does not exist: $run_dir" >&2
+  exit 1
+fi
+
+pid_file="$run_dir/pids"
+tmux_windows_file="$run_dir/tmux-windows"
+
+if [ -f "$pid_file" ]; then
+  while IFS= read -r pid; do
+    [ -z "$pid" ] && continue
+    case "$pid" in
+      *[!0-9]*)
+        echo "[WARN] skipping non-numeric pid: $pid" >&2
+        continue
+        ;;
+    esac
+
+    kill "$pid" 2>/dev/null || true
+  done < "$pid_file"
+fi
+
+if [ -f "$tmux_windows_file" ] && command -v tmux >/dev/null 2>&1; then
+  while IFS= read -r window_name; do
+    [ -z "$window_name" ] && continue
+    tmux kill-window -t "$window_name" 2>/dev/null || true
+  done < "$tmux_windows_file"
+fi
