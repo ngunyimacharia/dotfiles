@@ -54,6 +54,10 @@ export NVM_DIR="$HOME/.nvm"
 # opencode
 export PATH=$HOME/.opencode/bin:$PATH
 
+# Bun (JavaScript runtime) installation
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 # Android SDK configuration
 {{ if eq .chezmoi.os "linux" -}}
 export ANDROID_SDK_ROOT=/home/raven/Android/Sdk

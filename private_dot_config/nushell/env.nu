@@ -39,6 +39,8 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend [
     ($env.HOME | path join ".opencode" "bin")
     ($env.ANDROID_SDK_ROOT | path join "emulator")
     ($env.ANDROID_SDK_ROOT | path join "platform-tools")
+    # Bun (JavaScript runtime)
+    ($env.HOME | path join ".bun" "bin")
 ])
 
 # 1Password SSH agent
@@ -46,6 +48,7 @@ $env.SSH_AUTH_SOCK = ($env.HOME | path join ".1password" "agent.sock")
 
 # NVM Directory
 $env.NVM_DIR = ($env.HOME | path join ".nvm")
+$env.BUN_INSTALL = ($env.HOME | path join ".bun")
 
 # Starship prompt
 try {
