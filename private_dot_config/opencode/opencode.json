@@ -2,7 +2,6 @@
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": true,
   "plugin": [
-    "./tmux-status.js",
     "@mohak34/opencode-notifier@latest",
     "@plannotator/opencode@latest"
   ],
