@@ -8,6 +8,6 @@ Before creating any commit, determine and run every relevant project quality che
 
 - Formatters and linters such as Prettier, Pint, PHP CS Fixer, ESLint, or equivalent project-specific tools.
 - Static analysis such as PHPStan, Larastan, TypeScript checks, or equivalent project-specific tools.
-- Tests affected by the changes. Prefer the narrowest reliable scope, but if the repo's workflow or tooling indicates broader coverage is required, run that broader suite.
+- Tests affected by the changes. Always use the narrowest reliable test scope. Never run the entire test suite.
 
 Do not guess when the repo defines the commands explicitly. Prefer the exact project commands from scripts, composer scripts, make targets, task runners, or workflow files. If a required check fails, stop, report the failure, and do not commit until all required checks pass.
