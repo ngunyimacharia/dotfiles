@@ -32,7 +32,7 @@ Examples:
 
 ### Commit Authorship
 
-- Do not add "opencode" as a co-author in commit messages
+- Do not add "{{ .tool }}" as a co-author in commit messages
 - Keep commits clean without AI tool attribution
 
 ## General Guidelines
@@ -40,4 +40,3 @@ Examples:
 - Use descriptive variable names and clear comments
 - Follow existing patterns in similar files
 - Test changes before committing to avoid breaking functionality
-
