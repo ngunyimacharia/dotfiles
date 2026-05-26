@@ -616,6 +616,14 @@ else
   curl -fsSL https://opencode.ai/install | bash
 fi
 
+# Install Kimi Code CLI
+which kimi >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  echo "Kimi Code CLI already installed."
+else
+  curl -L code.kimi.com/install.sh | bash
+fi
+
 # Install Starship
 which starship >/dev/null 2>&1
 if [ $? -eq 0 ]; then
