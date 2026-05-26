@@ -64,3 +64,13 @@ try {
         zoxide init nushell --cmd cd | save -f ~/.zoxide.nu
     }
 } catch { |e| }
+
+# Load local ~/.env file (Claude Code + Kimi configuration)
+let env_file = ($env.HOME | path join ".env")
+if ($env_file | path exists) {
+    open $env_file | lines
+    | where {|it| not ($it | str starts-with "#") and ($it | str trim) != "" }
+    | parse "{key}={value}"
+    | transpose -r -d
+    | load-env
+}
