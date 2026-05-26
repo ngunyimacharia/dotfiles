@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": true,
+  "plugin": [
+    "@mohak34/opencode-notifier@latest",
+    "@plannotator/opencode@latest"
+  ],
+  {{ template "private_dot_config/mcp_servers.json" dict "format" "opencode" }},
+  "theme": "everforest"
+}
