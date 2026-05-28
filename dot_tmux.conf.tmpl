@@ -1,6 +1,11 @@
 set -g mouse on # Enable mouse usage
+{{ if eq .chezmoi.os "darwin" -}}
+set -g default-shell /bin/zsh
+set-environment -g SHELL /bin/zsh
+{{ else -}}
 set -g default-shell /bin/bash
 set-environment -g SHELL /bin/bash
+{{ end }}
 set -g base-index 1 # Start windows at 1
 set -g renumber-windows on # Renumber windows when a window is closed
 setw -g mode-keys vi # Use vi keybindings in copy mode

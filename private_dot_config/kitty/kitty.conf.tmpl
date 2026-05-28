@@ -25,7 +25,11 @@ color14 #83c092
 color15 #d3c6aa
 
 # Keep existing configuration from your template
+{{ if eq .chezmoi.os "darwin" -}}
+shell /bin/zsh
+{{ else -}}
 shell /bin/bash
+{{ end }}
 
 font_family Fira Code
 font_size 16.0
