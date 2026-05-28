@@ -1,5 +1,20 @@
 {{ if eq .chezmoi.os "darwin" -}}
 .local
+bin/handy-gnome-hotkey
+gnome-setup.sh
+handy-gnome-hotkey.sh
+setup-inotify-limits.sh
+setup-syncthing.sh
+ubuntu_install-packages.sh
+run_once_setup-inotify-limits.sh
+run_once_setup-syncthing.sh
+run_onchange_gnome-setup.sh
+run_onchange_handy-gnome-hotkey.sh
+run_onchange_ubuntu_install-packages.sh
+{{ else -}}
+Library
+darwin_install-packages.sh
+run_onchange_darwin_install-packages.sh
 {{ end -}}
 
 .config/nvim/lazy-lock.json
