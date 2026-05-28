@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install TUI Applications (Nushell-compatible version)
+# Install TUI Applications
 # Usage: ./tui-apps-install.sh
 
 set -e
@@ -69,4 +69,4 @@ echo ""
 echo "💡 These tools are now available as native commands"
 echo "🌲 Configuration files created in ~/.config/tui-apps/"
 echo ""
-echo "⚠️  Note: No aliases created since Nushell already provides superior functionality"
+echo "💡 Run tui-apps-setup.sh to add Bash aliases and environment variables."
