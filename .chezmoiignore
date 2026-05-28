@@ -1,4 +1,5 @@
 {{ if eq .chezmoi.os "darwin" -}}
+.bashrc
 .local
 bin/handy-gnome-hotkey
 gnome-setup.sh
@@ -12,6 +13,7 @@ run_onchange_gnome-setup.sh
 run_onchange_handy-gnome-hotkey.sh
 run_onchange_ubuntu_install-packages.sh
 {{ else -}}
+.zshrc
 Library
 darwin_install-packages.sh
 run_onchange_darwin_install-packages.sh

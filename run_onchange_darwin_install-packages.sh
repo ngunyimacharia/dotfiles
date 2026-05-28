@@ -317,16 +317,16 @@ else
   echo "zoxide is already installed."
 fi
 
-# Configure Bash as default shell
-BASH_PATH="/bin/bash"
-if [ -f "$BASH_PATH" ]; then
-  if [ "$SHELL" != "$BASH_PATH" ]; then
-    echo "Changing default shell to Bash..."
-    chsh -s "$BASH_PATH"
-    echo "Shell changed to Bash. Please restart your terminal or log out/in for changes to take effect."
+# Configure Zsh as default shell
+ZSH_PATH="/bin/zsh"
+if [ -f "$ZSH_PATH" ]; then
+  if [ "$SHELL" != "$ZSH_PATH" ]; then
+    echo "Changing default shell to Zsh..."
+    chsh -s "$ZSH_PATH"
+    echo "Shell changed to Zsh. Please restart your terminal or log out/in for changes to take effect."
   else
-    echo "Bash is already the default shell."
+    echo "Zsh is already the default shell."
   fi
 else
-  echo "Bash binary not found at expected location."
+  echo "Zsh binary not found at expected location."
 fi
