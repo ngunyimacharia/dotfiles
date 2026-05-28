@@ -35,15 +35,14 @@ Fedora support was removed due to network connectivity issues caused by Valet Li
 
 ## Features
 
-### Modern Shell Experience
+### Modern Bash Experience
 
-This repository uses **Nushell** as the default shell, providing:
+This repository uses **Bash** as the default shell, providing:
 
-- **Structured data pipelines**: Work with tables, records, and lists natively
-- **Better error messages**: Clear, actionable error reporting
-- **Cross-platform consistency**: Same shell experience on Linux and macOS
-- **Type-aware completions**: Smart autocompletion based on data types
-- **Integrated tooling**: Starship prompt and Zoxide navigation built-in
+- **Cross-platform compatibility**: Same shell baseline on Linux and macOS
+- **Integrated tooling**: Starship prompt and Zoxide navigation
+- **Development environment setup**: Laravel, Android, Bun, Composer, Go, and Rust paths
+- **TUI aliases**: Optional bat, lsd, and btop aliases when installed
 
 ### Cross-Platform Configuration
 
@@ -63,11 +62,10 @@ This repository uses **Nushell** as the default shell, providing:
 
 #### Terminal & Shell
 
-- **Nushell**: Modern shell with structured data pipelines as default shell
-- **Kitty**: GPU-accelerated terminal emulator configured to use Nushell
-- **Starship**: Fast, minimal prompt with Nushell integration
-- **Zoxide**: Smart directory jumping integrated with Nushell
-- **Bash**: Fallback shell configuration via `.bashrc` template for compatibility
+- **Bash**: Default shell configuration via `.bashrc` template
+- **Kitty**: GPU-accelerated terminal emulator configured to use Bash
+- **Starship**: Fast, minimal prompt with Bash integration
+- **Zoxide**: Smart directory jumping integrated with Bash
 
 #### Version Control
 
@@ -160,9 +158,6 @@ These scripts:
 │       └── icons/              # Custom icons
 ├── private_dot_config/         # User configuration files
 │   ├── kitty/                 # Kitty terminal config
-│   ├── nushell/               # Nushell shell configuration
-│   │   ├── config.nu          # Shell config and aliases
-│   │   └── env.nu.tmpl        # Environment variables (templated)
 │   ├── nvim/                  # Neovim configuration
 │   ├── opencode/              # OpenCode AI assistant config
 │   └── starship.toml          # Starship prompt config
@@ -175,9 +170,7 @@ These scripts:
 
 ### Shell
 
-- `nushell/config.nu`: Nushell configuration with aliases and keybindings
-- `nushell/env.nu`: Nushell environment variables (templated)
-- `.bashrc`: Fallback bash configuration (templated)
+- `.bashrc`: Bash configuration with aliases, environment variables, Starship, and zoxide
 
 ### Editors
 
@@ -186,8 +179,8 @@ These scripts:
 
 ### Terminal & Shell
 
-- Nushell: Modern shell with structured data support
-- Kitty: Modern GPU-accelerated terminal configured with Nushell
+- Bash: Default interactive shell configuration
+- Kitty: Modern GPU-accelerated terminal configured with Bash
 - Starship: Minimal, fast shell prompt
 - Zoxide: Smart directory navigation
 
@@ -206,30 +199,23 @@ The `.chezmoiignore` file ensures platform-appropriate configuration:
 
 ## Development Workflows
 
-### Nushell Usage
+### Bash Usage
 
-Nushell is configured as the default shell in Kitty. Key features:
+Bash is configured as the default shell in Kitty. Key features:
 
 **Smart Navigation:**
 
-```nushell
+```bash
 z project  # Jump to frequently used directories with zoxide
 cd ..      # Traditional navigation still works
 ```
 
 **Laravel Aliases:**
 
-```nushell
+```bash
 a migrate          # php artisan migrate
 amfs               # php artisan migrate:fresh --seed
 sail up            # Laravel Sail
-```
-
-**Structured Data:**
-
-```nushell
-ls | where size > 1mb | sort-by modified  # Filter and sort files
-docker ps | to json                        # Convert to JSON
 ```
 
 **Environment:**
