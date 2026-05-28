@@ -110,8 +110,3 @@ fi
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init bash --cmd cd)"
 fi
-
-# Laravel Cloud CLI completions
-if command -v cloud >/dev/null 2>&1; then
-  eval "$(cloud completions bash --print)"
-fi
