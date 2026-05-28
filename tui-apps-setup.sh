@@ -37,20 +37,17 @@ fi
 # Create aliases for enhanced terminal experience
 echo "Creating TUI aliases..."
 
-# Add to Nushell config if exists
-NU_CONFIG="$HOME/.config/nushell/config.nu"
-if [ -f "$NU_CONFIG" ]; then
-    echo "source tui-apps/config.nu" >> "$NU_CONFIG"
-fi
-
 # Add to Bash config if exists
 BASH_CONFIG="$HOME/.bashrc"
 if [ -f "$BASH_CONFIG" ]; then
     echo "" >> "$BASH_CONFIG"
     echo "# TUI Applications Aliases" >> "$BASH_CONFIG"
-    echo "alias cat='bat'" >> "$BASH_CONFIG"
-    echo "alias ls='lsd'" >> "$BASH_CONFIG"
-    echo "alias top='btop'" >> "$BASH_CONFIG"
+    echo "command -v bat >/dev/null 2>&1 && alias cat='bat'" >> "$BASH_CONFIG"
+    echo "command -v lsd >/dev/null 2>&1 && alias ls='lsd'" >> "$BASH_CONFIG"
+    echo "command -v btop >/dev/null 2>&1 && alias top='btop'" >> "$BASH_CONFIG"
+    echo "export BAT_CONFIG_PATH=\"$HOME/.config/tui-apps/bat.conf\"" >> "$BASH_CONFIG"
+    echo "export LSD_CONFIG_FILE=\"$HOME/.config/tui-apps/lsd.yaml\"" >> "$BASH_CONFIG"
+    echo "export BTOP_CONFIG=\"$HOME/.config/tui-apps/btop.conf\"" >> "$BASH_CONFIG"
 fi
 
 echo ""
