@@ -25,11 +25,7 @@ color14 #83c092
 color15 #d3c6aa
 
 # Keep existing configuration from your template
-{{- if eq .chezmoi.os "darwin" }}
-shell /opt/homebrew/bin/nu
-{{- else if eq .chezmoi.os "linux" }}
-shell /home/raven/.local/bin/nu
-{{- end }}
+shell /bin/bash
 
 font_family Fira Code
 font_size 16.0
