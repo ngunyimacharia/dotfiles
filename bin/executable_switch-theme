@@ -1,80 +1,138 @@
-#!/bin/bash
+#!/bin/sh
 
-# Everforest Theme Switcher for Chezmoi Dotfiles
-# Usage: ./bin/switch-theme [theme-name]
+set -eu
 
-set -e
+MODE_FILE="$HOME/.current_theme_mode"
+KITTY_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
+KITTY_CURRENT_THEME="$KITTY_CONFIG_DIR/theme-current.conf"
+KITTY_SOCKET="unix:/tmp/kitty-theme"
+TMUX_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
 
-THEME_DIR="$HOME/.local/share/chezmoi/themes"
-CURRENT_THEME_FILE="$HOME/.local/share/chezmoi/.current_theme"
-AVAILABLE_THEMES=$(ls "$THEME_DIR" | grep -v "current_theme")
-
-# Function to show usage
 show_usage() {
-    echo "Usage: $0 [theme-name]"
-    echo ""
-    echo "Available themes:"
-    for theme in $AVAILABLE_THEMES; do
-        if [ "$theme" = "$(cat "$CURRENT_THEME_FILE" 2>/dev/null)" ]; then
-            echo "  $theme (current)"
-        else
-            echo "  $theme"
-        fi
-    done
-    echo ""
-    echo "Example: $0 everforest"
+  echo "Usage: ${0##*/} [dark|light|auto|status]"
+  echo ""
+  echo "Examples:"
+  echo "  ${0##*/} auto"
+  echo "  ${0##*/} light"
+  echo "  ${0##*/} dark"
 }
 
-# Function to apply theme
-apply_theme() {
-    local theme="$1"
-    
-    if [ ! -d "$THEME_DIR/$theme" ]; then
-        echo "Error: Theme '$theme' not found"
-        echo "Available themes: $AVAILABLE_THEMES"
-        exit 1
+detect_os_mode() {
+  if [ "$(uname)" = "Darwin" ]; then
+    if defaults read -g AppleInterfaceStyle 2>/dev/null | grep -qi "dark"; then
+      echo "dark"
+    else
+      echo "light"
     fi
-    
-    echo "Switching to $theme theme..."
-    
-    # Save current theme
-    echo "$theme" > "$CURRENT_THEME_FILE"
-    
-    # Update Neovim configuration
-    if [ -f "$THEME_DIR/$theme/neovim.lua" ]; then
-        echo "Updating Neovim theme..."
-        cp "$THEME_DIR/$theme/neovim.lua" "$HOME/.local/share/chezmoi/private_dot_config/nvim/lua/plugins/theme.lua"
+    return
+  fi
+
+  if command -v gsettings >/dev/null 2>&1; then
+    if gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | grep -q "prefer-dark"; then
+      echo "dark"
+    else
+      echo "light"
     fi
-    
-    # Update Kitty configuration
-    if [ -f "$THEME_DIR/$theme/kitty.conf" ]; then
-        echo "Updating Kitty theme..."
-        cp "$THEME_DIR/$theme/kitty.conf" "$HOME/.local/share/chezmoi/private_dot_config/kitty/kitty.conf.tmpl"
-    fi
-    
-    # Update Starship configuration
-    if [ -f "$THEME_DIR/$theme/starship.toml" ]; then
-        echo "Updating Starship theme..."
-        cp "$THEME_DIR/$theme/starship.toml" "$HOME/.local/share/chezmoi/private_dot_config/starship.toml"
-    fi
-    
-    # Apply changes with chezmoi
-    echo "Applying changes with chezmoi..."
-    chezmoi apply
-    
-    echo "Theme '$theme' applied successfully!"
-    echo "Please restart your terminal and any running applications to see the changes."
+    return
+  fi
+
+  if [ -f "$MODE_FILE" ]; then
+    cat "$MODE_FILE"
+  else
+    echo "dark"
+  fi
 }
 
-# Main logic
-case "${1:-}" in
+resolve_mode() {
+  case "${1:-}" in
+    dark|light)
+      echo "$1"
+      ;;
+    auto)
+      detect_os_mode
+      ;;
     "")
-        show_usage
-        ;;
+      show_usage
+      exit 0
+      ;;
     --help|-h)
-        show_usage
-        ;;
+      show_usage
+      exit 0
+      ;;
+    status)
+      if [ -f "$MODE_FILE" ]; then
+        echo "Current theme mode: $(cat "$MODE_FILE")"
+      else
+        echo "Current theme mode: unset"
+      fi
+      exit 0
+      ;;
     *)
-        apply_theme "$1"
-        ;;
-esac
+      echo "Error: expected dark, light, auto, or status" >&2
+      show_usage >&2
+      exit 1
+      ;;
+  esac
+}
+
+reload_kitty() {
+  if ! command -v kitty >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if kitty @ --to "$KITTY_SOCKET" set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
+    echo "Updated running kitty windows."
+    return 0
+  fi
+
+  if kitty @ set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
+    echo "Updated current kitty window."
+    return 0
+  fi
+
+  echo "Kitty theme file updated. Restart kitty if no running windows changed."
+}
+
+reload_tmux() {
+  if ! command -v tmux >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if ! tmux has-session >/dev/null 2>&1; then
+    return 0
+  fi
+
+  tmux source-file "$TMUX_CONFIG_DIR/everforest-$mode.conf" >/dev/null 2>&1 || true
+  tmux_fg="$(tmux show-option -gqv @everforest_fg)"
+  tmux_bg0="$(tmux show-option -gqv @everforest_bg0)"
+  tmux_bg2="$(tmux show-option -gqv @everforest_bg2)"
+  tmux_green="$(tmux show-option -gqv @everforest_green)"
+
+  tmux set-option -g status-style "fg=$tmux_fg,bg=$tmux_bg0,default" >/dev/null 2>&1 || true
+  tmux set-option -g status-right "#[fg=$tmux_bg2,bg=$tmux_bg0]#[fg=$tmux_fg,bg=$tmux_bg2] %Y-%m-%d #[fg=$tmux_green,bg=$tmux_bg2]#[fg=$tmux_bg0,bg=$tmux_green] %H:%M " >/dev/null 2>&1 || true
+  if [ -f "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" ]; then
+    "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" >/dev/null 2>&1 || true
+  fi
+  tmux refresh-client -S >/dev/null 2>&1 || true
+  echo "Updated tmux status theme."
+}
+
+mode="$(resolve_mode "${1:-}")"
+kitty_source="$KITTY_CONFIG_DIR/theme-everforest-$mode.conf"
+
+if [ ! -f "$kitty_source" ]; then
+  echo "Error: missing $kitty_source" >&2
+  echo "Run chezmoi apply first so the managed kitty theme files exist." >&2
+  exit 1
+fi
+
+mkdir -p "$KITTY_CONFIG_DIR"
+cp "$kitty_source" "$KITTY_CURRENT_THEME"
+printf '%s\n' "$mode" > "$MODE_FILE"
+
+reload_kitty
+reload_tmux
+
+echo "Theme mode set to $mode."
+echo "Neovim will use it on next start; run :ThemeSync in an existing Neovim session."
+echo "Restart opencode if its TUI does not repaint from the terminal palette."

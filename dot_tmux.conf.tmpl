@@ -27,7 +27,10 @@ set -g @plugin 'omerxx/tmux-sessionx'
 
 set -g @sessionx-bind 'o'
 set -g @sessionx-fzf-builtin-tmux 'on'
-set -g @sessionx-additional-options "--color=fg:#d3c6aa,bg:#2d353b,hl:#dbbc7f,fg+:#d3c6aa,bg+:#343f44,hl+:#dbbc7f,info:#7a8478,prompt:#a7c080,pointer:#e67e80,marker:#e69875,spinner:#7fbbb3,header:#859289,border:#475258,separator:#475258,scrollbar:#7a8478,gutter:#2d353b,query:#d3c6aa"
+
+if-shell 'test "$(cat ~/.current_theme_mode 2>/dev/null)" = light' \
+  'source-file ~/.config/tmux/everforest-light.conf' \
+  'source-file ~/.config/tmux/everforest-dark.conf'
 
 # Automatic continuum boot on Start
 set -g @continuum-boot 'on'
@@ -39,45 +42,10 @@ if "test ! -d ~/.tmux/plugins/tpm" \
 # Initialize tpm
 run '~/.tmux/plugins/tpm/tpm'
 
-## COLORSCHEME: everforest dark medium
-set -g @everforest_bg_dim '#232a2e'
-set -g @everforest_bg0 '#2d353b'
-set -g @everforest_bg1 '#343f44'
-set -g @everforest_bg2 '#3d484d'
-set -g @everforest_bg3 '#475258'
-set -g @everforest_bg4 '#4f585e'
-set -g @everforest_bg5 '#56635f'
-set -g @everforest_bg_visual '#543a48'
-set -g @everforest_bg_red '#514045'
-set -g @everforest_bg_green '#425047'
-set -g @everforest_bg_blue '#3a515d'
-set -g @everforest_bg_yellow '#4d4c43'
-
-set -g @everforest_fg '#d3c6aa'
-set -g @everforest_red '#e67e80'
-set -g @everforest_orange '#e69875'
-set -g @everforest_yellow '#dbbc7f'
-set -g @everforest_green '#a7c080'
-set -g @everforest_aqua '#83c092'
-set -g @everforest_blue '#7fbbb3'
-set -g @everforest_purple '#d699b6'
-set -g @everforest_grey0 '#7a8478'
-set -g @everforest_grey1 '#859289'
-set -g @everforest_grey2 '#9da9a0'
-set -g @everforest_statusline1 '#a7c080'
-set -g @everforest_statusline2 '#d3c6aa'
-set -g @everforest_statusline3 '#e67e80'
-
 set-option -g status "on"
 set -g status-interval 2
 
-set-option -g status-fg '#d3c6aa' # fg (No idea why I can't use variables here)
-set-option -g status-bg '#2d353b' # bg0
-
 set-option -g mode-style fg='#{@everforest_purple}',bg='#{@everforest_bg_red}' # fg=purple, bg=bg_visual
-
-# default statusbar colors
-set-option -g status-style fg='#{@everforest_fg}',bg='#{@everforest_bg_dim}',default # fg=fg bg=bg_dim
 
 # ---- Windows ----
 # default window title colors
@@ -120,7 +88,7 @@ set -g status-left '#[fg=#{@everforest_bg_dim},bg=#{@everforest_green},bold] #S 
 set-option -g status-right-style none
 set -g status-right-length 150
 
-set -g status-right '#[fg=#{@everforest_bg2}]#[fg=#{@everforest_fg},bg=#{@everforest_bg2}] %Y-%m-%d #[fg=#{@everforest_green},bg=#{@everforest_bg2}]#[fg=#{@everforest_bg_dim},bg=#{@everforest_green}] %H:%M '
+set -g status-right '#[fg=#{@everforest_bg2},bg=#{@everforest_bg0}]#[fg=#{@everforest_fg},bg=#{@everforest_bg2}] %Y-%m-%d #[fg=#{@everforest_green},bg=#{@everforest_bg2}]#[fg=#{@everforest_bg0},bg=#{@everforest_green}] %H:%M '
 
 set -g window-status-separator '#[fg=#{@everforest_grey2},bg=#{@everforest_bg0}] '
 set -g window-status-format "#[fg=#{@everforest_grey0},bg=#{@everforest_bg0}] #I  #[fg=#{@everforest_grey0},bg=#{@everforest_bg0}]#W#[fg=#{@everforest_grey0},bg=#{@everforest_bg0}] "
