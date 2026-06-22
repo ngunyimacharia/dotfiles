@@ -1,28 +1,5 @@
-# Everforest theme for Kitty
-
-# Everforest color palette
-background #2d353b
-foreground #d3c6aa
-
-# Black, Red, Green, Yellow, Blue, Magenta, Cyan, White
-color0 #2d353b
-color1 #e67e80
-color2 #a7c080
-color3 #dbbc7f
-color4 #7fbbb3
-color5 #d699b6
-color6 #83c092
-color7 #d3c6aa
-
-# Bright colors
-color8 #9da9a0
-color9 #e67e80
-color10 #a7c080
-color11 #dbbc7f
-color12 #7fbbb3
-color13 #d699b6
-color14 #83c092
-color15 #d3c6aa
+# Shared theme is managed by ~/bin/theme or ~/bin/switch-theme.
+include theme-current.conf
 
 # Keep existing configuration from your template
 {{ if eq .chezmoi.os "darwin" -}}
@@ -35,6 +12,9 @@ font_family Fira Code
 font_size 16.0
 adjust_line_height 2
 
+allow_remote_control socket-only
+listen_on unix:/tmp/kitty-theme
+
 # Tab bar styling
 tab_bar_min_tabs            2
 tab_bar_edge                bottom
@@ -42,13 +22,6 @@ tab_bar_style               powerline
 tab_powerline_style         slanted
 tab_title_template          {title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}
 
-# Colors
-active_tab_foreground   #2d353b
-active_tab_background   #a7c080
-inactive_tab_foreground #d3c6aa
-inactive_tab_background #3a4148
-
 # Spacing
 tab_bar_margin_height 2.0
 tab_bar_margin_width 8.0
-tab_bar_background #2d353b
