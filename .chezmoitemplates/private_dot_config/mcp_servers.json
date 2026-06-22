@@ -24,4 +24,16 @@
     }
   }
 }
+{{- else if eq .format "claude" -}}
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "ray": {
+      "url": "http://127.0.0.1:2411/mcp"
+    }
+  }
+}
 {{- end -}}
