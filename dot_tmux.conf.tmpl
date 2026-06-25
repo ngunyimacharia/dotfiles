@@ -1,4 +1,9 @@
 set -g mouse on # Enable mouse usage
+
+# Allow terminal apps to copy to the system clipboard through tmux.
+set -g set-clipboard on
+set -g allow-passthrough on
+
 {{ if eq .chezmoi.os "darwin" -}}
 set -g default-shell /bin/zsh
 set-environment -g SHELL /bin/zsh
