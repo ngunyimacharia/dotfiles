@@ -140,7 +140,7 @@ These scripts:
 │   ├── opencode/              # OpenCode AI assistant config
 │   └── starship.toml          # Starship prompt config
 ├── systemd/                   # Systemd service files
-│   └── syncthing.service      # Syncthing user service
+│   └── syncthing@.service     # Syncthing boot service template
 └── run_*.sh                   # Automated setup scripts
 ```
 
@@ -240,8 +240,7 @@ sudo wg-quick down wg0
 Systemd service is automatically configured on Linux:
 
 ```bash
-systemctl --user start syncthing
-systemctl --user enable syncthing
+sudo systemctl enable --now syncthing@$USER.service
 ```
 
 ## Updating
