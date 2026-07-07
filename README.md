@@ -35,8 +35,20 @@ This repository uses **Bash** as the default shell, providing:
 - Full LazyVim configuration with custom plugins
 - PHP/Laravel development support (Blade formatting, Laravel.nvim)
 - Code formatting via conform.nvim and null-ls
-- AI assistance with OpenCode integration
+- AI assistance with Claude Code (`claudecode.nvim`), OpenCode (`opencode.nvim`), and terminal harness integration
 - Custom keymaps and autocmds
+
+#### AI Coding Harnesses
+
+This repository installs and configures multiple terminal-first AI coding agents:
+
+- **Kimi Code CLI** — `kimi`
+- **Claude Code** — `claude-code` (also available inside Neovim via `claudecode.nvim`)
+- **OpenAI Codex** — `codex`
+- **OpenCode** — `opencode`
+- **Pi** — `@mariozechner/pi-coding-agent`
+
+Each harness gets its own `AGENTS.md` under `~/.config/<harness>/` (or `~/.kimi/`, `~/.claude/`, `~/.codex/`) generated from shared templates. MCP servers (`context7`, `ray`) are wired for harnesses that support them.
 
 #### Terminal & Shell
 

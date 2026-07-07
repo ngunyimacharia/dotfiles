@@ -1,5 +1,13 @@
 # Global Agent Guidelines
 
+This repository is configured for the following AI coding harnesses. All harnesses share these guidelines unless a harness-specific file overrides them.
+
+- `kimi` — Kimi Code CLI
+- `claude` — Claude Code (via claude-code CLI and claudecode.nvim)
+- `codex` — OpenAI Codex CLI
+- `opencode` — OpenCode CLI
+- `pi` — Pi terminal coding harness (`@mariozechner/pi-coding-agent`)
+
 ## Commit Guidelines
 
 ### Conventional Commits
@@ -40,3 +48,7 @@ Examples:
 - Use descriptive variable names and clear comments
 - Follow existing patterns in similar files
 - Test changes before committing to avoid breaking functionality
+
+## Review Guidelines
+
+- For code reviews, load the Hunk skill from `/usr/local/lib/node_modules/hunkdiff/skills/hunk-review/SKILL.md` and use it for the review.

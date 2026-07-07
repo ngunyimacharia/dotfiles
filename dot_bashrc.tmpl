@@ -15,6 +15,7 @@ case "$TERM" in
 esac
 
 # Path edits
+export PATH="$HOME/.npm-global/bin:$PATH"
 export PATH="$PATH:$HOME/.composer/vendor/bin"
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 {{ if eq .chezmoi.os "darwin" -}}
@@ -40,6 +41,8 @@ export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agen
 # Enhanced Terminal Aliases (via TUI Apps)
 if command -v bat >/dev/null 2>&1; then
   alias cat='bat'
+elif command -v batcat >/dev/null 2>&1; then
+  alias cat='batcat'
 fi
 if command -v lsd >/dev/null 2>&1; then
   alias ls='lsd'
@@ -70,6 +73,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+# Activate the default Node.js version (set via `nvm alias default`)
+command -v nvm >/dev/null 2>&1 && nvm use default --silent
+
 if [ -f "$HOME/.env" ]; then
   set -a
   . "$HOME/.env"
@@ -78,6 +84,23 @@ fi
 
 # opencode
 export PATH=$HOME/.opencode/bin:$PATH
+
+# AI harness convenience aliases
+if command -v kimi >/dev/null 2>&1; then
+  alias k='kimi'
+fi
+if command -v claude >/dev/null 2>&1; then
+  alias cc='claude'
+fi
+if command -v codex >/dev/null 2>&1; then
+  alias cx='codex'
+fi
+if command -v opencode >/dev/null 2>&1; then
+  alias oc='opencode'
+fi
+if command -v pi >/dev/null 2>&1; then
+  alias p='pi'
+fi
 
 # Shared terminal/app theme switcher
 theme() {
