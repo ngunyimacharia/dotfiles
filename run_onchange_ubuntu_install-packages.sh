@@ -688,7 +688,7 @@ else
 fi
 
 # Install bat - Enhanced cat with syntax highlighting
-if ! command -v bat >/dev/null 2>&1; then
+if ! command -v bat >/dev/null 2>&1 && ! command -v batcat >/dev/null 2>&1; then
     echo "Installing bat..."
     BAT_VERSION=$(curl -s "https://api.github.com/repos/sharkdp/bat/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
     curl -Lo bat.tar.gz "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-x86_64-unknown-linux-musl.tar.gz"

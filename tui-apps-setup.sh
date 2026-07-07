@@ -42,7 +42,7 @@ BASH_CONFIG="$HOME/.bashrc"
 if [ -f "$BASH_CONFIG" ]; then
     echo "" >> "$BASH_CONFIG"
     echo "# TUI Applications Aliases" >> "$BASH_CONFIG"
-    echo "command -v bat >/dev/null 2>&1 && alias cat='bat'" >> "$BASH_CONFIG"
+    echo "if command -v bat >/dev/null 2>&1; then alias cat='bat'; elif command -v batcat >/dev/null 2>&1; then alias cat='batcat'; fi" >> "$BASH_CONFIG"
     echo "command -v lsd >/dev/null 2>&1 && alias ls='lsd'" >> "$BASH_CONFIG"
     echo "command -v btop >/dev/null 2>&1 && alias top='btop'" >> "$BASH_CONFIG"
     echo "export BAT_CONFIG_PATH=\"$HOME/.config/tui-apps/bat.conf\"" >> "$BASH_CONFIG"

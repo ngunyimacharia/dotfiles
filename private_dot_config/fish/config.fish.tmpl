@@ -1,4 +1,6 @@
 # Fish config (managed by chezmoi private_dot_config)
+# Add npm global install directory to PATH (sudo-free global installs)
+set -x PATH $HOME/.npm-global/bin $PATH
 # Add Bun install directory to PATH
 set -x BUN_INSTALL $HOME/.bun
 set -x PATH $BUN_INSTALL/bin $PATH

@@ -2,7 +2,11 @@
 # This should be appended to your Bash config
 
 # Enhanced commands for better terminal experience
-command -v bat >/dev/null 2>&1 && alias cat='bat'
+if command -v bat >/dev/null 2>&1; then
+  alias cat='bat'
+elif command -v batcat >/dev/null 2>&1; then
+  alias cat='batcat'
+fi
 command -v lsd >/dev/null 2>&1 && alias ls='lsd'
 command -v btop >/dev/null 2>&1 && alias top='btop'
 
