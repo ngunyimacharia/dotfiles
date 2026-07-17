@@ -4,6 +4,8 @@ set -g mouse on # Enable mouse usage
 set -g set-clipboard on
 set -g allow-passthrough on
 set -g extended-keys on
+# Propagate the Wayland socket to new panes so clipboard tools work (not in tmux's default list)
+set -ga update-environment "WAYLAND_DISPLAY"
 
 {{ if eq .chezmoi.os "darwin" -}}
 set -g default-shell /bin/zsh
