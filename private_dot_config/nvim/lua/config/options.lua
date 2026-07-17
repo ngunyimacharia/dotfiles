@@ -16,3 +16,9 @@ vim.keymap.set("i", "<down>", "<nop>", { noremap = true })
 vim.opt.guicursor = ""
 vim.opt.mouse = ""
 vim.opt.mousescroll = "ver:0,hor:0"
+
+-- tmux panes often lack WAYLAND_DISPLAY; restore it so the clipboard
+-- provider picks wl-copy instead of xclip (which needs stale X auth)
+if not vim.env.WAYLAND_DISPLAY and vim.uv.fs_stat((vim.env.XDG_RUNTIME_DIR or "") .. "/wayland-0") then
+  vim.env.WAYLAND_DISPLAY = "wayland-0"
+end
