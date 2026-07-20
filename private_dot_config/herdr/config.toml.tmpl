@@ -1,0 +1,54 @@
+# Herdr configuration
+# Docs: https://herdr.dev/docs/configuration/
+
+# Skip first-run onboarding.
+onboarding = false
+
+# Everforest (dark soft) — no built-in everforest theme exists, so the
+# palette from ~/.config/tmux/everforest-dark.conf is mapped onto Herdr's
+# color tokens. Note: theme auto_switch only works with built-in theme
+# names, so light/dark switching via switch-theme does not apply here.
+[theme]
+name = "kanagawa" # dark base; every token below overrides it
+[theme.custom]
+accent = "#a7c080" # green
+panel_bg = "#2d353b" # bg0
+surface_dim = "#232a2e" # bg_dim
+surface0 = "#343f44" # bg1
+surface1 = "#3d484d" # bg2
+overlay0 = "#475258" # bg3
+overlay1 = "#56635f" # bg5
+text = "#d3c6aa" # fg
+subtext0 = "#9da9a0" # grey2
+mauve = "#d699b6" # purple
+green = "#a7c080"
+yellow = "#dbbc7f"
+red = "#e67e80"
+blue = "#7fbbb3"
+teal = "#83c092" # aqua
+peach = "#e69875" # orange
+
+[terminal]
+{{ if eq .chezmoi.os "darwin" -}}
+default_shell = "/bin/zsh"
+{{ else -}}
+default_shell = "/bin/bash"
+{{ end -}}
+new_cwd = "follow" # new panes/tabs inherit the current directory (like tmux -c)
+
+[keys]
+prefix = "ctrl+b"
+# tmux-style splits on top of the defaults (prefix+v / prefix+minus)
+split_vertical = ["prefix+v", "prefix+percent"] # side by side, like tmux %
+split_horizontal = ["prefix+minus", "prefix+quote"] # stacked, like tmux "
+# indexed tab/workspace switching (tmux base-index 1 equivalent)
+switch_tab = "prefix+1..9"
+switch_workspace = "prefix+shift+1..9"
+
+[ui]
+accent = "#a7c080" # everforest green for highlights/borders
+
+# Notify in-app when a background agent finishes or needs input.
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
