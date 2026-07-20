@@ -131,6 +131,14 @@ else
   echo "tmux is already installed."
 fi
 
+# Install Herdr
+if ! brew list | grep -q "herdr"; then
+  echo "Installing Herdr..."
+  brew install herdr
+else
+  echo "Herdr is already installed."
+fi
+
 # Install Slack
 if ! brew list --cask | grep -q "slack"; then
   echo "Installing Slack..."

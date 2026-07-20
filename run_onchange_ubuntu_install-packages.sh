@@ -435,6 +435,15 @@ if [ $? -ne 0 ]; then
 else
   echo "tmux is already installed."
 fi
+
+# Install Herdr (not in apt; official installer puts it in ~/.local/bin)
+which herdr >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "Installing Herdr..."
+  curl -fsSL https://herdr.dev/install.sh | sh
+else
+  echo "Herdr is already installed."
+fi
 # Communication tools
 
 if ! dpkg -l | grep "^ii" | grep -q "slack-desktop"; then
