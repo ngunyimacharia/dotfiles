@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plannotator Last"
+  short_description: "Annotate the last assistant response"
+  default_prompt: "Use $plannotator-last to annotate the last assistant response."
