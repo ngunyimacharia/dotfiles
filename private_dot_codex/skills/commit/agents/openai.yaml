@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Changes"
+  short_description: "Validate and commit the current changes"
+  default_prompt: "Use $commit to validate and commit the current changes."

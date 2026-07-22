@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plannotator Review"
+  short_description: "Review current changes interactively"
+  default_prompt: "Use $plannotator-review to review the current changes."
