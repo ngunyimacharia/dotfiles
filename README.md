@@ -48,7 +48,7 @@ This repository installs and configures multiple terminal-first AI coding agents
 - **OpenCode** — `opencode`
 - **Pi** — `@mariozechner/pi-coding-agent`
 
-Each harness gets its own `AGENTS.md` under `~/.config/<harness>/` (or `~/.kimi/`, `~/.claude/`, `~/.codex/`) generated from shared templates. MCP servers (`context7`, `ray`) are wired for harnesses that support them.
+Each harness gets its own global `AGENTS.md` generated from a shared template. Shared commit and Plannotator workflows are also exposed through each harness's native commands, prompts, or skills. MCP servers (`context7`, `ray`) are wired for harnesses that support them.
 
 #### Terminal & Shell
 
