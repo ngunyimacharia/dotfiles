@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Hermes
+Comment=Hermes Agent desktop app (Nous Research)
+Exec=/home/raven/.hermes/hermes-agent/apps/desktop/release/linux-unpacked/Hermes
+Terminal=false
+Type=Application
+Icon=/home/raven/.local/share/icons/hermes.png
+Categories=Development;Utility;
+StartupNotify=true
+StartupWMClass=Hermes
+Keywords=hermes;agent;ai;nous;
