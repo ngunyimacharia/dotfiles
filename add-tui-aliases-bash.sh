@@ -14,7 +14,7 @@ echo "Adding TUI aliases to Bash configuration..."
 if [ -f "$BASH_CONFIG" ]; then
     echo "" >> "$BASH_CONFIG"
     echo "# Enhanced Terminal Aliases (TUI Applications)" >> "$BASH_CONFIG"
-    echo "cat README.md    # Enhanced cat with syntax highlighting" >> "$BASH_CONFIG"
+    echo "bat README.md    # Enhanced cat with syntax highlighting" >> "$BASH_CONFIG"
     echo "lsd -la         # Enhanced ls with icons and colors" >> "$BASH_CONFIG"
     echo "top             # Enhanced system monitoring" >> "$BASH_CONFIG"
     echo "" >> "$BASH_CONFIG"
