@@ -1,0 +1,15 @@
+{
+  "laravel-lsp": {
+    "command": "laravel-lsp",
+    "args": [],
+    "extensionToLanguage": {
+      ".php": "php",
+      ".blade.php": "blade"
+    },
+    "initializationOptions": {
+      "phpEnvironment": "auto"
+    },
+    "restartOnCrash": true,
+    "maxRestarts": 3
+  }
+}

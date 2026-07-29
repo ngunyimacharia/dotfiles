@@ -4,5 +4,11 @@
   "plugin": [
     "@plannotator/opencode@latest"
   ],
+  "lsp": {
+    "laravel-lsp": {
+      "command": ["laravel-lsp"],
+      "extensions": [".php", ".blade.php"]
+    }
+  },
   {{ template "private_dot_config/mcp_servers.json" dict "format" "opencode" }}
 }
