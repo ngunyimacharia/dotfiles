@@ -10,8 +10,8 @@ Use this command when the user wants to move work from their laptop/local agent 
 
 1. Detects the current git repository and branch (or uses the repo/branch the user provides).
 2. Uses AWS SSM to run the launcher on the Hermes host (`i-0328fd8001432219f` in `af-south-1`).
-3. Waits for the Fargate task to become READY.
-4. Returns the pi-web Tailscale URL, task short ID, and kill command.
+3. Launches and correlates the primary Pi session through `hermes-fargate`, optionally sending the task as its initial prompt.
+4. Returns the pi-web Tailscale URL, task short ID, supervision commands, and artifact location.
 
 ## Prerequisites on the laptop
 
@@ -27,24 +27,34 @@ Use this command when the user wants to move work from their laptop/local agent 
    ```
    If the user supplied a repo/branch, use those instead.
 
-2. Send the launch command via SSM:
+2. Verify the branch is clean, has an upstream, and has no unpushed commits. Fargate clones from GitHub, so local-only work will be absent. Ask before committing or pushing.
+
+3. Set `PROMPT` to the coding task, then build shell-safe SSM parameters and launch through the session manager:
    ```bash
+   PARAMETERS=$(python3 - "$REPO_URL" "$REF" "$PROMPT" <<'PY'
+   import json, shlex, sys
+   launch = shlex.join(["/opt/fargate-agent-harness/bin/hermes-fargate", "launch", *sys.argv[1:3], "--prompt", sys.argv[3]])
+   command = "set -a; . /home/ec2-user/.hermes/fargate-env; set +a; exec sudo -u ec2-user --preserve-env=TELEGRAM_BOT_TOKEN,TELEGRAM_CHAT_ID " + launch
+   print(json.dumps({"commands": [command]}))
+   PY
+   )
    aws ssm send-command \
      --region af-south-1 \
      --instance-ids i-0328fd8001432219f \
      --document-name AWS-RunShellScript \
-     --parameters "commands=[\"/opt/fargate-agent-harness/bin/launch-task $REPO_URL $REF\"]" \
+     --parameters "$PARAMETERS" \
      --output text --query 'Command.CommandId'
    ```
 
-3. Poll `aws ssm get-command-invocation` until the status is `Success` or `Failed`.
+4. Poll `aws ssm get-command-invocation` until the status is `Success` or `Failed`. Setup can take up to 15 minutes.
 
-4. Parse the output:
+5. Parse the output:
    - `task: arn:aws:ecs:af-south-1:.../coding-agents/<uuid>`
-   - `READY: https://fargate-<short-id>.<tailnet>.ts.net`
+   - `READY: http://fargate-<short-id>.<tailnet>.ts.net`
+   - `Pi: <pi-session-id>`
 
-5. Report back to the user:
+6. Report back to the user:
    - The READY URL (open in browser/Tailscale phone). It uses HTTP because the Tailnet tunnel is already encrypted by WireGuard.
    - The task short ID.
-   - The kill command: `/kill <short-id>` in Telegram, or `aws ecs stop-task --region af-south-1 --cluster coding-agents --task <arn>`.
-   - Reminder that the session log will be uploaded to `s3://coding-agent-session-logs-526094459325-af-south-1/sessions/<short-id>/session.log` on kill.
+   - Telegram controls: `/inspect`, `/transcript`, `/pi_prompt`, `/abort`, and `/kill` with the short ID.
+   - The artifact prefix `s3://coding-agent-session-logs-526094459325-af-south-1/sessions/<short-id>/`; `manifest.json` is uploaded last and artifacts expire after 30 days.
