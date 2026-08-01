@@ -37,8 +37,16 @@ if command -v composer >/dev/null 2>&1; then
   else
     echo "Laravel Installer is already installed."
   fi
+
+  composer global show "laravel/lsp" >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Installing Laravel LSP..."
+    composer global require laravel/lsp
+  else
+    echo "Laravel LSP is already installed."
+  fi
 else
-  echo "Composer not available, skipping Laravel Takeout installation."
+  echo "Composer not available, skipping global Laravel tools."
 fi
 
 # Utilities

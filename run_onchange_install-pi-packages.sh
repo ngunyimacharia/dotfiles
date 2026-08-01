@@ -25,3 +25,7 @@ ensure_pi_package() {
 # Kimi Code provider for Pi (account login reuse, file uploads, tool schema dedup, etc.)
 # https://pi.dev/packages/pi-provider-kimi-code
 ensure_pi_package "pi-provider-kimi-code" "npm:pi-provider-kimi-code"
+
+# Language Server Protocol tools with configurable extension-based routing.
+# https://pi.dev/packages/@narumitw/pi-lsp
+ensure_pi_package "@narumitw/pi-lsp" "npm:@narumitw/pi-lsp"

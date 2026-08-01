@@ -30,6 +30,13 @@ This repository uses **Bash** as the default shell, providing:
 
 ### Development Tools
 
+#### Meetily
+
+- Installs the privacy-first Meetily meeting assistant on Linux and macOS
+- Uses the official release DMG on Apple Silicon
+- Opens the official build instructions on Linux, where no installer is published
+- Builds the pinned upstream release from source on Intel macOS when no official binary is available
+
 #### Neovim
 
 - Full LazyVim configuration with custom plugins
@@ -129,6 +136,7 @@ The repository includes automated package installation scripts that run when app
 - `run_onchange_ubuntu_install-packages.sh`: Installs Ubuntu/Debian packages
 - `run_onchange_darwin_install-packages.sh`: Installs macOS packages via Homebrew
 - `run_onchange_install-npm-packages.sh`: Installs global npm packages
+- `run_onchange_install-meetily.sh`: Installs Meetily on Linux and macOS
 
 These scripts:
 
