@@ -7,9 +7,9 @@ Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) for consistent
 - **Linux**: Ubuntu, Debian, Pop!\_OS
 - **macOS**: Darwin (Apple Silicon and Intel)
 
-### Fedora Support Removed
+### Local PHP Development
 
-Fedora support was removed due to network connectivity issues caused by Valet Linux's dnsmasq configuration conflicting with Fedora's NetworkManager. The DNS resolver conflicts resulted in unreliable internet connectivity.
+[Lerd](https://lerd.sh/) provides the same rootless, Podman-native PHP development stack on Linux and macOS. It manages PHP-FPM, Nginx, `.test` DNS, TLS, Node, Composer, and shared application services without a separate host PHP stack or Docker Desktop.
 
 ## Features
 
@@ -69,29 +69,16 @@ Each harness gets its own global `AGENTS.md` generated from a shared template. S
 - Global `.gitignore` setup via `run_once_setup-gitignore.sh`
 - Git configuration managed through chezmoi
 
-### Linux-Specific Features
-
-#### Custom Desktop Entries
-
-Custom `.desktop` files in `dot_local/share/applications/` override default application launchers for better compatibility:
-
-- **LazyDocker** (`lazydocker.desktop`): Custom launcher that opens lazydocker in a dedicated Kitty terminal window
-
-#### Docker Icon
-
-Custom Docker icon (`Docker.png`) in `dot_local/share/icons/` for improved visual consistency.
-
 ### macOS-Specific Features
 
 - Homebrew package management
 - Zen Browser installation
-- PHP development tools (Valet, Laravel ecosystem)
+- Lerd PHP and service development environment
 - macOS-optimized applications (VSCode, 1Password, etc.)
 
 ### Ubuntu/Debian-Specific Features
 
-- **Valet Linux Plus**: PHP development environment with Nginx
-- **Laravel Takeout**: Docker-based service manager for development
+- **Lerd**: Rootless Podman PHP, Nginx, DNS, TLS, and service environment
 - **Development utilities**: xclip, libfuse2, and other Linux-specific tools
 - **Composer global packages**: PHP dependency management
 
@@ -224,24 +211,22 @@ sail up            # Laravel Sail
 
 ### PHP/Laravel Development
 
-**Ubuntu/Debian:**
+Lerd uses the same workflow on Ubuntu, Debian, Pop!_OS, and macOS:
 
 ```bash
-# Valet is automatically installed
-valet start
-valet park ~/Code
+lerd start
+lerd park ~/Code
 
-# Use Takeout for services
-takeout enable mysql
+# Services are installed on first use
+lerd service start mysql
+lerd service start redis
 ```
 
-**macOS:**
-
-```bash
-# Valet is automatically installed
-valet start
-valet park ~/Code
-```
+Chezmoi also installs custom PostgreSQL 16 and 18 service definitions with
+PostGIS and pgvector. A post-apply script builds their multi-architecture
+images only when the corresponding Containerfile changes. The built-in
+PostgreSQL service keeps host port `5432`, PostgreSQL 18 uses `5433`, and the
+additional PostgreSQL 16 service uses `5434`.
 
 ### Wireguard VPN
 
