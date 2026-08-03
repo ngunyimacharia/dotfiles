@@ -1,0 +1,77 @@
+name: postgres-18
+image: localhost/lerd-postgres18-postgis-pgvector:local
+ports:
+  - 5433:5432
+environment:
+  PGDATA: /var/lib/postgresql/data
+  POSTGRES_DB: lerd
+  POSTGRES_PASSWORD: lerd
+data_dir: /var/lib/postgresql/data
+env_vars:
+  - DB_CONNECTION=pgsql
+  - DB_HOST=lerd-postgres-18
+  - DB_PORT=5432
+  - DB_DATABASE=lerd
+  - DB_USERNAME=postgres
+  - DB_PASSWORD=lerd
+connection_url: postgresql://postgres:lerd@127.0.0.1:5433/lerd
+description: PostgreSQL 18 with PostGIS and pgvector
+category: databases
+icon: elephant
+family: postgres
+preset: postgres
+preset_version: "18"
+client_shims:
+  - name: psql
+    binary:
+      - psql
+  - name: pg_dump
+    binary:
+      - pg_dump
+  - name: pg_dumpall
+    binary:
+      - pg_dumpall
+  - name: pg_restore
+    binary:
+      - pg_restore
+introspect:
+  entities:
+    - kind: databases
+      list: |
+        psql -U postgres -tAc "SELECT datname || chr(9) || GREATEST(pg_database_size(datname) - (SELECT pg_database_size('template1')), 0) FROM pg_database WHERE datistemplate = false AND datname <> 'postgres' ORDER BY datname"
+      columns:
+        - key: size
+          label: Size
+          format: bytes
+      format: sql
+      actions:
+        create:
+          exec: psql -U postgres -c 'CREATE DATABASE "{{name}}";'
+        drop:
+          exec: psql -U postgres -c 'DROP DATABASE IF EXISTS "{{name}}" WITH (FORCE);'
+          destructive: true
+        export:
+          exec: pg_dump -U postgres --clean --if-exists {{name}}
+          filename: "{{name}}.sql"
+        export_all:
+          exec: pg_dumpall -U postgres --clean --if-exists
+        import:
+          exec: psql -U postgres -d {{name}}
+        import_all:
+          exec: psql -U postgres -d postgres
+extensions:
+  - name: postgis
+    types:
+      - geometry
+      - geography
+  - name: postgis_raster
+    types:
+      - raster
+  - name: postgis_topology
+    types:
+      - topogeometry
+  - name: vector
+    types:
+      - vector
+      - halfvec
+      - sparsevec

@@ -6,30 +6,46 @@ if [ ! -f /etc/os-release ] || ! grep -qE "^ID=(ubuntu|debian|pop)" /etc/os-rele
   exit 0
 fi
 
-# valet-linux-plus
-composer global show "cpriego/valet-linux" >/dev/null 2>&1
-if [ $? -eq 0 ]; then
-  echo "valet-linux-plus is already installed"
-else
-  echo "Installing valet-linux-plus..."
-  sudo apt-get install curl libnss3-tools jq xsel openssl ca-certificates
-  sudo add-apt-repository ppa:ondrej/php -y
-  sudo apt update
-   sudo apt install php php-cli php-mbstring php-xml php-zip php-curl -y
-   curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
-  composer global require cpriego/valet-linux
+if ! command -v curl >/dev/null 2>&1; then
+  echo "Installing curl for the Lerd installer..."
+  sudo apt-get update
+  sudo apt-get install -y ca-certificates curl
 fi
 
-# Laravel Takeout
-if command -v composer >/dev/null 2>&1; then
-  composer global show "tightenco/takeout" >/dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo "Installing Laravel Takeout..."
-    composer global require tightenco/takeout
-  else
-    echo "Laravel Takeout is already installed."
-  fi
+# Lerd provides PHP-FPM, Nginx, Composer, Node, DNS, TLS, and development
+# services through rootless Podman containers.
+export PATH="$HOME/.local/share/lerd/bin:$HOME/.local/bin:$PATH"
 
+if ! command -v lerd >/dev/null 2>&1; then
+  echo "Installing Lerd..."
+  lerd_installer=$(mktemp)
+  if ! curl -fsSL https://lerd.sh/install.sh -o "$lerd_installer"; then
+    rm -f "$lerd_installer"
+    echo "Failed to download the Lerd installer." >&2
+    exit 1
+  fi
+  if ! bash "$lerd_installer"; then
+    rm -f "$lerd_installer"
+    echo "Failed to install Lerd." >&2
+    exit 1
+  fi
+  rm -f "$lerd_installer"
+else
+  echo "Lerd is already installed."
+fi
+
+if [ ! -f "$HOME/.config/lerd/config.yaml" ]; then
+  echo "Configuring Lerd..."
+  if ! lerd install; then
+    echo "Failed to configure Lerd." >&2
+    exit 1
+  fi
+fi
+
+# Make Lerd's managed tool shims available to the rest of this script.
+export PATH="$HOME/.local/share/lerd/bin:$HOME/.local/bin:$PATH"
+
+if command -v composer >/dev/null 2>&1; then
   composer global show "laravel/installer" >/dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo "Installing Laravel Installer..."
@@ -673,7 +689,7 @@ if [ -n "$DISPLAY" ] && command -v gnome-shell &> /dev/null; then
   # Check if we should install extensions (only if gnome-shell is running)
   if pgrep -x "gnome-shell" > /dev/null 2>&1; then
     echo "GNOME Shell detected, installing extensions..."
-    /home/raven/.local/share/chezmoi/gnome-install-extensions.sh
+    "$HOME/.local/share/chezmoi/gnome-install-extensions.sh"
   else
     echo "GNOME Shell not running, skipping extension installation."
     echo "Run this script again in a GNOME session to install extensions."
@@ -751,7 +767,7 @@ if [ -n "$DISPLAY" ] && command -v gnome-shell &> /dev/null; then
   # Check if we should install extensions (only if gnome-shell is running)
   if pgrep -x "gnome-shell" > /dev/null 2>&1; then
     echo "GNOME Shell detected, installing extensions..."
-    /home/raven/.local/share/chezmoi/gnome-install-extensions.sh
+    "$HOME/.local/share/chezmoi/gnome-install-extensions.sh"
   else
     echo "GNOME Shell not running, skipping extension installation."
     echo "Run this script again in a GNOME session to install extensions."

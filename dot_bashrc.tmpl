@@ -18,9 +18,7 @@ esac
 export PATH="$HOME/.npm-global/bin:$PATH"
 export PATH="$PATH:$HOME/.composer/vendor/bin"
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
-{{ if eq .chezmoi.os "darwin" -}}
-export PATH="$PATH:$HOME/Library/Application Support/Herd/bin"
-{{ end -}}
+export PATH="$HOME/.local/share/lerd/bin:$PATH"
 export PATH="$PATH:$HOME/.local/share/mise/installs/node/22.10.0/bin"
 export PATH="$PATH:$HOME/.cargo/bin"
 export PATH="$PATH:$HOME/.local/bin"
@@ -56,20 +54,11 @@ export LSD_CONFIG_FILE="$HOME/.config/tui-apps/lsd.yaml"
 export BTOP_CONFIG="$HOME/.config/tui-apps/btop.conf"
 
 # Laravel specific
-alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
-
-# Laravel specific
 alias a='php artisan'
 alias amfs='php artisan migrate:fresh --seed'
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
-alias takeout="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --add-host=host.docker.internal:host-gateway -it tighten/takeout:latest"
 
-
-{{ if eq .chezmoi.os "darwin" -}}
-export NVM_DIR="$HOME/Library/Application Support/Herd/config/nvm"
-{{ else -}}
 export NVM_DIR="$HOME/.nvm"
-{{ end }}
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
@@ -113,8 +102,8 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Android SDK configuration
 {{ if eq .chezmoi.os "linux" -}}
-export ANDROID_SDK_ROOT=/home/raven/Android/Sdk
-export ANDROID_HOME=/home/raven/Android/Sdk
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools
 alias start-emulator="emulator @Pixel_9 -sysdir \$ANDROID_SDK_ROOT/system-images/android-36.1/google_apis_playstore/x86_64/ &"
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
@@ -123,12 +112,6 @@ export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export ANDROID_HOME=$ANDROID_SDK_ROOT
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
-export HERD_PHP_84_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/84"
-export HERD_PHP_85_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/85"
-export HERD_PHP_83_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/83"
-export HERD_PHP_82_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/82"
-export HERD_PHP_80_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/80"
-export HERD_PHP_74_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/74"
 {{ end }}
 
 # Initialize Starship prompt

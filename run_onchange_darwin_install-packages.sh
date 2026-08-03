@@ -38,13 +38,9 @@ else
   echo "Google Chrome is already installed."
 fi
 # Install Zen Browser
-if ! test -d "/Applications/Zen Browser.app"; then
+if ! brew list --cask zen >/dev/null 2>&1; then
   echo "Installing Zen Browser..."
-  curl -L "https://objects.githubusercontent.com/github-production-release-asset-2e65be/778556932/07bb19d8-1960-4589-9d79-c290c0b6795d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=releaseassetproduction%2F20250131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250131T071117Z&X-Amz-Expires=300&X-Amz-Signature=271b6858c0614b280560b1b2f2df0d5c9ae074b8bb45b982cef68c5aa4ac953a&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dzen.macos-universal.dmg&response-content-type=application%2Foctet-stream" -o zen.dmg
-  hdiutil attach zen.dmg
-  cp -R "/Volumes/Zen/Zen.app" /Applications/
-  hdiutil detach "/Volumes/Zen"
-  rm zen.dmg
+  brew install --cask zen
 else
   echo "Zen Browser is already installed."
 fi
@@ -147,24 +143,39 @@ else
   echo "Slack is already installed."
 fi
 
-# Install Laravel Herd
-if ! test -d "/Applications/Herd.app"; then
-  echo "Laravel Herd is not installed. Opening download page..."
-  open "https://herd.laravel.com/download"
+# Install Lerd and its Podman dependency.
+export PATH="$HOME/.local/share/lerd/bin:$HOME/.local/bin:$PATH"
+
+if ! command -v lerd >/dev/null 2>&1; then
+  echo "Installing Lerd..."
+  lerd_installer=$(mktemp)
+  if ! curl -fsSL https://lerd.sh/install.sh -o "$lerd_installer"; then
+    rm -f "$lerd_installer"
+    echo "Failed to download the Lerd installer." >&2
+    exit 1
+  fi
+  if ! bash "$lerd_installer"; then
+    rm -f "$lerd_installer"
+    echo "Failed to install Lerd." >&2
+    exit 1
+  fi
+  rm -f "$lerd_installer"
 else
-  echo "Laravel Herd is already installed."
+  echo "Lerd is already installed."
 fi
 
-# Install Laravel Takeout (requires Composer)
-if command -v composer >/dev/null 2>&1; then
-  composer global show "tightenco/takeout" >/dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo "Installing Laravel Takeout..."
-    composer global require tightenco/takeout
-  else
-    echo "Laravel Takeout is already installed."
+if [ ! -f "$HOME/.config/lerd/config.yaml" ]; then
+  echo "Configuring Lerd..."
+  if ! lerd install; then
+    echo "Failed to configure Lerd." >&2
+    exit 1
   fi
+fi
 
+# Make Lerd's managed tool shims available to the rest of this script.
+export PATH="$HOME/.local/share/lerd/bin:$HOME/.local/bin:$PATH"
+
+if command -v composer >/dev/null 2>&1; then
   composer global show "laravel/lsp" >/dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo "Installing Laravel LSP..."
@@ -247,16 +258,6 @@ if ! brew list | grep -q "go"; then
 else
   echo "Golang is already installed."
 fi
-
-# Install Docker Desktop
-if ! brew list --cask | grep -q "docker"; then
-  echo "Installing Docker Desktop..."
-  brew install --cask docker
-else
-  echo "Docker Desktop is already installed."
-fi
-
-
 
 # Install LocalSend
 if ! brew list --cask | grep -q "localsend"; then
