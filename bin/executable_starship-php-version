@@ -1,0 +1,95 @@
+#!/bin/sh
+# Print the PHP version for the current directory, for starship's [custom.php] module.
+#
+# Starship's built-in php module executes the `php` on PATH. Here that is
+# ~/.local/share/lerd/bin/php, a shim that execs `lerd php`, which is a
+# container round-trip: ~200ms idle and 0.5-0.9s when the machine is busy,
+# against starship's 500ms command_timeout. So this reads project files
+# instead and never executes php.
+#
+# Resolution order, walking up from the current directory to $HOME (or /),
+# first hit wins:
+#   1. .lerd.yaml  php_version   (lerd's explicit per-project override)
+#   2. .php-version
+#   3. composer.json  config.platform.php, else require.php
+# Falling back to php.default_version from ~/.config/lerd/config.yaml.
+
+set -u
+
+LERD_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/lerd/config.yaml"
+
+# Reduce a version or constraint to major.minor: "^8.1" -> 8.1, "8.2.14" -> 8.2,
+# ">=8.0 <8.4" -> 8.0. Prints nothing if there is no version-looking token.
+normalize() {
+	printf '%s\n' "$1" | awk '{
+		if (match($0, /[0-9]+\.[0-9]+/)) { print substr($0, RSTART, RLENGTH); exit }
+		if (match($0, /[0-9]+/))         { print substr($0, RSTART, RLENGTH); exit }
+	}'
+}
+
+# php_version from a .lerd.yaml, top-level key only.
+from_lerd_yaml() {
+	awk '
+		/^[[:space:]]*#/ { next }
+		/^php_version[[:space:]]*:/ {
+			v = $0
+			sub(/^[^:]*:[[:space:]]*/, "", v)
+			sub(/[[:space:]]*#.*$/, "", v)
+			gsub(/["'\'']/, "", v)
+			gsub(/[[:space:]]+$/, "", v)
+			if (v != "") { print v; exit }
+		}
+	' "$1" 2>/dev/null
+}
+
+# php.default_version from lerd's global config.
+from_lerd_config() {
+	[ -f "$LERD_CONFIG" ] || return 0
+	awk '
+		/^php:[[:space:]]*$/ { in_php = 1; next }
+		/^[^[:space:]#]/     { in_php = 0 }
+		in_php && /^[[:space:]]+default_version[[:space:]]*:/ {
+			v = $0
+			sub(/^[^:]*:[[:space:]]*/, "", v)
+			gsub(/["'\'']/, "", v)
+			gsub(/[[:space:]]+$/, "", v)
+			if (v != "") { print v; exit }
+		}
+	' "$LERD_CONFIG" 2>/dev/null
+}
+
+# config.platform.php, else require.php, from a composer.json.
+from_composer() {
+	jq -r '(.config.platform.php // .require.php // empty) | tostring' "$1" 2>/dev/null
+}
+
+dir=$PWD
+found=
+
+while [ -n "$dir" ]; do
+	if [ -f "$dir/.lerd.yaml" ]; then
+		found=$(from_lerd_yaml "$dir/.lerd.yaml")
+		[ -n "$found" ] && break
+	fi
+
+	if [ -f "$dir/.php-version" ]; then
+		found=$(head -n 1 "$dir/.php-version" 2>/dev/null)
+		[ -n "$found" ] && break
+	fi
+
+	if [ -f "$dir/composer.json" ]; then
+		found=$(from_composer "$dir/composer.json")
+		[ -n "$found" ] && break
+	fi
+
+	# Stop at $HOME so we never walk into unrelated parents above it.
+	[ "$dir" = "$HOME" ] && break
+	[ "$dir" = "/" ] && break
+	dir=${dir%/*}
+	[ -z "$dir" ] && dir=/
+done
+
+[ -n "$found" ] || found=$(from_lerd_config)
+[ -n "$found" ] || exit 0
+
+normalize "$found"
