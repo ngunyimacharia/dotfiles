@@ -19,7 +19,7 @@ $python\
 $rust\
 $golang\
 $lua\
-$php\
+${custom.php}\
 $cmd_duration\
 $fill\
 $time
@@ -143,10 +143,20 @@ symbol = " "
 style = "bold #7fbbb3"
 format = "[$symbol$version]($style) "
 
+# The built-in php module runs the `php` on PATH, which here is a shim that
+# execs `lerd php` — a container round-trip that overruns starship's 500ms
+# command_timeout when the machine is busy. custom.php reads the version from
+# project files instead (~4ms).
 [php]
+disabled = true
+
+[custom.php]
+command = "~/bin/starship-php-version"
+detect_extensions = ["php"]
+detect_files = ["composer.json", ".php-version", ".lerd.yaml"]
 symbol = " "
 style = "bold #d3c6aa"
-format = "[$symbol$version]($style) "
+format = "[$symbol$output]($style) "
 
 [buf]
 symbol = " "
