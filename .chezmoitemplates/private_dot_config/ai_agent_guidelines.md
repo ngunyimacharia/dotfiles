@@ -2,7 +2,6 @@
 
 This repository is configured for the following AI coding harnesses. All harnesses share these guidelines unless a harness-specific file overrides them.
 
-- `kimi` — Kimi Code CLI
 - `claude` — Claude Code (via claude-code CLI and claudecode.nvim)
 - `codex` — OpenAI Codex CLI
 - `opencode` — OpenCode CLI

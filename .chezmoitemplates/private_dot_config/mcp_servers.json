@@ -11,7 +11,7 @@
     "enabled": true
   }
 }
-{{- else if or (eq .format "kimi") (eq .format "claude") -}}
+{{- else if eq .format "claude" -}}
 {
   "mcpServers": {
     "context7": {

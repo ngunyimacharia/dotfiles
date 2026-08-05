@@ -641,20 +641,25 @@ else
   echo "Handy is already installed."
 fi
 
-# Install OpenCode
+# Install OpenCode v1 (official curl installer, installs to ~/.opencode)
 which opencode >/dev/null 2>&1
 if [ $? -eq 0 ]; then
-  echo "OpenCode already installed."
+  echo "OpenCode v1 already installed."
 else
+  echo "Installing OpenCode v1..."
   curl -fsSL https://opencode.ai/install | bash
 fi
 
-# Install Kimi Code CLI
-which kimi >/dev/null 2>&1
-if [ $? -eq 0 ]; then
-  echo "Kimi Code CLI already installed."
+# Install OpenCode v2 (npm beta channel, side-by-side at ~/.opencode2)
+if [ -x "$HOME/.opencode2/bin/opencode" ]; then
+  echo "OpenCode v2 already installed."
 else
-  curl -L code.kimi.com/install.sh | bash
+  if command -v npm >/dev/null 2>&1; then
+    echo "Installing opencode v2 (beta)..."
+    npm install -g --prefix "$HOME/.opencode2" opencode-ai@beta 2>&1
+  else
+    echo "npm not found; skipping opencode v2 install."
+  fi
 fi
 
 # Install Starship

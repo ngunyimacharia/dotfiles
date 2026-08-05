@@ -14,7 +14,6 @@ export PATH="$PATH:$HOME/.local/bin"
 export PATH="$PATH:$HOME/.local/kitty.app/bin"
 export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$HOME/go/bin"
-export PATH="$HOME/.kimi-code/bin:$PATH"
 
 # 1Password SSH agent
 {{ if eq .chezmoi.os "linux" -}}
@@ -54,13 +53,16 @@ if [ -f "$HOME/.env" ]; then
   set +a
 fi
 
-# opencode
+# opencode v1 (curl installer) / v2 (npm beta, side-by-side)
 export PATH=$HOME/.opencode/bin:$PATH
+if [ -x "$HOME/.opencode2/bin/opencode" ]; then
+  alias opencode="$HOME/.opencode2/bin/opencode"
+fi
+if [ -x "$HOME/.opencode/bin/opencode" ]; then
+  alias opencode1="$HOME/.opencode/bin/opencode"
+fi
 
 # AI harness convenience aliases
-if command -v kimi >/dev/null 2>&1; then
-  alias k='kimi'
-fi
 if command -v claude >/dev/null 2>&1; then
   alias cc='claude'
 fi

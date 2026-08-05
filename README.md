@@ -49,7 +49,6 @@ This repository uses **Bash** as the default shell, providing:
 
 This repository installs and configures multiple terminal-first AI coding agents:
 
-- **Kimi Code CLI** — `kimi`
 - **Claude Code** — `claude-code` (also available inside Neovim via `claudecode.nvim`)
 - **OpenAI Codex** — `codex`
 - **OpenCode** — `opencode`

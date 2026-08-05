@@ -1,1 +1,10 @@
 {{ template "private_dot_config/ai_agent_guidelines.md" dict "tool" "opencode" }}
+
+## Orchestration & Delegation
+
+Do NOT do everything in the main thread. The main thread is for orchestration, decisions, and user communication — push reading, searching, and bulk work into subagents to keep context small and costs low.
+
+- **Explore first**: For any codebase question, file lookup, or "where is X", invoke the `explore` subagent instead of searching yourself. Launch multiple `explore` agents in parallel for independent questions.
+- **Parallelize grunt work**: Break multi-step or independent units of work into parallel `general` subagent tasks rather than doing them sequentially yourself. Only do work inline when it is small, sequential, and depends on conversation context.
+- **Plan non-trivial work**: For anything beyond a small, obvious change, use the plan agent to analyze and design before editing.
+- **Review before finishing**: After implementing changes, invoke the `review` subagent on the diff and address its findings before declaring the task done.
