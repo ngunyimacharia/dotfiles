@@ -4,3 +4,4 @@
 .codex/prompts/plannotator-annotate.md
 .codex/prompts/plannotator-last.md
 .codex/prompts/plannotator-review.md
+.config/nvim/lua/plugins/amp.lua
