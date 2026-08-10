@@ -625,8 +625,8 @@ else
   echo "wtype is already installed."
 fi
 
-# Install Handy
-if ! command -v handy >/dev/null 2>&1; then
+# Install Handy (skip if the AppImage is already managed by appimagelauncher)
+if ! command -v handy >/dev/null 2>&1 && ! ls "$HOME"/Applications/Handy_*.AppImage >/dev/null 2>&1; then
   echo "Installing Handy..."
   HANDY_VERSION=$(curl -s "https://api.github.com/repos/cjpais/Handy/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
   HANDY_ARCH=$(dpkg --print-architecture)
