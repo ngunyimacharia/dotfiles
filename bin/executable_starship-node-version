@@ -1,0 +1,130 @@
+#!/bin/sh
+# Print the Node version for the current directory, for starship's [custom.node] module.
+#
+# Starship's built-in nodejs module executes the `node` on PATH. Here that is
+# ~/.local/share/lerd/bin/node, a shim that execs `lerd node`, which is a
+# container round-trip: ~480ms idle against starship's 500ms command_timeout,
+# so it times out whenever the machine is even slightly busy. Worse, starship
+# renders modules in parallel, so that one stall starves the others and
+# custom.php times out alongside it. This reads project files instead and
+# never executes node.
+#
+# Resolution order, walking up from the current directory to $HOME (or /),
+# first hit wins:
+#   1. .lerd.yaml  node_version   (lerd's explicit per-project override)
+#   2. .nvmrc
+#   3. .node-version
+#   4. package.json  engines.node
+# Falling back to node.default_version from ~/.config/lerd/config.yaml.
+#
+# A bare or partial version ("22", "^22.0.0") is then expanded against fnm's
+# installed versions so the prompt still shows the full v22.23.2 that the
+# built-in module used to print.
+
+set -u
+
+LERD_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/lerd/config.yaml"
+FNM_VERSIONS="${FNM_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/fnm}/node-versions"
+
+# Reduce a version or constraint to its leading numeric token, keeping up to
+# three components: "^22.0.0" -> 22.0.0, "22" -> 22, ">=18 <21" -> 18.
+# Prints nothing if there is no version-looking token.
+normalize() {
+	printf '%s\n' "$1" | awk '{
+		if (match($0, /[0-9]+(\.[0-9]+){0,2}/)) { print substr($0, RSTART, RLENGTH); exit }
+	}'
+}
+
+# node_version from a .lerd.yaml, top-level key only.
+from_lerd_yaml() {
+	awk '
+		/^[[:space:]]*#/ { next }
+		/^node_version[[:space:]]*:/ {
+			v = $0
+			sub(/^[^:]*:[[:space:]]*/, "", v)
+			sub(/[[:space:]]*#.*$/, "", v)
+			gsub(/["'\'']/, "", v)
+			gsub(/[[:space:]]+$/, "", v)
+			if (v != "") { print v; exit }
+		}
+	' "$1" 2>/dev/null
+}
+
+# node.default_version from lerd's global config.
+from_lerd_config() {
+	[ -f "$LERD_CONFIG" ] || return 0
+	awk '
+		/^node:[[:space:]]*$/ { in_node = 1; next }
+		/^[^[:space:]#]/      { in_node = 0 }
+		in_node && /^[[:space:]]+default_version[[:space:]]*:/ {
+			v = $0
+			sub(/^[^:]*:[[:space:]]*/, "", v)
+			gsub(/["'\'']/, "", v)
+			gsub(/[[:space:]]+$/, "", v)
+			if (v != "") { print v; exit }
+		}
+	' "$LERD_CONFIG" 2>/dev/null
+}
+
+# engines.node from a package.json.
+from_package_json() {
+	jq -r '(.engines.node // empty) | tostring' "$1" 2>/dev/null
+}
+
+# Highest installed fnm version whose number starts with $1, e.g. 22 -> 22.23.2.
+# Prints nothing when fnm is absent or nothing matches.
+match_installed() {
+	[ -d "$FNM_VERSIONS" ] || return 0
+	ls "$FNM_VERSIONS" 2>/dev/null | awk -v p="$1" '
+		$0 == "v" p || index($0, "v" p ".") == 1 { print }
+	' | sort -V | tail -n 1 | sed 's/^v//'
+}
+
+dir=$PWD
+found=
+
+while [ -n "$dir" ]; do
+	if [ -f "$dir/.lerd.yaml" ]; then
+		found=$(from_lerd_yaml "$dir/.lerd.yaml")
+		[ -n "$found" ] && break
+	fi
+
+	if [ -f "$dir/.nvmrc" ]; then
+		found=$(head -n 1 "$dir/.nvmrc" 2>/dev/null)
+		[ -n "$found" ] && break
+	fi
+
+	if [ -f "$dir/.node-version" ]; then
+		found=$(head -n 1 "$dir/.node-version" 2>/dev/null)
+		[ -n "$found" ] && break
+	fi
+
+	if [ -f "$dir/package.json" ]; then
+		found=$(from_package_json "$dir/package.json")
+		[ -n "$found" ] && break
+	fi
+
+	# Stop at $HOME so we never walk into unrelated parents above it.
+	[ "$dir" = "$HOME" ] && break
+	[ "$dir" = "/" ] && break
+	dir=${dir%/*}
+	[ -z "$dir" ] && dir=/
+done
+
+[ -n "$found" ] || found=$(from_lerd_config)
+[ -n "$found" ] || exit 0
+
+version=$(normalize "$found")
+[ -n "$version" ] || exit 0
+
+# Expand a partial version against what fnm actually has installed, widening
+# from the full token down to the major: 22.0.0 -> 22.0 -> 22.
+exact=$(match_installed "$version")
+if [ -z "$exact" ]; then
+	exact=$(match_installed "${version%.*}")
+fi
+if [ -z "$exact" ]; then
+	exact=$(match_installed "${version%%.*}")
+fi
+
+printf 'v%s\n' "${exact:-$version}"

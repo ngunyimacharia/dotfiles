@@ -2,7 +2,11 @@
 
 "$schema" = "https://starship.rs/config-schema.json"
 
-# ~/.config/starship.toml
+# Headroom over the 500ms default. Nothing in this prompt should need it now
+# that php and node read project files instead of shelling out to lerd shims,
+# but git in a large repo can still spike, and a timed-out module prints a
+# warning line that scrolls the prompt rather than just rendering empty.
+command_timeout = 1000
 
 # Everforest theme for Starship
 format = """
@@ -14,7 +18,7 @@ $git_branch\
 $git_status\
 $git_state\
 $git_metrics\
-$nodejs\
+${custom.node}\
 $python\
 $rust\
 $golang\
@@ -118,10 +122,22 @@ symbol = " "
 style = "bold #a7c080"
 format = "[$symbol]($style)[$profile@$region]($style) "
 
+# Same story as php below: the `node` on PATH is a shim that execs `lerd node`,
+# a container round-trip measured at ~480ms against the 500ms command_timeout.
+# It times out under any load, and because starship renders modules in
+# parallel it starved custom.php into timing out too. custom.node reads the
+# version from project files instead (~10ms).
 [nodejs]
+disabled = true
+
+[custom.node]
+command = "~/bin/starship-node-version"
+detect_extensions = ["js", "mjs", "cjs", "ts", "mts", "cts"]
+detect_files = ["package.json", ".nvmrc", ".node-version", ".lerd.yaml"]
+detect_folders = ["node_modules"]
 symbol = " "
 style = "bold #a7c080"
-format = "[$symbol$version]($style) "
+format = "[$symbol$output]($style) "
 
 [python]
 symbol = " "
