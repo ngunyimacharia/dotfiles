@@ -34,7 +34,7 @@ Every harness command needs the env sourced first:
 
        bin/hermes-harness prompt <sid> "<instruction>"
 
-   To run the session on a specific opencode model, pass `--model <providerID>/<modelID>` (`launch` selects the model for the initial prompt; `prompt` switches the session model before that message and the switch sticks for later turns). Example: `bin/hermes-harness launch github.com/<owner>/<repo> --prompt "..." --model opencode-go/deepseek-v4-flash`. The model list on a live session is available via `curl -sf <session-url>/api/provider`. A bad provider/model ID fails the model switch with a clear "model switch failed (rc=...)" error and the prompt is not sent.
+   To run a specific turn on a chosen opencode model, pass `--model <providerID>/<modelID>` as a per-message override, sent in the prompt body (`launch` sets it for the initial prompt; `prompt` for that message). Example: `bin/hermes-harness launch github.com/<owner>/<repo> --prompt "..." --model opencode-go/deepseek-v4-flash`. The model list on a live session is available via `curl -sf <session-url>/provider`. The v1 API validates the model at inference time, not at delivery: a wrong ID is still accepted (204 No Content) and surfaces as an error in the session transcript.
 
 3. **List sessions:** `bin/hermes-harness list`
 4. **Stop a session:** `bin/hermes-harness kill <sid>`
@@ -52,4 +52,5 @@ Work through these in order; each step names the likely cause and fix.
 5. **Launch printed the message but no Telegram arrived** — `bin/telegram-notify "remote-handoff self-test"`; a failure means `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` are missing from `~/.hermes/harness-env`.
 6. **`prompt` says "not correlated with Pi"** — the session predates opencode prompt routing (harness checkout is behind; `git pull`) or the session is aws/fly-backed (pi) and needs `bin/hermes-harness inspect <sid>` to reconcile first.
 7. **Still stuck** — `python3 -m unittest discover -s tests -q` in the harness checkout must pass; then inspect VM state with `bin/exe-cli` (list VMs, check the session short id) and the session DB at `~/.hermes/harness-sessions.db`.
-8. **`model switch failed (rc=...)`** — the provider/model ID is wrong or not configured on the box. List what's actually available with `curl -sf <session-url>/api/provider` and retry `launch`/`prompt` with a valid `providerID/modelID` pair from that response.
+8. **Prompt accepted but the session errors / no reply** — the `--model` ID is likely wrong (v1 validates at inference, not delivery). List providers on the box: `curl -sf <session-url>/provider`, then retry `launch`/`prompt` with a valid `providerID/modelID` pair from that response.
+9. **Web UI shows the session but no messages** — the harness checkout predates the v1 retarget (`git pull`); v2-posted messages never render in the UI.
