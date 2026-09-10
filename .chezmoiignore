@@ -2,22 +2,16 @@
 .bashrc
 .local
 bin/handy-gnome-hotkey
-gnome-setup.sh
-handy-gnome-hotkey.sh
-setup-inotify-limits.sh
-setup-syncthing.sh
-ubuntu_install-packages.sh
-run_once_setup-inotify-limits.sh
-run_once_setup-syncthing.sh
-run_onchange_gnome-setup.sh
-run_onchange_handy-gnome-hotkey.sh
-run_onchange_ubuntu_install-packages.sh
+.chezmoiscripts/gnome-setup.sh
+.chezmoiscripts/handy-gnome-hotkey.sh
+.chezmoiscripts/setup-inotify-limits.sh
+.chezmoiscripts/setup-syncthing.sh
+.chezmoiscripts/ubuntu_install-packages.sh
 {{ else -}}
 .zshrc
 .zshenv
 Library
-darwin_install-packages.sh
-run_onchange_darwin_install-packages.sh
+.chezmoiscripts/darwin_install-packages.sh
 {{ end -}}
 
 .config/nvim/lazy-lock.json
@@ -26,16 +20,10 @@ run_onchange_darwin_install-packages.sh
 README.md
 AGENTS.md
 
-# Ignore helper scripts stored at repo root
-add-tui-aliases-bash.sh
-btop.tar.gz
-create-enhanced-bashrc.sh
-gnome-install-extensions.sh
+# Helper scripts and asset dirs kept at the repo root for reference. These are
+# plain files in the source tree, so they still need ignoring; the run_* scripts
+# no longer do, because .chezmoiscripts/ is never written to the target.
 gnome
-intelephense
+gnome-install-extensions.sh
 systemd
-tui-aliases.sh
 tui-apps-install.sh
-tui-apps-setup.sh
-tui-configs
-themes
