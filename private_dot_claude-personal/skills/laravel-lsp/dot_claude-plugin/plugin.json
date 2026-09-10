@@ -1,0 +1,8 @@
+{
+  "name": "laravel-lsp",
+  "version": "1.0.0",
+  "description": "Laravel framework-aware code intelligence for Claude Code",
+  "author": {
+    "name": "Kelvin Ngunyi"
+  }
+}
