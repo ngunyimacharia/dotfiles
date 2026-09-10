@@ -58,9 +58,11 @@ if command -v btop >/dev/null 2>&1; then
   alias top='btop'
 fi
 
-export BAT_CONFIG_PATH="$HOME/.config/tui-apps/bat.conf"
-export LSD_CONFIG_FILE="$HOME/.config/tui-apps/lsd.yaml"
-export BTOP_CONFIG="$HOME/.config/tui-apps/btop.conf"
+# No BAT_CONFIG_PATH / LSD_CONFIG_FILE / BTOP_CONFIG here on purpose. Those
+# pointed at ~/.config/tui-apps/, where only bat ever read its file: lsd 1.0.0
+# ignores LSD_CONFIG_FILE, and BTOP_CONFIG is not a variable btop knows. All
+# three configs now live at the paths each tool reads natively and are managed
+# by chezmoi, themed from .chezmoidata/palette.toml.
 
 # Laravel specific
 alias a='php artisan'

@@ -1,0 +1,8 @@
+# bat configuration.
+--decorations=always
+--style=header,grid,numbers
+
+# 'ansi' renders using the terminal's own 16 colors, so bat follows whatever
+# theme kitty is on. The old tui-configs/bat.conf pinned gruvbox-dark, which
+# was neither Everforest nor light/dark aware.
+--theme=ansi

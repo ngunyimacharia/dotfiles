@@ -1,3 +1,6 @@
+{{- $c := .palette.everforest.dark -}}
+{{- /* Colors come from .chezmoidata/palette.toml. Pinned to dark: herdr has
+       no light variant wired into ~/bin/theme yet. */ -}}
 # Herdr configuration
 # Docs: https://herdr.dev/docs/configuration/
 
@@ -11,28 +14,28 @@ onboarding = false
 [theme]
 name = "kanagawa" # dark base; every token below overrides it
 [theme.custom]
-accent = "#a7c080" # green
-panel_bg = "#2d353b" # bg0
-surface_dim = "#232a2e" # bg_dim
-surface0 = "#343f44" # bg1
-surface1 = "#3d484d" # bg2
-overlay0 = "#475258" # bg3
-overlay1 = "#56635f" # bg5
-text = "#d3c6aa" # fg
-subtext0 = "#9da9a0" # grey2
-mauve = "#d699b6" # purple
-green = "#a7c080"
-yellow = "#dbbc7f"
-red = "#e67e80"
-blue = "#7fbbb3"
-teal = "#83c092" # aqua
-peach = "#e69875" # orange
+accent = "{{ $c.green }}" # green
+panel_bg = "{{ $c.bg0 }}" # bg0
+surface_dim = "{{ $c.bg_dim }}" # bg_dim
+surface0 = "{{ $c.bg1 }}" # bg1
+surface1 = "{{ $c.bg2 }}" # bg2
+overlay0 = "{{ $c.bg3 }}" # bg3
+overlay1 = "{{ $c.bg5 }}" # bg5
+text = "{{ $c.fg }}" # fg
+subtext0 = "{{ $c.grey2 }}" # grey2
+mauve = "{{ $c.purple }}" # purple
+green = "{{ $c.green }}"
+yellow = "{{ $c.yellow }}"
+red = "{{ $c.red }}"
+blue = "{{ $c.blue }}"
+teal = "{{ $c.aqua }}" # aqua
+peach = "{{ $c.orange }}" # orange
 
 [terminal]
 {{ if eq .chezmoi.os "darwin" -}}
-default_shell = "/bin/zsh"
+default_shell = "{{ lookPath "zsh" | default "/bin/zsh" }}"
 {{ else -}}
-default_shell = "/bin/bash"
+default_shell = "{{ lookPath "bash" | default "/bin/bash" }}"
 {{ end -}}
 new_cwd = "follow" # new panes/tabs inherit the current directory (like tmux -c)
 
@@ -46,7 +49,7 @@ switch_tab = "prefix+1..9"
 switch_workspace = "prefix+shift+1..9"
 
 [ui]
-accent = "#a7c080" # everforest green for highlights/borders
+accent = "{{ $c.green }}" # everforest green for highlights/borders
 
 # Notify in-app when a background agent finishes or needs input.
 [ui.toast]

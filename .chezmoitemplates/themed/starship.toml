@@ -1,3 +1,6 @@
+# Starship prompt. Shared body for the dark, light and default copies.
+# The template context is a palette mode map from .chezmoidata/palette.toml,
+# so colors are referenced as {{ ".green" }}, {{ ".fg" }} and so on.
 # ~/.config/starship.toml
 
 "$schema" = "https://starship.rs/config-schema.json"
@@ -32,7 +35,7 @@ $character
 
 [os]
 disabled = false
-style = "bold #a7c080"
+style = "bold {{ .green }}"
 
 [os.symbols]
 Alpaquita = " "
@@ -84,28 +87,28 @@ Windows = "󰍲 "
 
 [username]
 show_always = true
-style_user = "bold #a7c080"
-style_root = "bold #e67e80"
+style_user = "bold {{ .green }}"
+style_root = "bold {{ .red }}"
 format = "[$user]($style) "
 
 [directory]
 truncation_length = 1
 truncate_to_repo = true
-style = "bold #7fbbb3"
+style = "bold {{ .blue }}"
 format = "[$path]($style) "
 read_only = " 󰌾"
 
 [git_branch]
 symbol = " "
-style = "bold #d699b6"
+style = "bold {{ .purple }}"
 format = "on [$symbol$branch]($style) "
 
 [git_status]
-style = "bold #d3c6aa"
+style = "bold {{ .fg }}"
 format = "([$all_status$ahead_behind]($style) )"
 
 [git_state]
-style = "bold #e67e80"
+style = "bold {{ .red }}"
 format = "([$state( $progress_current/$progress_total)]($style) )"
 
 [git_metrics]
@@ -114,12 +117,12 @@ format = "([+$added]($added_style) [-$deleted]($deleted_style) )"
 
 [cmd_duration]
 min_time = 500
-style = "bold #7fbbb3"
+style = "bold {{ .blue }}"
 format = "took [$duration]($style) "
 
 [aws]
 symbol = " "
-style = "bold #a7c080"
+style = "bold {{ .green }}"
 format = "[$symbol]($style)[$profile@$region]($style) "
 
 # Same story as php below: the `node` on PATH is a shim that execs `lerd node`,
@@ -136,27 +139,27 @@ detect_extensions = ["js", "mjs", "cjs", "ts", "mts", "cts"]
 detect_files = ["package.json", ".nvmrc", ".node-version", ".lerd.yaml"]
 detect_folders = ["node_modules"]
 symbol = " "
-style = "bold #a7c080"
+style = "bold {{ .green }}"
 format = "[$symbol$output]($style) "
 
 [python]
 symbol = " "
-style = "bold #7fbbb3"
+style = "bold {{ .blue }}"
 format = "[$symbol$version]($style) "
 
 [rust]
 symbol = "󱘗 "
-style = "bold #e69875"
+style = "bold {{ .orange }}"
 format = "[$symbol$version]($style) "
 
 [golang]
 symbol = " "
-style = "bold #83c092"
+style = "bold {{ .aqua }}"
 format = "[$symbol$version]($style) "
 
 [lua]
 symbol = " "
-style = "bold #7fbbb3"
+style = "bold {{ .blue }}"
 format = "[$symbol$version]($style) "
 
 # The built-in php module runs the `php` on PATH, which here is a shim that
@@ -171,7 +174,7 @@ command = "~/bin/starship-php-version"
 detect_extensions = ["php"]
 detect_files = ["composer.json", ".php-version", ".lerd.yaml"]
 symbol = " "
-style = "bold #d3c6aa"
+style = "bold {{ .fg }}"
 format = "[$symbol$output]($style) "
 
 [buf]
@@ -305,7 +308,7 @@ symbol = " "
 
 [time]
 disabled = false
-style = "bold #a7c080"
+style = "bold {{ .green }}"
 format = "[$time]($style)"
 time_format = "%I:%M %p"
 
@@ -316,7 +319,7 @@ vicmd_symbol = "❯"
 
 # Simple color palette (no custom colors for now to avoid parsing issues)
 # [palette]
-# green = "#a7c080"
-# blue = "#7fbbb3" 
-# purple = "#d699b6"
-# red = "#e67e80"
+# green = "{{ .green }}"
+# blue = "{{ .blue }}" 
+# purple = "{{ .purple }}"
+# red = "{{ .red }}"

@@ -1,0 +1,123 @@
+# Everforest palette, the single source of truth for every themed config.
+# Generated from the tmux and kitty theme files that previously held these
+# values independently. Consumed by templates via {{ .palette.everforest.<mode>.<key> }}.
+# Upstream: https://github.com/sainnhe/everforest (soft background variant)
+
+[palette.everforest.dark]
+# Which appearance this map is. Consumed by templates and by ~/bin/theme.
+mode = "dark"
+bg_dim = "#232a2e"
+bg0 = "#2d353b"
+bg1 = "#343f44"
+bg2 = "#3d484d"
+bg3 = "#475258"
+bg4 = "#4f585e"
+bg5 = "#56635f"
+bg_visual = "#543a48"
+bg_red = "#514045"
+bg_green = "#425047"
+bg_blue = "#3a515d"
+bg_yellow = "#4d4c43"
+fg = "#d3c6aa"
+red = "#e67e80"
+orange = "#e69875"
+yellow = "#dbbc7f"
+green = "#a7c080"
+aqua = "#83c092"
+blue = "#7fbbb3"
+purple = "#d699b6"
+grey0 = "#7a8478"
+grey1 = "#859289"
+grey2 = "#9da9a0"
+statusline1 = "#a7c080"
+statusline2 = "#d3c6aa"
+statusline3 = "#e67e80"
+
+# Raw ANSI 0-15, kept explicit because the light mode inverts
+# color0/color7 relative to dark and uses shades not in the semantic set.
+[palette.everforest.dark.ansi]
+color0 = "#2d353b"
+color1 = "#e67e80"
+color2 = "#a7c080"
+color3 = "#dbbc7f"
+color4 = "#7fbbb3"
+color5 = "#d699b6"
+color6 = "#83c092"
+color7 = "#d3c6aa"
+color8 = "#9da9a0"
+color9 = "#e67e80"
+color10 = "#a7c080"
+color11 = "#dbbc7f"
+color12 = "#7fbbb3"
+color13 = "#d699b6"
+color14 = "#83c092"
+color15 = "#d3c6aa"
+
+[palette.everforest.dark.kitty]
+background = "#2d353b"
+foreground = "#d3c6aa"
+active_tab_foreground = "#2d353b"
+active_tab_background = "#a7c080"
+inactive_tab_foreground = "#d3c6aa"
+inactive_tab_background = "#3a4148"
+tab_bar_background = "#2d353b"
+
+[palette.everforest.light]
+# Which appearance this map is. Consumed by templates and by ~/bin/theme.
+mode = "light"
+bg_dim = "#efebd4"
+bg0 = "#fdf6e3"
+bg1 = "#f4f0d9"
+bg2 = "#efebd4"
+bg3 = "#e6e2cc"
+bg4 = "#d8d3ba"
+bg5 = "#bdc3af"
+bg_visual = "#eaedc8"
+bg_red = "#fbe3da"
+bg_green = "#f0f1d2"
+bg_blue = "#e9f0e9"
+bg_yellow = "#faedcd"
+fg = "#5c6a72"
+red = "#f85552"
+orange = "#f57d26"
+yellow = "#dfa000"
+green = "#8da101"
+aqua = "#35a77c"
+blue = "#3a94c5"
+purple = "#df69ba"
+grey0 = "#a6b0a0"
+grey1 = "#939f91"
+grey2 = "#829181"
+statusline1 = "#8da101"
+statusline2 = "#5c6a72"
+statusline3 = "#f85552"
+
+# Raw ANSI 0-15, kept explicit because the light mode inverts
+# color0/color7 relative to dark and uses shades not in the semantic set.
+[palette.everforest.light.ansi]
+color0 = "#5c6a72"
+color1 = "#f85552"
+color2 = "#8da101"
+color3 = "#dfa000"
+color4 = "#3a94c5"
+color5 = "#df69ba"
+color6 = "#35a77c"
+color7 = "#fdf6e3"
+color8 = "#a6b0a0"
+color9 = "#f85552"
+color10 = "#8da101"
+color11 = "#dfa000"
+color12 = "#3a94c5"
+color13 = "#df69ba"
+color14 = "#35a77c"
+color15 = "#fff9e8"
+
+[palette.everforest.light.kitty]
+background = "#fdf6e3"
+foreground = "#5c6a72"
+active_tab_foreground = "#fdf6e3"
+active_tab_background = "#8da101"
+inactive_tab_foreground = "#5c6a72"
+inactive_tab_background = "#efebd4"
+tab_bar_background = "#f4f0d9"
+

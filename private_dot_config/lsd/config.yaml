@@ -1,0 +1,19 @@
+# lsd configuration.
+#
+# The old tui-configs/lsd.yaml was never read: lsd 1.0.0 ignores LSD_CONFIG_FILE
+# and only looks here. Its keys (theme, time-style, inode, symlinks, git-repo-*)
+# are also rejected by this version, so lsd ran on pure defaults.
+classic: false
+date: '+%Y-%m-%d'
+size: default
+permission: rwx
+total-size: false
+
+icons:
+  when: auto
+  theme: fancy
+  separator: " "
+
+sorting:
+  column: name
+  dir-grouping: first
