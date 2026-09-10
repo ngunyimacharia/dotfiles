@@ -69,6 +69,14 @@ if command -v pi >/dev/null 2>&1; then
   alias p='pi'
 fi
 
+# Claude Code profile switching (work vs personal)
+claude-work() {
+  CLAUDE_CONFIG_DIR="$HOME/.claude" claude "$@"
+}
+claude-personal() {
+  CLAUDE_CONFIG_DIR="$HOME/.claude-personal" claude "$@"
+}
+
 # Shared terminal/app theme switcher
 theme() {
   "$HOME/bin/theme" "$@"
