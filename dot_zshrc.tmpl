@@ -53,14 +53,7 @@ if [ -f "$HOME/.env" ]; then
   set +a
 fi
 
-# opencode v1 (curl installer) / v2 (npm beta, side-by-side)
 export PATH=$HOME/.opencode/bin:$PATH
-if [ -x "$HOME/.opencode2/bin/opencode" ]; then
-  alias opencode="$HOME/.opencode2/bin/opencode"
-fi
-if [ -x "$HOME/.opencode/bin/opencode" ]; then
-  alias opencode1="$HOME/.opencode/bin/opencode"
-fi
 
 # AI harness convenience aliases
 if command -v claude >/dev/null 2>&1; then
