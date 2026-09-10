@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# Nothing here works without npm. Skip cleanly instead of letting every
+# install below fail one by one and take the chezmoi apply down with them.
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm not found; skipping global npm package install."
+  exit 0
+fi
+
 # Use a user-owned global prefix so npm install -g does not require sudo.
 NPM_GLOBAL_PREFIX="$HOME/.npm-global"
 if [ "$(npm config get prefix)" != "$NPM_GLOBAL_PREFIX" ]; then
