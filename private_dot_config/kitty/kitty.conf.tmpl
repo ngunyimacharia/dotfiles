@@ -2,10 +2,11 @@
 include theme-current.conf
 
 # Keep existing configuration from your template
+# Resolve the real shell path at apply time instead of pinning /bin/*.
 {{ if eq .chezmoi.os "darwin" -}}
-shell /bin/zsh
+shell {{ lookPath "zsh" | default "/bin/zsh" }}
 {{ else -}}
-shell /bin/bash
+shell {{ lookPath "bash" | default "/bin/bash" }}
 {{ end }}
 
 font_family Fira Code

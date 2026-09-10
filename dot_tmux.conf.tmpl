@@ -7,12 +7,16 @@ set -g extended-keys on
 # Propagate the Wayland socket to new panes so clipboard tools work (not in tmux's default list)
 set -ga update-environment "WAYLAND_DISPLAY"
 
+# Resolve the real shell path at apply time instead of pinning /bin/*, which
+# is wrong on any machine with a Homebrew or distro-packaged shell.
 {{ if eq .chezmoi.os "darwin" -}}
-set -g default-shell /bin/zsh
-set-environment -g SHELL /bin/zsh
+{{ $shell := lookPath "zsh" | default "/bin/zsh" -}}
+set -g default-shell {{ $shell }}
+set-environment -g SHELL {{ $shell }}
 {{ else -}}
-set -g default-shell /bin/bash
-set-environment -g SHELL /bin/bash
+{{ $shell := lookPath "bash" | default "/bin/bash" -}}
+set -g default-shell {{ $shell }}
+set-environment -g SHELL {{ $shell }}
 {{ end }}
 set -g base-index 1 # Start windows at 1
 set -g renumber-windows on # Renumber windows when a window is closed
