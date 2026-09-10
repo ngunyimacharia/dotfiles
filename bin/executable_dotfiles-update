@@ -1,0 +1,105 @@
+#!/bin/sh
+# Update the dotfiles and the packages they depend on, in a safe order.
+#
+# Inspired by omarchy-update: take a lock so two runs cannot interleave, confirm
+# before doing anything, then run the steps in an order where each one can rely
+# on the previous having finished. Notably chezmoi runs first, because the
+# package lists live in .chezmoiscripts/ and we want the new ones, not the old.
+#
+# Usage: dotfiles-update [-y]
+#   -y   do not ask for confirmation
+
+set -eu
+
+# omarchy-update uses flock, which macOS does not ship. mkdir is atomic on both.
+LOCK_DIR="${TMPDIR:-/tmp}/dotfiles-update.lock"
+
+usage() {
+  echo "Usage: ${0##*/} [-y]"
+  echo ""
+  echo "  -y   skip the confirmation prompt"
+}
+
+assume_yes=0
+case "${1:-}" in
+  -y) assume_yes=1 ;;
+  "") ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "Error: unknown argument '$1'" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
+
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+  echo "Another dotfiles-update is already running ($LOCK_DIR exists)." >&2
+  echo "If that is wrong, remove the directory and retry." >&2
+  exit 1
+fi
+trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT INT TERM
+
+step() {
+  echo ""
+  echo "==> $1"
+}
+
+if [ "$assume_yes" -eq 0 ]; then
+  printf 'Update dotfiles and system packages? [y/N] '
+  read -r reply
+  case "$reply" in
+    y | Y | yes | YES) ;;
+    *)
+      echo "Nothing done."
+      exit 0
+      ;;
+  esac
+fi
+
+# 1. Dotfiles first: this pulls the repo and applies it, which also runs any
+#    new or changed scripts under .chezmoiscripts/.
+step "Updating dotfiles (chezmoi update)"
+if command -v chezmoi >/dev/null 2>&1; then
+  chezmoi update
+else
+  echo "chezmoi not found; skipping."
+fi
+
+# 2. System packages, per platform.
+step "Updating system packages"
+case "$(uname)" in
+  Darwin)
+    if command -v brew >/dev/null 2>&1; then
+      brew update
+      brew upgrade
+    else
+      echo "Homebrew not found; skipping."
+    fi
+    ;;
+  Linux)
+    if command -v apt-get >/dev/null 2>&1; then
+      sudo apt-get update
+      sudo apt-get upgrade -y
+    else
+      echo "apt-get not found; skipping."
+    fi
+    ;;
+  *)
+    echo "Unsupported OS $(uname); skipping."
+    ;;
+esac
+
+# 3. Tool managers that keep their own versions.
+step "Updating tool managers"
+if command -v mise >/dev/null 2>&1; then
+  mise upgrade || echo "mise upgrade reported a problem; continuing."
+else
+  echo "mise not found; skipping."
+fi
+
+step "Done"
+echo "Theme mode is $(cat "$HOME/.current_theme_mode" 2>/dev/null || echo unknown)."
+echo "Run 'theme auto' if the desktop appearance changed during the update."
