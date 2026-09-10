@@ -7,6 +7,8 @@ KITTY_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
 KITTY_CURRENT_THEME="$KITTY_CONFIG_DIR/theme-current.conf"
 KITTY_SOCKET="unix:/tmp/kitty-theme"
 TMUX_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+BTOP_CONFIG_FILE="$CONFIG_DIR/btop/btop.conf"
 
 show_usage() {
   echo "Usage: ${0##*/} [dark|light|auto|status]"
@@ -40,6 +42,63 @@ detect_os_mode() {
     cat "$MODE_FILE"
   else
     echo "dark"
+  fi
+}
+
+# Swap a themed config into the place its app actually reads. Each app owns a
+# plain "current" file; the light and dark variants next to it are managed by
+# chezmoi and generated from .chezmoidata/palette.toml.
+apply_variant() {
+  variant="$1"
+  active="$2"
+  [ -f "$variant" ] || return 0
+  mkdir -p "$(dirname "$active")"
+  cp "$variant" "$active"
+}
+
+apply_starship() {
+  apply_variant "$CONFIG_DIR/starship-$mode.toml" "$CONFIG_DIR/starship.toml"
+  # starship re-reads its config on every prompt, so there is nothing to signal.
+}
+
+apply_fastfetch() {
+  apply_variant "$CONFIG_DIR/fastfetch/config-$mode.jsonc" \
+    "$CONFIG_DIR/fastfetch/config.jsonc"
+}
+
+# btop rewrites btop.conf itself when it exits, so we edit the one line we own
+# rather than managing the whole file and fighting it.
+apply_btop() {
+  [ -f "$BTOP_CONFIG_FILE" ] || return 0
+  if grep -q '^color_theme' "$BTOP_CONFIG_FILE"; then
+    tmp="$BTOP_CONFIG_FILE.theme-tmp"
+    sed "s|^color_theme.*|color_theme = \"everforest-$mode\"|" \
+      "$BTOP_CONFIG_FILE" > "$tmp" && mv "$tmp" "$BTOP_CONFIG_FILE"
+  else
+    printf 'color_theme = "everforest-%s"\n' "$mode" >> "$BTOP_CONFIG_FILE"
+  fi
+
+  # Only signal a btop that is actually running; SIGUSR2 makes it reload.
+  if pgrep -x btop >/dev/null 2>&1; then
+    pkill -USR2 -x btop >/dev/null 2>&1 || true
+  fi
+}
+
+# Follow the switch through to the desktop, so GTK apps and system chrome match
+# the terminal instead of staying on whatever they were.
+apply_os_appearance() {
+  if [ "$(uname)" = "Darwin" ]; then
+    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $([ "$mode" = dark ] && echo true || echo false)" >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  command -v gsettings >/dev/null 2>&1 || return 0
+  if [ "$mode" = "light" ]; then
+    gsettings set org.gnome.desktop.interface color-scheme "prefer-light" >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita" >/dev/null 2>&1 || true
+  else
+    gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark" >/dev/null 2>&1 || true
   fi
 }
 
@@ -125,6 +184,11 @@ fi
 mkdir -p "$KITTY_CONFIG_DIR"
 cp "$kitty_source" "$KITTY_CURRENT_THEME"
 printf '%s\n' "$mode" > "$MODE_FILE"
+
+apply_starship
+apply_fastfetch
+apply_btop
+apply_os_appearance
 
 reload_kitty
 reload_tmux
