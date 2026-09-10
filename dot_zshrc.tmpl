@@ -100,6 +100,9 @@ export PATH=$PATH:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
 {{ end }}
 
+# Lerd completions
+fpath=($HOME/.local/share/zsh/site-functions $fpath)
+
 autoload -Uz compinit
 compinit -i
 
