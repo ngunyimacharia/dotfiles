@@ -14,6 +14,7 @@ run_onchange_handy-gnome-hotkey.sh
 run_onchange_ubuntu_install-packages.sh
 {{ else -}}
 .zshrc
+.zshenv
 Library
 darwin_install-packages.sh
 run_onchange_darwin_install-packages.sh
