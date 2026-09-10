@@ -43,38 +43,6 @@ detect_os_mode() {
   fi
 }
 
-resolve_mode() {
-  case "${1:-}" in
-    dark|light)
-      echo "$1"
-      ;;
-    auto)
-      detect_os_mode
-      ;;
-    "")
-      show_usage
-      exit 0
-      ;;
-    --help|-h)
-      show_usage
-      exit 0
-      ;;
-    status)
-      if [ -f "$MODE_FILE" ]; then
-        echo "Current theme mode: $(cat "$MODE_FILE")"
-      else
-        echo "Current theme mode: unset"
-      fi
-      exit 0
-      ;;
-    *)
-      echo "Error: expected dark, light, auto, or status" >&2
-      show_usage >&2
-      exit 1
-      ;;
-  esac
-}
-
 reload_kitty() {
   if ! command -v kitty >/dev/null 2>&1; then
     return 0
@@ -117,7 +85,35 @@ reload_tmux() {
   echo "Updated tmux status theme."
 }
 
-mode="$(resolve_mode "${1:-}")"
+# Resolve the mode inline rather than through a command substitution. A
+# subshell's "exit" only ends the subshell, so the usage/status branches used to
+# be captured into $mode instead of ending the script.
+case "${1:-}" in
+  dark|light)
+    mode="$1"
+    ;;
+  auto)
+    mode="$(detect_os_mode)"
+    ;;
+  "" | --help | -h)
+    show_usage
+    exit 0
+    ;;
+  status)
+    if [ -f "$MODE_FILE" ]; then
+      echo "Current theme mode: $(cat "$MODE_FILE")"
+    else
+      echo "Current theme mode: unset"
+    fi
+    exit 0
+    ;;
+  *)
+    echo "Error: expected dark, light, auto, or status" >&2
+    show_usage >&2
+    exit 1
+    ;;
+esac
+
 kitty_source="$KITTY_CONFIG_DIR/theme-everforest-$mode.conf"
 
 if [ ! -f "$kitty_source" ]; then
