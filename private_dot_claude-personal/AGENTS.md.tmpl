@@ -1,0 +1,40 @@
+{{ template "private_dot_config/ai_agent_guidelines.md" dict "tool" "claude" }}
+
+# Claude-Specific Guidelines
+
+## Tool Usage
+
+- Use the `bash` tool for terminal operations, git commands, and running scripts
+- Use the `read` tool to inspect files before editing
+- Use the `edit` tool for precise file modifications (requires reading first)
+- Use the `write` tool for creating new files
+- Use the `grep` tool for searching code across the codebase
+- Use the `glob` tool for finding files by pattern
+- Use the `task` tool for delegating research or multi-step work to subagents
+- Use the `question` tool to ask the user for clarification when needed
+
+## MCP Server Usage
+
+The following MCP servers are available:
+- `context7`: Upstash Context7 for library documentation queries
+- `ray`: Local Raycast MCP server at http://127.0.0.1:2411/mcp
+
+When using MCP servers, resolve library IDs first, then query documentation.
+
+## Commands
+
+The following custom commands are available via the slash menu:
+- `/commit` — Commit changes using conventional commits
+- `/commit-push` — Commit and push changes using conventional commits
+- `/plannotator-annotate` — Open interactive annotation UI for a markdown file
+- `/plannotator-last` — Annotate the last assistant message
+- `/plannotator-review` — Open interactive code review for current changes
+
+## Skills
+
+The following skills are available for specialized tasks:
+- `deploying-laravel-cloud` — Deploy and manage Laravel applications on Laravel Cloud
+- `find-skills` — Discover and install agent skills
+- `plannotator-annotate` — Open Plannotator's annotation UI
+- `plannotator-last` — Annotate the last assistant message
+- `plannotator-review` — Open Plannotator's code review UI
