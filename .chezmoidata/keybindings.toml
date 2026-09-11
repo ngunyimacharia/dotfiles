@@ -25,11 +25,10 @@ id = "launcher"
 label = "Open the launcher"
 aerospace_key = ""
 aerospace_action = ""
-gnome_schema = "org.gnome.shell.keybindings"
-gnome_key = "toggle-application-view"
+gnome_command = "vicinae toggle"
 gnome_binding = "<Alt>space"
 manual = true
-note = "Raycast's hotkey lives in its own settings and cannot be set from a file. Set it under Raycast Settings > General > Raycast Hotkey."
+note = "Raycast on macOS keeps its hotkey in its own settings; set it under Raycast Settings > General > Raycast Hotkey. Linux runs Vicinae, which has no global shortcut support of its own and expects the desktop to bind a key to its toggle."
 
 [[keybinding]]
 id = "switch-window"

@@ -63,6 +63,66 @@ gsettings set org.gnome.desktop.wm.keybindings activate-window-menu "[]"
 gsettings set org.gnome.desktop.wm.keybindings switch-applications "[]"
 gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "[]"
 
+# Beyond that fixed list, sweep for any key still holding an accelerator this
+# table is about to claim and clear it. A hand-maintained conflict list only
+# covers the collisions known when it was written: moving the launcher from
+# toggle-application-view to a Vicinae custom command left the old key still
+# holding Alt+space, so Alt+space was bound twice and GNOME picked whichever
+# it liked. This makes the clearing follow the table instead.
+python3 - <<'PYEOF'
+import subprocess
+
+wanted = [
+{{- range .keybinding }}
+{{- if index . "gnome_binding" }}
+    ("{{ index . "gnome_binding" }}", "{{ index . "gnome_schema" | default "" }}", "{{ index . "gnome_key" | default "" }}"),
+{{- end }}
+{{- end }}
+]
+{{- $ws := .workspaces }}
+{{- range $i := until (int $ws.count) }}
+{{- $n := add $i 1 }}
+wanted.append(("{{ $ws.gnome_switch_binding_prefix }}{{ $n }}",
+               "org.gnome.desktop.wm.keybindings", "switch-to-workspace-{{ $n }}"))
+wanted.append(("{{ $ws.gnome_move_binding_prefix }}{{ $n }}",
+               "org.gnome.desktop.wm.keybindings", "move-to-workspace-{{ $n }}"))
+{{- end }}
+
+SCHEMAS = [
+    "org.gnome.desktop.wm.keybindings",
+    "org.gnome.shell.keybindings",
+    "org.gnome.settings-daemon.plugins.media-keys",
+    "org.gnome.mutter.keybindings",
+    "org.gnome.mutter.wayland.keybindings",
+]
+
+# accel -> the schema/key that is allowed to keep it
+owner = {accel: (sch, key) for accel, sch, key in wanted}
+
+cleared = 0
+for schema in SCHEMAS:
+    out = subprocess.run(["gsettings", "list-recursively", schema],
+                         capture_output=True, text=True).stdout
+    for line in out.splitlines():
+        parts = line.split(" ", 2)
+        if len(parts) != 3:
+            continue
+        sch, key, value = parts
+        if not value.startswith("["):
+            continue
+        for accel, (osch, okey) in owner.items():
+            if "'%s'" % accel not in value:
+                continue
+            if sch == osch and key == okey:
+                continue
+            subprocess.run(["gsettings", "set", sch, key, "[]"], check=False)
+            cleared += 1
+            break
+
+if cleared:
+    print("Cleared %d conflicting default binding(s)." % cleared)
+PYEOF
+
 # --- Simple rebinds: existing gsettings keys ------------------------------
 # Every keybinding schema/key combination used here (org.gnome.desktop.wm.keybindings,
 # org.gnome.shell.keybindings, org.gnome.settings-daemon.plugins.media-keys)
@@ -118,6 +178,8 @@ custom_count=$((custom_count + 1))
 python3 - <<'PYEOF'
 import ast
 import re
+import shlex
+import shutil
 import subprocess
 
 schema = "org.gnome.settings-daemon.plugins.media-keys"
@@ -139,10 +201,28 @@ def path_for(i):
 
 ours = [path_for(i) for i in range(len(entries))]
 
+def resolve(command):
+    """Make the binary absolute where we can find it.
+
+    gnome-settings-daemon runs these commands without the login shell's
+    PATH, so anything in ~/.local/bin (vicinae, for one) is not necessarily
+    resolvable by bare name. Leave the command untouched when the binary is
+    not on PATH right now, since it may simply not be installed yet.
+    """
+    parts = shlex.split(command)
+    if not parts:
+        return command
+    found = shutil.which(parts[0])
+    if not found:
+        return command
+    parts[0] = found
+    return shlex.join(parts)
+
+
 for i, (id_, label, command, binding) in enumerate(entries):
     key = "%s.custom-keybinding:%s" % (schema, path_for(i))
     subprocess.run(["gsettings", "set", key, "name", label], check=True)
-    subprocess.run(["gsettings", "set", key, "command", command], check=True)
+    subprocess.run(["gsettings", "set", key, "command", resolve(command)], check=True)
     subprocess.run(["gsettings", "set", key, "binding", binding], check=True)
 
 raw = subprocess.run(
