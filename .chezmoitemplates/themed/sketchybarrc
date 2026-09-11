@@ -1,0 +1,87 @@
+#!/bin/sh
+# SketchyBar config. Shared body for the dark, light and default copies.
+# The template context is a palette mode map from .chezmoidata/palette.toml,
+# so colors are referenced as {{ ".green" }}, {{ ".bg0" }} and so on.
+# Rendered mode: {{ .mode }}
+# Lands at ~/.config/sketchybar/sketchybarrc (must stay executable,
+# SketchyBar runs this file itself on launch and on `sketchybar --reload`).
+#
+# This is the Omarchy-Quickshell analogue: one self-contained script, no
+# separate plugins/ directory, so there is only one place to theme.
+#
+# Workspace indicators are driven by AeroSpace, which has no native
+# SketchyBar integration. AeroSpace's exec-on-workspace-change setting
+# should call:
+#   sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE
+# on every workspace change, so the space.N items below can react to it.
+
+PATH="/opt/homebrew/bin:$PATH"
+
+sketchybar --bar \
+  color=0xff{{ trimPrefix "#" .bg0 }} \
+  height=32 \
+  position=top \
+  padding_left=10 \
+  padding_right=10 \
+  border_color=0xff{{ trimPrefix "#" .bg3 }} \
+  border_width=2
+
+sketchybar --default \
+  icon.font="CaskaydiaMono Nerd Font:Bold:14.0" \
+  label.font="CaskaydiaMono Nerd Font:Bold:14.0" \
+  icon.color=0xff{{ trimPrefix "#" .fg }} \
+  label.color=0xff{{ trimPrefix "#" .fg }} \
+  padding_left=5 \
+  padding_right=5
+
+##### Left side: front app #####
+
+sketchybar --add item front_app left \
+  --set front_app icon.drawing=off \
+              label.color=0xff{{ trimPrefix "#" .green }} \
+              script="sketchybar --set \$NAME label=\"\$INFO\"" \
+  --subscribe front_app front_app_switched
+
+##### Left side: AeroSpace workspace indicators #####
+
+for sid in 1 2 3 4 5; do
+  sketchybar --add item space.$sid left
+  sketchybar --set space.$sid \
+    icon="$sid" \
+    icon.padding_left=8 \
+    icon.padding_right=8 \
+    label.drawing=off \
+    background.corner_radius=5 \
+    background.height=20 \
+    background.color=0x00000000 \
+    icon.color=0xff{{ trimPrefix "#" .fg }} \
+    click_script="aerospace workspace $sid" \
+    script="sid=$sid; if [ \"\$FOCUSED_WORKSPACE\" = \"\$sid\" ]; then sketchybar --set \$NAME background.color=0xff{{ trimPrefix "#" .green }} icon.color=0xff{{ trimPrefix "#" .bg0 }}; else sketchybar --set \$NAME background.color=0x00000000 icon.color=0xff{{ trimPrefix "#" .fg }}; fi"
+  sketchybar --subscribe space.$sid aerospace_workspace_change
+done
+
+##### Right side: clock, battery, cpu #####
+
+sketchybar --add item clock right
+sketchybar --set clock \
+  update_freq=10 \
+  icon.drawing=off \
+  label.color=0xff{{ trimPrefix "#" .blue }} \
+  script="sketchybar --set \$NAME label=\"\$(date '+%a %d %b %H:%M')\""
+
+sketchybar --add item battery right
+sketchybar --set battery \
+  update_freq=120 \
+  icon.color=0xff{{ trimPrefix "#" .yellow }} \
+  label.color=0xff{{ trimPrefix "#" .yellow }} \
+  script="pct=\$(pmset -g batt | grep -Eo '[0-9]+%' | head -1); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
+sketchybar --subscribe battery system_woke power_source_change
+
+sketchybar --add item cpu right
+sketchybar --set cpu \
+  update_freq=5 \
+  icon.color=0xff{{ trimPrefix "#" .aqua }} \
+  label.color=0xff{{ trimPrefix "#" .aqua }} \
+  script="pct=\$(ps -A -o %cpu | awk '{s+=\$1} END {printf \"%.0f%%\", s}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
+
+sketchybar --update

@@ -1,0 +1,14 @@
+#!/bin/sh
+# JankyBorders config. Shared body for the dark, light and default copies.
+# The template context is a palette mode map from .chezmoidata/palette.toml,
+# so colors are referenced as {{ ".green" }}, {{ ".bg4" }} and so on.
+# Rendered mode: {{ .mode }}
+# Lands at ~/.config/borders/bordersrc (must stay executable, borders reads
+# it as a shell script that calls itself with these flags).
+
+borders \
+  active_color=0xff{{ trimPrefix "#" .green }} \
+  inactive_color=0xff{{ trimPrefix "#" .bg4 }} \
+  width=5.0 \
+  hidpi=on \
+  style=round
