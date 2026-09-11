@@ -13,8 +13,8 @@ if [ "$(uname)" != "Linux" ] || ! command -v gsettings >/dev/null 2>&1; then
 fi
 
 # Keybindings are not set here. They come from .chezmoidata/keybindings.toml
-# through run_onchange_gnome-keybindings.sh, which is shared with AeroSpace
-# on macOS. Two scripts writing the same gsettings keys would fight.
+# through run_onchange_gnome-keybindings.sh. Two scripts writing the same
+# gsettings keys would fight.
 echo "Applying GNOME desktop settings..."
 
 gsettings set org.gnome.mutter center-new-windows true
