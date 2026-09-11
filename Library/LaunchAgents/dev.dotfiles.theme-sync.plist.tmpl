@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.dotfiles.theme-sync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{ .chezmoi.homeDir }}/bin/theme-sync-apply</string>
+  </array>
+  <!-- The directory, not the file: Syncthing writes a temporary file and
+       renames it over the target, which a file-level watch can miss. -->
+  <key>WatchPaths</key>
+  <array>
+    <string>{{ .chezmoi.homeDir }}/.local/share/dotfiles-sync</string>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/tmp/theme-sync.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/theme-sync.log</string>
+</dict>
+</plist>

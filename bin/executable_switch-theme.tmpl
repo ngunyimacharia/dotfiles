@@ -11,6 +11,7 @@ MODE_FILE="$HOME/.current_theme_mode"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 THEME_DIR="$HOME/.local/share/dotfiles-themes"
 BACKGROUND_DIR="$HOME/.local/share/backgrounds"
+SYNC_DIR="$HOME/.local/share/dotfiles-sync"
 THEME_BACKGROUND_DIR="$HOME/.local/share/dotfiles-themes-backgrounds"
 KITTY_CONFIG_DIR="$CONFIG_DIR/kitty"
 KITTY_CURRENT_THEME="$KITTY_CONFIG_DIR/theme-current.conf"
@@ -350,6 +351,15 @@ uname_s="$(uname)"
 
 printf '%s\n' "$theme" >"$THEME_FILE"
 printf '%s\n' "$mode" >"$MODE_FILE"
+
+# Publish for the other machine when the Syncthing folder is present. Written
+# only when the value actually changes, so re-applying the same theme does not
+# touch the file and give Syncthing something to think about.
+if [ -d "$SYNC_DIR" ]; then
+  if [ "$(cat "$SYNC_DIR/current_theme" 2>/dev/null | tr -d '\r\n')" != "$theme" ]; then
+    printf '%s\n' "$theme" >"$SYNC_DIR/current_theme"
+  fi
+fi
 
 apply_terminal
 apply_btop

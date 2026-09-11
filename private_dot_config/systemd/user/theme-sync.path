@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch the synced theme file for changes from another machine
+
+[Path]
+# The directory, not the file: Syncthing writes a temporary file and renames it
+# over the target, which a file-level watch can miss.
+PathChanged=%h/.local/share/dotfiles-sync
+Unit=theme-sync.service
+
+[Install]
+WantedBy=default.target

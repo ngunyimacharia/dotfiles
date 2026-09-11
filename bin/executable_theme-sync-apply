@@ -1,0 +1,36 @@
+#!/bin/sh
+# Apply the theme another machine picked.
+#
+# ~/.local/share/dotfiles-sync is a Syncthing folder shared between the two
+# machines. switch-theme writes the chosen theme there; a watcher on each
+# machine runs this when the file changes.
+#
+# No loop: this only acts when the shared value differs from what is already
+# applied locally, and switch-theme writes the shared file only when the value
+# would actually change. Applying a theme that came from the other side
+# therefore produces identical content, which Syncthing does not treat as a
+# change because it compares hashes rather than timestamps.
+
+set -eu
+
+SYNC_FILE="$HOME/.local/share/dotfiles-sync/current_theme"
+SWITCH="$HOME/bin/switch-theme"
+
+[ -f "$SYNC_FILE" ] || exit 0
+[ -x "$SWITCH" ] || exit 0
+
+want=$(cat "$SYNC_FILE" 2>/dev/null | tr -d '\r\n')
+have=$(cat "$HOME/.current_theme" 2>/dev/null | tr -d '\r\n')
+
+[ -n "$want" ] || exit 0
+[ "$want" = "$have" ] && exit 0
+
+# Ignore a value this machine cannot honour rather than failing noisily in a
+# background unit where nobody would see it.
+"$SWITCH" list 2>/dev/null | awk '{ print ($1 == "*") ? $2 : $1 }' | grep -qx "$want" || {
+  echo "theme-sync: unknown theme '$want', ignoring" >&2
+  exit 0
+}
+
+echo "theme-sync: applying '$want' (was '${have:-unset}')"
+exec "$SWITCH" "$want"

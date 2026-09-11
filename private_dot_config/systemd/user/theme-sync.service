@@ -1,0 +1,6 @@
+[Unit]
+Description=Apply the theme chosen on another machine
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/theme-sync-apply
