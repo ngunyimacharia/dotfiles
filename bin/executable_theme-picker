@@ -1,0 +1,58 @@
+#!/bin/sh
+# Pick a theme from a list and apply it.
+#
+# The themes come from "switch-theme list" rather than being read out of
+# palette.toml again, so this cannot list something the switcher will not
+# accept. Adding a theme to the palette makes it appear here with no change
+# to this file.
+#
+# Launched from the Activities overview or a launcher through
+# ~/.local/share/applications/theme-picker.desktop, or bound to a key.
+
+set -eu
+
+SWITCH="$HOME/bin/switch-theme"
+
+die() {
+  if command -v zenity >/dev/null 2>&1; then
+    zenity --error --text="$1" --width=320 2>/dev/null || true
+  fi
+  echo "$1" >&2
+  exit 1
+}
+
+[ -x "$SWITCH" ] || die "switch-theme is not installed at $SWITCH"
+command -v zenity >/dev/null 2>&1 || die "zenity is not installed. Run: sudo apt install zenity"
+
+# switch-theme marks the active theme with a leading asterisk, so the columns
+# shift by one on that row. Flatten both shapes into name/mode pairs, one field
+# per line, which is the form zenity --list reads from stdin.
+#
+# Two columns, not three with a marker column. A third column is empty on every
+# row but one, and command substitution strips the trailing newline, so the last
+# row arrives one field short and zenity aborts on an assertion. Folding the
+# marker into the mode cell keeps every cell non-empty.
+rows=$("$SWITCH" list | awk '
+  {
+    if ($1 == "*") { name = $2; mode = $3 " - current" }
+    else           { name = $1; mode = $2 }
+    print name; print mode
+  }')
+
+choice=$(printf '%s\n' "$rows" | zenity --list \
+  --title="Switch theme" \
+  --text="Applies to the terminal, GTK apps, the shell and the wallpaper." \
+  --column="Theme" --column="Mode" \
+  --width=420 --height=560 2>/dev/null) || exit 0
+
+[ -n "$choice" ] || exit 0
+
+# zenity can return the row separated by its own delimiter; keep the first field.
+choice=${choice%%|*}
+
+"$SWITCH" "$choice" >/dev/null 2>&1 || die "Could not apply theme: $choice"
+
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send --app-name="Theme" "Theme set to $choice" \
+    "GTK apps use it when they next start." 2>/dev/null || true
+fi

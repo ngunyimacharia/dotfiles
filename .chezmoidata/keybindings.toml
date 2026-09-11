@@ -78,6 +78,18 @@ label = "Open a terminal"
 gnome_command = "kitty"
 gnome_binding = "<Alt>Return"
 
+[[keybinding]]
+id = "theme-picker"
+label = "Pick a theme"
+gnome_command = "theme-picker"
+gnome_binding = "<Alt>t"
+
+[[keybinding]]
+id = "theme-next"
+label = "Next theme"
+gnome_command = "switch-theme next"
+gnome_binding = "<Alt><Shift>t"
+
 # Workspaces 1-9. GNOME needs static workspaces for these to address
 # anything, which the keybinding script sets up before applying them.
 [workspaces]
