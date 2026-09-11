@@ -82,6 +82,9 @@ sketchybar --set cpu \
   update_freq=5 \
   icon.color=0xff{{ trimPrefix "#" .aqua }} \
   label.color=0xff{{ trimPrefix "#" .aqua }} \
-  script="pct=\$(ps -A -o %cpu | awk '{s+=\$1} END {printf \"%.0f%%\", s}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
+  # ps reports %cpu per core, so summing it reaches ncpu*100 rather than 100
+  # on a multi-core machine. Divide by the core count to get a figure that
+  # reads the way a bar should.
+  script="pct=\$(ps -A -o %cpu | awk -v n=\$(sysctl -n hw.ncpu) '{s+=\$1} END {printf \"%.0f%%\", s/n}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
 
 sketchybar --update
