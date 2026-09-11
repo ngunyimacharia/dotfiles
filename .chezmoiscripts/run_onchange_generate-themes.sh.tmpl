@@ -76,14 +76,20 @@ MANIFEST="$THEMES_ROOT/.dotfiles-generated-themes"
 NEW_THEMES='{{ range $name, $c := .palette }}{{ $name }}
 {{ end }}'
 
-[ "$WANT_GNOME" = 1 ] && mkdir -p "$THEMES_ROOT" || true
-if [ -f "$MANIFEST" ]; then
-    while IFS= read -r old_name; do
-        [ -n "$old_name" ] || continue
-        if ! printf '%s\n' "$NEW_THEMES" | grep -qxF "$old_name"; then
-            rm -rf "$THEMES_ROOT/$old_name"
-        fi
-    done < "$MANIFEST"
+# All of the ~/.themes bookkeeping is Linux-only, manifest included. Guarding
+# only the mkdir left the manifest write at the end pointing into a directory
+# that does not exist on macOS, which aborted the script under set -eu after
+# the staging directory had already been swapped in.
+if [ "$WANT_GNOME" = 1 ]; then
+    mkdir -p "$THEMES_ROOT"
+    if [ -f "$MANIFEST" ]; then
+        while IFS= read -r old_name; do
+            [ -n "$old_name" ] || continue
+            if ! printf '%s\n' "$NEW_THEMES" | grep -qxF "$old_name"; then
+                rm -rf "$THEMES_ROOT/$old_name"
+            fi
+        done < "$MANIFEST"
+    fi
 fi
 
 STAGE_TMP="$STAGE_ROOT.tmp.$$"
@@ -167,7 +173,9 @@ fi
 rm -rf "$STAGE_ROOT"
 mv "$STAGE_TMP" "$STAGE_ROOT"
 
-printf '%s\n' "$NEW_THEMES" | sed '/^$/d' > "$MANIFEST"
+if [ "$WANT_GNOME" = 1 ]; then
+    printf '%s\n' "$NEW_THEMES" | sed '/^$/d' > "$MANIFEST"
+fi
 
 if [ "$WANT_GNOME" = 1 ]; then
   echo "Generated $count themes into $STAGE_ROOT and $THEMES_ROOT."
