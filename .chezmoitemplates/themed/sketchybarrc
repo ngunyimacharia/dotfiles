@@ -77,19 +77,21 @@ sketchybar --set battery \
   script="pct=\$(pmset -g batt | grep -Eo '[0-9]+%' | head -1); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
 sketchybar --subscribe battery system_woke power_source_change
 
+# CPU. ps reports %cpu per core, so summing it across processes reaches
+# ncpu*100 rather than 100; divide by the core count so the number reads the
+# way a status bar implies. sysctl is called by absolute path because
+# SketchyBar runs item scripts with a minimal PATH that excludes /usr/sbin,
+# and a bare "sysctl" yields an empty count, an awk divide-by-zero and a
+# blank label.
+#
+# These comments stay outside the --set block on purpose: a comment line in
+# the middle of a backslash continuation ends the command early, which
+# silently drops every argument after it, script= included.
 sketchybar --add item cpu right
 sketchybar --set cpu \
   update_freq=5 \
   icon.color=0xff{{ trimPrefix "#" .aqua }} \
   label.color=0xff{{ trimPrefix "#" .aqua }} \
-  # ps reports %cpu per core, so summing it reaches ncpu*100 rather than 100
-  # on a multi-core machine. Divide by the core count to get a figure that
-  # reads the way a bar should.
-  #
-  # sysctl is called by absolute path on purpose. SketchyBar runs item scripts
-  # with a minimal PATH that does not include /usr/sbin, so a bare "sysctl"
-  # silently produces an empty core count and awk then divides by zero,
-  # leaving the label blank.
   script="pct=\$(ps -A -o %cpu | awk -v n=\$(/usr/sbin/sysctl -n hw.ncpu) '{s+=\$1} END {printf \"%.0f%%\", s/n}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
 
 sketchybar --update
