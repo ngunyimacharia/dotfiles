@@ -1,0 +1,164 @@
+#!/bin/sh
+# Apply the shared keybinding table to GNOME via gsettings.
+#
+# .chezmoidata/keybindings.toml is the single source of truth, shared with
+# AeroSpace on macOS (see private_dot_config/aerospace/aerospace.toml.tmpl).
+# One table describes both sides so they cannot quietly drift apart.
+#
+# This is a run_onchange_ TEMPLATE, not a plain script, because the binding
+# values below are rendered straight from keybindings.toml into the script
+# text. Editing a binding in the table changes what this script says, which
+# changes its hash, which is what makes chezmoi re-run it. There is no
+# separate "did the keybindings change" check to keep in sync by hand.
+#
+# Why gsettings and not a hotkey daemon: on GNOME Wayland (this is GNOME 46)
+# there is no portable way for an app outside the compositor to grab a
+# global shortcut. The XDG GlobalShortcuts portal exists on paper, but
+# GNOME Shell does not implement it yet. gsettings plus GNOME's own
+# keybinding schemas is the only route that actually reaches the compositor.
+
+set -eu
+
+# Never an error on the MacBook: no GNOME, no gsettings, nothing to do here.
+if [ "$(uname)" != "Linux" ] || ! command -v gsettings >/dev/null 2>&1; then
+  exit 0
+fi
+
+# The custom-keybindings bookkeeping below needs real list manipulation
+# (read the current array, drop the slots we own, add ours back), which is
+# unpleasant and fragile in shell. python3 is already assumed elsewhere in
+# this repo's GNOME scripts (run_onchange_gnome-setup.sh, bin/handy-gnome-hotkey)
+# for the same reason, so the same assumption is made here.
+if ! command -v python3 >/dev/null 2>&1; then
+  exit 0
+fi
+
+echo "Applying GNOME keybindings from keybindings.toml..."
+
+# --- Workspaces: static, not dynamic ------------------------------------
+# GNOME defaults to dynamic workspaces, where workspaces are created and
+# destroyed on demand and "switch to workspace 7" is meaningless because
+# workspace 7 may not exist yet. The digit bindings below are pointless
+# without a fixed count, so pin it first.
+gsettings set org.gnome.mutter dynamic-workspaces false
+gsettings set org.gnome.desktop.wm.preferences num-workspaces {{ .workspaces.count }}
+
+# --- Conflicts this scheme displaces -------------------------------------
+# Binding a key that GNOME already uses for something else leaves both
+# bindings registered, and which one fires is undefined. Clear the specific
+# defaults this table's bindings collide with before setting anything, so
+# this script does not depend on run_onchange_gnome-setup.sh having run
+# first.
+#
+#   - activate-window-menu defaults to <Alt>space. The table's launcher
+#     entry rebinds toggle-application-view to <Alt>space, so this one has
+#     to go or the two fight over the same key.
+#   - switch-applications / switch-applications-backward default to
+#     <Alt>Tab / <Shift><Alt>Tab. The table's switch-window entry (see
+#     "manual" keybindings below) puts <Alt>Tab on switch-windows instead,
+#     for per-window rather than per-app Alt+Tab. gnome-setup.sh already
+#     does this rebind, but this script does it again so it works on a box
+#     where that script has not run.
+gsettings set org.gnome.desktop.wm.keybindings activate-window-menu "[]"
+gsettings set org.gnome.desktop.wm.keybindings switch-applications "[]"
+gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "[]"
+
+# --- Simple rebinds: existing gsettings keys ------------------------------
+# Every keybinding schema/key combination used here (org.gnome.desktop.wm.keybindings,
+# org.gnome.shell.keybindings, org.gnome.settings-daemon.plugins.media-keys)
+# takes a list of accelerators ("as"), not a single string - checked with
+# `gsettings range` against several keys before writing this, not assumed.
+# Entries marked "manual" in the table (launcher, switch-window) still have
+# real gnome_schema/gnome_key values and are applied here same as any other;
+# "manual" only means macOS configures that one inside an app instead of
+# from a file.
+count=0
+{{- range .keybinding }}
+{{- if and (index . "gnome_schema") (index . "gnome_key") }}
+gsettings set {{ index . "gnome_schema" }} {{ index . "gnome_key" }} "['{{ index . "gnome_binding" }}']"
+count=$((count + 1))
+{{- end }}
+{{- end }}
+
+# --- Workspace digits 1..N -------------------------------------------------
+workspaces_count={{ .workspaces.count }}
+i=1
+while [ "$i" -le "$workspaces_count" ]; do
+  gsettings set org.gnome.desktop.wm.keybindings "switch-to-workspace-$i" "['{{ .workspaces.gnome_switch_binding_prefix }}$i']"
+  gsettings set org.gnome.desktop.wm.keybindings "move-to-workspace-$i" "['{{ .workspaces.gnome_move_binding_prefix }}$i']"
+  i=$((i + 1))
+done
+
+# --- Custom commands: relocatable custom-keybinding schema -----------------
+# A command like "open a terminal" has no existing gsettings key to rebind,
+# so GNOME needs a custom-keybinding object instead, registered under
+# org.gnome.settings-daemon.plugins.media-keys custom-keybindings.
+#
+# Ownership: this script claims the custom0, custom1, ... slots and rewrites
+# that whole range from the table on every run, by index, in table order.
+# That makes re-running idempotent (it never appends a duplicate customN)
+# and handles the table shrinking (a stale custom3 from a table that used
+# to have 4 custom commands gets dropped once it only has 3). Any path that
+# is not named customN - such as handy-toggle, which
+# run_onchange_handy-gnome-hotkey.sh manages under its own fixed name - is
+# left alone.
+#
+# The real consequence, stated plainly: GNOME's own Settings app also
+# names shortcuts custom0, custom1, ... in the order you add them by hand.
+# If you add one that way, it can land in a slot this script considers its
+# own, and it will be silently overwritten on the next apply. That is the
+# price of one file being the source of truth instead of the Settings UI.
+custom_count=0
+{{- range .keybinding }}
+{{- if and (not (index . "gnome_schema")) (index . "gnome_command") }}
+custom_count=$((custom_count + 1))
+{{- end }}
+{{- end }}
+
+python3 - <<'PYEOF'
+import ast
+import re
+import subprocess
+
+schema = "org.gnome.settings-daemon.plugins.media-keys"
+base = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+
+# (id, label, command, binding), in table order. Position is what decides
+# the customN index, not the id, so reordering the table just reshuffles
+# which command is customN - the whole range is rewritten either way.
+entries = [
+{{- range .keybinding }}
+{{- if and (not (index . "gnome_schema")) (index . "gnome_command") }}
+    ("{{ .id }}", "{{ .label }}", "{{ index . "gnome_command" }}", "{{ index . "gnome_binding" }}"),
+{{- end }}
+{{- end }}
+]
+
+def path_for(i):
+    return "%s/custom%d/" % (base, i)
+
+ours = [path_for(i) for i in range(len(entries))]
+
+for i, (id_, label, command, binding) in enumerate(entries):
+    key = "%s.custom-keybinding:%s" % (schema, path_for(i))
+    subprocess.run(["gsettings", "set", key, "name", label], check=True)
+    subprocess.run(["gsettings", "set", key, "command", command], check=True)
+    subprocess.run(["gsettings", "set", key, "binding", binding], check=True)
+
+raw = subprocess.run(
+    ["gsettings", "get", schema, "custom-keybindings"],
+    capture_output=True, text=True, check=True,
+).stdout.strip()
+current = [] if raw in ("@as []", "") else ast.literal_eval(raw)
+
+owned = re.compile(r"/custom\d+/$")
+kept = [p for p in current if not owned.search(p)]
+new_list = kept + ours
+
+if new_list != current:
+    value = "[" + ", ".join("'%s'" % p for p in new_list) + "]"
+    subprocess.run(["gsettings", "set", schema, "custom-keybindings", value], check=True)
+PYEOF
+
+total=$((count + workspaces_count * 2 + custom_count))
+echo "GNOME keybindings applied: $count rebinds, $((workspaces_count * 2)) workspace shortcuts, $custom_count custom command(s), $total total."
