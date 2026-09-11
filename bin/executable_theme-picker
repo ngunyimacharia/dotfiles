@@ -6,15 +6,18 @@
 # accept. Adding a theme to the palette makes it appear here with no change
 # to this file.
 #
-# Launched from the Activities overview or a launcher through
-# ~/.local/share/applications/theme-picker.desktop, or bound to a key.
+# Two front ends, because there is no dialog tool common to both machines:
+# zenity on Linux, osascript on macOS. Both are already present on their own
+# platform, so neither adds a dependency.
 
 set -eu
 
 SWITCH="$HOME/bin/switch-theme"
 
 die() {
-  if command -v zenity >/dev/null 2>&1; then
+  if [ "$(uname)" = "Darwin" ]; then
+    osascript -e "display alert \"Theme\" message \"$1\" as critical" >/dev/null 2>&1 || true
+  elif command -v zenity >/dev/null 2>&1; then
     zenity --error --text="$1" --width=320 2>/dev/null || true
   fi
   echo "$1" >&2
@@ -22,37 +25,56 @@ die() {
 }
 
 [ -x "$SWITCH" ] || die "switch-theme is not installed at $SWITCH"
-command -v zenity >/dev/null 2>&1 || die "zenity is not installed. Run: sudo apt install zenity"
 
-# switch-theme marks the active theme with a leading asterisk, so the columns
-# shift by one on that row. Flatten both shapes into name/mode pairs, one field
-# per line, which is the form zenity --list reads from stdin.
-#
-# Two columns, not three with a marker column. A third column is empty on every
-# row but one, and command substitution strips the trailing newline, so the last
-# row arrives one field short and zenity aborts on an assertion. Folding the
-# marker into the mode cell keeps every cell non-empty.
-rows=$("$SWITCH" list | awk '
-  {
-    if ($1 == "*") { name = $2; mode = $3 " - current" }
-    else           { name = $1; mode = $2 }
-    print name; print mode
-  }')
+current=$("$SWITCH" list | awk '$1 == "*" { print $2 }')
 
-choice=$(printf '%s\n' "$rows" | zenity --list \
-  --title="Switch theme" \
-  --text="Applies to the terminal, GTK apps, the shell and the wallpaper." \
-  --column="Theme" --column="Mode" \
-  --width=420 --height=560 2>/dev/null) || exit 0
+if [ "$(uname)" = "Darwin" ]; then
+  # AppleScript wants a quoted, comma-separated list. Theme names come from the
+  # palette and are plain words, but quote-escape anyway rather than assume.
+  items=$("$SWITCH" list | awk '
+    { name = ($1 == "*") ? $2 : $1
+      gsub(/"/, "\\\"", name)
+      printf "%s\"%s\"", (NR > 1 ? "," : ""), name }')
+  script="choose from list {$items}"
+  script="$script with prompt \"Switch theme\""
+  script="$script default items {\"$current\"}"
+  choice=$(osascript -e "$script" 2>/dev/null) || exit 0
+  # Cancel yields "false", which is not a theme name.
+  [ "$choice" = "false" ] && exit 0
+else
+  command -v zenity >/dev/null 2>&1 ||
+    die "zenity is not installed. Run: sudo apt install zenity"
+
+  # switch-theme marks the active theme with a leading asterisk, so the columns
+  # shift by one on that row. Flatten both shapes into name/mode pairs, one
+  # field per line, which is the form zenity --list reads from stdin.
+  #
+  # Two columns, not three with a marker column. A third column is empty on
+  # every row but one, and command substitution strips the trailing newline, so
+  # the last row arrives a field short and zenity aborts on an assertion.
+  # Folding the marker into the mode cell keeps every cell non-empty.
+  rows=$("$SWITCH" list | awk '
+    {
+      if ($1 == "*") { name = $2; mode = $3 " - current" }
+      else           { name = $1; mode = $2 }
+      print name; print mode
+    }')
+
+  choice=$(printf '%s\n' "$rows" | zenity --list \
+    --title="Switch theme" \
+    --text="Applies to the terminal, GTK apps, the shell and the wallpaper." \
+    --column="Theme" --column="Mode" \
+    --width=420 --height=560 2>/dev/null) || exit 0
+  choice=${choice%%|*}
+fi
 
 [ -n "$choice" ] || exit 0
 
-# zenity can return the row separated by its own delimiter; keep the first field.
-choice=${choice%%|*}
-
 "$SWITCH" "$choice" >/dev/null 2>&1 || die "Could not apply theme: $choice"
 
-if command -v notify-send >/dev/null 2>&1; then
+if [ "$(uname)" = "Darwin" ]; then
+  osascript -e "display notification \"Theme set to $choice\" with title \"Theme\"" >/dev/null 2>&1 || true
+elif command -v notify-send >/dev/null 2>&1; then
   notify-send --app-name="Theme" "Theme set to $choice" \
     "GTK apps use it when they next start." 2>/dev/null || true
 fi
