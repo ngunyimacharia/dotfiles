@@ -285,7 +285,17 @@ reload_tmux() {
   if [ -f "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" ]; then
     "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" >/dev/null 2>&1 || true
   fi
-  tmux refresh-client -S >/dev/null 2>&1 || true
+  # Refresh every attached client, fully, by name.
+  #
+  # "refresh-client -S" was wrong twice. -S updates only the status line, so
+  # pane borders kept their old colours until something else forced a redraw.
+  # And refresh-client with no -t acts on "the current client", which does not
+  # exist when this runs from a script outside tmux, so it could refresh
+  # nothing at all. Naming each client fixes both.
+  tmux list-clients -F '#{client_name}' 2>/dev/null | while read -r client; do
+    [ -n "$client" ] || continue
+    tmux refresh-client -t "$client" >/dev/null 2>&1 || true
+  done
   echo "Updated tmux status theme."
 }
 
