@@ -15,7 +15,7 @@ SYNC_DIR="$HOME/.local/share/dotfiles-sync"
 THEME_BACKGROUND_DIR="$HOME/.local/share/dotfiles-themes-backgrounds"
 KITTY_CONFIG_DIR="$CONFIG_DIR/kitty"
 KITTY_CURRENT_THEME="$KITTY_CONFIG_DIR/theme-current.conf"
-KITTY_SOCKET="unix:/tmp/kitty-theme"
+KITTY_SOCKET_BASE="/tmp/kitty-theme"
 TMUX_CONFIG_DIR="$CONFIG_DIR/tmux"
 BTOP_CONFIG_FILE="$CONFIG_DIR/btop/btop.conf"
 
@@ -258,14 +258,26 @@ reload_kitty() {
   command -v kitty >/dev/null 2>&1 || return 0
   [ -f "$KITTY_CURRENT_THEME" ] || return 0
 
-  if kitty @ --to "$KITTY_SOCKET" set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
-    echo "Updated running kitty windows."
+  # kitty appends its own PID to the listen_on path, so the socket is
+  # /tmp/kitty-theme-<pid> and never the bare name the config asks for. Looking
+  # for the bare name meant the live reload always failed and always fell back
+  # to telling you to restart kitty, on both machines, quietly.
+  updated=0
+  for socket in "$KITTY_SOCKET_BASE" "$KITTY_SOCKET_BASE"-*; do
+    [ -S "$socket" ] || continue
+    if kitty @ --to "unix:$socket" set-colors --all --configured \
+      "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
+      updated=$((updated + 1))
+    fi
+  done
+
+  if [ "$updated" -gt 0 ]; then
+    echo "Updated $updated running kitty instance(s)."
     return 0
   fi
-  if kitty @ set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
-    echo "Updated current kitty window."
-    return 0
-  fi
+
+  # No socket: either kitty is not running, or it started before listen_on was
+  # configured, since kitty only opens the socket at startup.
   echo "Kitty theme file updated. Restart kitty if no running windows changed."
 }
 
