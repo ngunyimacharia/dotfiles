@@ -7,11 +7,21 @@ bin/handy-gnome-hotkey
 .chezmoiscripts/setup-inotify-limits.sh
 .chezmoiscripts/setup-syncthing.sh
 .chezmoiscripts/ubuntu_install-packages.sh
+# GNOME-only surfaces. macOS has no GTK app chrome worth theming and no shell
+# theme to load, so these never render there.
+.config/gtk-3.0
+.config/gtk-4.0
+.themes
 {{ else -}}
 .zshrc
 .zshenv
 Library
 .chezmoiscripts/darwin_install-packages.sh
+# The macOS desktop stack: tiling, status bar, window borders. GNOME covers the
+# same ground with its own shell, so none of this belongs on Linux.
+.config/aerospace
+.config/borders
+.config/sketchybar
 {{ end -}}
 
 .config/nvim/lazy-lock.json

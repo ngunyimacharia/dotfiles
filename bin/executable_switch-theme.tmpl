@@ -9,6 +9,7 @@ KITTY_SOCKET="unix:/tmp/kitty-theme"
 TMUX_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BTOP_CONFIG_FILE="$CONFIG_DIR/btop/btop.conf"
+BACKGROUND_DIR="$HOME/.local/share/backgrounds"
 
 show_usage() {
   echo "Usage: ${0##*/} [dark|light|auto|status]"
@@ -81,6 +82,105 @@ apply_btop() {
   # Only signal a btop that is actually running; SIGUSR2 makes it reload.
   if pgrep -x btop >/dev/null 2>&1; then
     pkill -USR2 -x btop >/dev/null 2>&1 || true
+  fi
+}
+
+# GTK reads one fixed filename per major version, so the light and dark variants
+# sit next to it and get copied over. Neither GTK3 nor GTK4 watches the file, so
+# windows that are already open keep their old colors until the app restarts.
+apply_gtk() {
+  apply_variant "$CONFIG_DIR/gtk-3.0/gtk-$mode.css" "$CONFIG_DIR/gtk-3.0/gtk.css"
+  apply_variant "$CONFIG_DIR/gtk-4.0/gtk-$mode.css" "$CONFIG_DIR/gtk-4.0/gtk.css"
+}
+
+# The GNOME Shell stylesheet only loads through the User Themes extension. When
+# that extension is absent its schema is absent too, so check before setting and
+# stay quiet rather than erroring on a machine that does not have it.
+apply_gnome_shell_theme() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  gsettings list-schemas 2>/dev/null |
+    grep -qx "org.gnome.shell.extensions.user-theme" || return 0
+  [ -d "$HOME/.themes/everforest-$mode/gnome-shell" ] || return 0
+  gsettings set org.gnome.shell.extensions.user-theme name "everforest-$mode" \
+    >/dev/null 2>&1 || true
+}
+
+# GNOME keeps separate wallpaper keys for light and dark and picks between them
+# from color-scheme, so both get pointed at their image every time and the swap
+# then follows the mode for free. macOS has one desktop picture, so it gets the
+# image for the mode we are switching into.
+apply_wallpaper() {
+  if [ "$(uname)" = "Darwin" ]; then
+    [ -f "$BACKGROUND_DIR/everforest-$mode.png" ] || return 0
+    osascript -e "tell application \"System Events\" to set picture of every desktop to \"$BACKGROUND_DIR/everforest-$mode.png\"" >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  command -v gsettings >/dev/null 2>&1 || return 0
+  [ -f "$BACKGROUND_DIR/everforest-dark.png" ] || return 0
+  [ -f "$BACKGROUND_DIR/everforest-light.png" ] || return 0
+
+  gsettings set org.gnome.desktop.background picture-uri \
+    "file://$BACKGROUND_DIR/everforest-light.png" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.background picture-uri-dark \
+    "file://$BACKGROUND_DIR/everforest-dark.png" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.background picture-options "zoom" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.screensaver picture-uri \
+    "file://$BACKGROUND_DIR/everforest-$mode.png" >/dev/null 2>&1 || true
+}
+
+# Papirus ships matching light and dark icon sets. Fall back silently to
+# whatever is already set when it is not installed.
+apply_icons() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  if [ "$mode" = "light" ]; then
+    want="Papirus-Light"
+  else
+    want="Papirus-Dark"
+  fi
+  for dir in "$HOME/.local/share/icons" "$HOME/.icons" /usr/share/icons; do
+    if [ -d "$dir/$want" ]; then
+      gsettings set org.gnome.desktop.interface icon-theme "$want" >/dev/null 2>&1 || true
+      return 0
+    fi
+  done
+}
+
+# macOS exposes no user color scheme, so these two keys are the only system
+# colors the palette can reach. Both only apply to apps launched afterwards.
+apply_macos_colors() {
+  [ "$(uname)" = "Darwin" ] || return 0
+  if [ "$mode" = "light" ]; then
+    highlight="{{ .palette.everforest.light.macos.highlight_color }}"
+    accent="{{ .palette.everforest.light.macos.accent_color }}"
+  else
+    highlight="{{ .palette.everforest.dark.macos.highlight_color }}"
+    accent="{{ .palette.everforest.dark.macos.accent_color }}"
+  fi
+  defaults write -g AppleHighlightColor -string "$highlight" >/dev/null 2>&1 || true
+  defaults write -g AppleAccentColor -int "$accent" >/dev/null 2>&1 || true
+}
+
+# sketchybar and borders are the macOS stand-ins for a themed panel and window
+# chrome. Only signal them when they are actually running.
+apply_macos_bars() {
+  [ "$(uname)" = "Darwin" ] || return 0
+
+  apply_variant "$CONFIG_DIR/sketchybar/sketchybarrc-$mode" \
+    "$CONFIG_DIR/sketchybar/sketchybarrc"
+  [ -f "$CONFIG_DIR/sketchybar/sketchybarrc" ] &&
+    chmod +x "$CONFIG_DIR/sketchybar/sketchybarrc" 2>/dev/null || true
+  if pgrep -x sketchybar >/dev/null 2>&1; then
+    sketchybar --reload >/dev/null 2>&1 || true
+  fi
+
+  apply_variant "$CONFIG_DIR/borders/bordersrc-$mode" "$CONFIG_DIR/borders/bordersrc"
+  [ -f "$CONFIG_DIR/borders/bordersrc" ] &&
+    chmod +x "$CONFIG_DIR/borders/bordersrc" 2>/dev/null || true
+  # borders has no reload signal, so bounce it instead, and only if it was up.
+  if pgrep -x borders >/dev/null 2>&1; then
+    pkill -x borders >/dev/null 2>&1 || true
+    "$CONFIG_DIR/borders/bordersrc" >/dev/null 2>&1 &
   fi
 }
 
@@ -188,7 +288,13 @@ printf '%s\n' "$mode" > "$MODE_FILE"
 apply_starship
 apply_fastfetch
 apply_btop
+apply_gtk
 apply_os_appearance
+apply_gnome_shell_theme
+apply_icons
+apply_wallpaper
+apply_macos_colors
+apply_macos_bars
 
 reload_kitty
 reload_tmux
@@ -196,3 +302,7 @@ reload_tmux
 echo "Theme mode set to $mode."
 echo "Neovim will use it on next start; run :ThemeSync in an existing Neovim session."
 echo "Restart opencode if its TUI does not repaint from the terminal palette."
+echo "GTK apps pick up the new colors when they next start."
+if [ "$(uname)" != "Darwin" ] && [ -d "$HOME/.themes/everforest-$mode/gnome-shell" ]; then
+  echo "GNOME Shell restyles live on Wayland only after logging out and back in."
+fi

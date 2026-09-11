@@ -121,3 +121,15 @@ inactive_tab_foreground = "#5c6a72"
 inactive_tab_background = "#efebd4"
 tab_bar_background = "#f4f0d9"
 
+# macOS-only derivations. AppleHighlightColor wants space-separated 0-1 floats
+# plus a display name, not a hex string, so the conversion is precomputed here
+# rather than attempted in a Go template. AppleAccentColor is a fixed enum
+# (0 red, 1 orange, 2 yellow, 3 green, 4 blue, 5 purple, 6 pink, -1 graphite),
+# so green is the closest match Apple allows; it is not arbitrary RGB.
+[palette.everforest.dark.macos]
+highlight_color = "0.654902 0.752941 0.501961 Green"
+accent_color = 3
+
+[palette.everforest.light.macos]
+highlight_color = "0.552941 0.631373 0.003922 Green"
+accent_color = 3

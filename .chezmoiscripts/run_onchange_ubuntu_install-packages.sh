@@ -686,6 +686,19 @@ else
   fi
 fi
 
+# Desktop theming packages. gnome-shell-extensions ships the User Themes
+# extension, which is the only supported way to load a custom GNOME Shell
+# stylesheet; without it ~/.themes/everforest-*/gnome-shell/gnome-shell.css is
+# never read. papirus-icon-theme gives the switcher a per-mode icon set.
+for pkg in gnome-shell-extensions papirus-icon-theme; do
+  if dpkg -s "$pkg" >/dev/null 2>&1; then
+    echo "$pkg is already installed."
+  else
+    echo "Installing $pkg..."
+    sudo apt install -y "$pkg"
+  fi
+done
+
 # GNOME Extensions and Settings (only if running GNOME)
 if [ -n "$DISPLAY" ] && command -v gnome-shell &> /dev/null; then
   echo ""
