@@ -1,0 +1,58 @@
+{{- /* Herdr config. Shared body for every theme.
+       The template context is a palette theme map from .chezmoidata/palette.toml
+       with the OS merged in, so colors are .green, .bg0 and so on, and .os is
+       "darwin" or "linux". Rendered mode: */ -}}
+# Herdr configuration ({{ .mode }} mode, generated from .chezmoidata/palette.toml)
+# Docs: https://herdr.dev/docs/configuration/
+
+# Skip first-run onboarding.
+onboarding = false
+
+# Herdr ships no theme matching this palette, so a built-in is named as the
+# base and every token below overrides it. auto_switch is deliberately not
+# used: it only understands built-in theme names, and ~/bin/switch-theme
+# rewrites this whole file per theme instead.
+[theme]
+name = "{{ if eq .mode "light" }}catppuccin-latte{{ else }}kanagawa{{ end }}" # base; every token below overrides it
+[theme.custom]
+accent = "{{ .green }}" # green
+panel_bg = "{{ .bg0 }}" # bg0
+surface_dim = "{{ .bg_dim }}" # bg_dim
+surface0 = "{{ .bg1 }}" # bg1
+surface1 = "{{ .bg2 }}" # bg2
+overlay0 = "{{ .bg3 }}" # bg3
+overlay1 = "{{ .bg5 }}" # bg5
+text = "{{ .fg }}" # fg
+subtext0 = "{{ .grey2 }}" # grey2
+mauve = "{{ .purple }}" # purple
+green = "{{ .green }}"
+yellow = "{{ .yellow }}"
+red = "{{ .red }}"
+blue = "{{ .blue }}"
+teal = "{{ .aqua }}" # aqua
+peach = "{{ .orange }}" # orange
+
+[terminal]
+{{ if eq .os "darwin" -}}
+default_shell = "{{ lookPath "zsh" | default "/bin/zsh" }}"
+{{ else -}}
+default_shell = "{{ lookPath "bash" | default "/bin/bash" }}"
+{{ end -}}
+new_cwd = "follow" # new panes/tabs inherit the current directory (like tmux -c)
+
+[keys]
+prefix = "ctrl+b"
+# tmux-style splits on top of the defaults (prefix+v / prefix+minus)
+split_vertical = ["prefix+v", "prefix+percent"] # side by side, like tmux %
+split_horizontal = ["prefix+minus", "prefix+quote"] # stacked, like tmux "
+# indexed tab/workspace switching (tmux base-index 1 equivalent)
+switch_tab = "prefix+1..9"
+switch_workspace = "prefix+shift+1..9"
+
+[ui]
+accent = "{{ .green }}" # palette accent for highlights/borders
+
+# Notify in-app when a background agent finishes or needs input.
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1

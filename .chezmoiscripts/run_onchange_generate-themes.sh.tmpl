@@ -9,6 +9,7 @@
 #   ~/.local/share/dotfiles-themes/<theme>/gtk4.css
 #   ~/.local/share/dotfiles-themes/<theme>/btop.theme
 #   ~/.local/share/dotfiles-themes/<theme>/tmux.conf
+#   ~/.local/share/dotfiles-themes/<theme>/herdr.toml
 #
 # so that switching themes at runtime is a plain file copy out of that
 # directory, with no chezmoi involved. GNOME Shell is the one exception: its
@@ -129,6 +130,10 @@ DOTFILES_THEME_EOF
 
 cat > "$THEME_DIR/tmux.conf" <<'DOTFILES_THEME_EOF'
 {{ template "themed/tmux.conf" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/herdr.toml" <<'DOTFILES_THEME_EOF'
+{{ template "themed/herdr.toml" (merge (dict "os" $.chezmoi.os) $c) }}
 DOTFILES_THEME_EOF
 
 if [ "$WANT_GNOME" = 1 ]; then

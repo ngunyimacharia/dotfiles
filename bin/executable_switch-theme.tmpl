@@ -108,6 +108,19 @@ apply_terminal() {
   apply_file fastfetch.jsonc "$CONFIG_DIR/fastfetch/config.jsonc"
   apply_file tmux.conf "$TMUX_CONFIG_DIR/theme-current.conf"
   apply_file btop.theme "$CONFIG_DIR/btop/themes/current.theme"
+  apply_herdr
+}
+
+# herdr has no light/dark switching of its own: auto_switch only understands
+# its built-in theme names, so the whole config is rewritten per theme and the
+# running server is asked to reread it.
+apply_herdr() {
+  apply_file herdr.toml "$CONFIG_DIR/herdr/config.toml"
+  [ -f "$CONFIG_DIR/herdr/config.toml" ] || return 0
+  command -v herdr >/dev/null 2>&1 || return 0
+  if pgrep -x herdr >/dev/null 2>&1; then
+    herdr server reload-config >/dev/null 2>&1 || true
+  fi
 }
 
 # btop rewrites btop.conf itself on exit, so only the one line we own is edited
