@@ -85,6 +85,11 @@ sketchybar --set cpu \
   # ps reports %cpu per core, so summing it reaches ncpu*100 rather than 100
   # on a multi-core machine. Divide by the core count to get a figure that
   # reads the way a bar should.
-  script="pct=\$(ps -A -o %cpu | awk -v n=\$(sysctl -n hw.ncpu) '{s+=\$1} END {printf \"%.0f%%\", s/n}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
+  #
+  # sysctl is called by absolute path on purpose. SketchyBar runs item scripts
+  # with a minimal PATH that does not include /usr/sbin, so a bare "sysctl"
+  # silently produces an empty core count and awk then divides by zero,
+  # leaving the label blank.
+  script="pct=\$(ps -A -o %cpu | awk -v n=\$(/usr/sbin/sysctl -n hw.ncpu) '{s+=\$1} END {printf \"%.0f%%\", s/n}'); sketchybar --set \$NAME icon=\"\" label=\"\$pct\""
 
 sketchybar --update
