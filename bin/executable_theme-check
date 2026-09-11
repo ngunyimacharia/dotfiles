@@ -1,0 +1,35 @@
+#!/bin/sh
+# Show what the current theme has actually applied.
+#
+# Switching touches a dozen places and most of them are not visible until you
+# open the app in question, so this reads the values back off disk and off the
+# running servers. Useful right after a switch to tell "it worked" apart from
+# "it looked like it worked".
+
+set -eu
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+row() { printf '  %-12s %s\n' "$1" "$2"; }
+
+row theme "$(cat "$HOME/.current_theme" 2>/dev/null || echo unset)"
+row mode "$(cat "$HOME/.current_theme_mode" 2>/dev/null || echo unset)"
+
+if [ "$(uname)" = "Darwin" ]; then
+  row appearance "$(defaults read -g AppleInterfaceStyle 2>/dev/null || echo Light)"
+  row highlight "$(defaults read -g AppleHighlightColor 2>/dev/null || echo unset)"
+  row accent "$(defaults read -g AppleAccentColor 2>/dev/null || echo unset)"
+  row wallpaper "$(osascript -e 'tell application "System Events" to get picture of current desktop' 2>/dev/null | sed 's|.*/||')"
+elif command -v gsettings >/dev/null 2>&1; then
+  row scheme "$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)"
+  row gtk-theme "$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null)"
+  row icons "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null)"
+  row shell "$(gsettings get org.gnome.shell.extensions.user-theme name 2>/dev/null || echo 'user-theme not installed')"
+  row wallpaper "$(gsettings get org.gnome.desktop.background picture-uri 2>/dev/null | sed 's|.*/||;s|.$||')"
+  row gtk4 "$(sed -n 's/^@define-color window_bg_color //p' "$CONFIG_DIR/gtk-4.0/gtk.css" 2>/dev/null | tr -d ';' | head -1)"
+fi
+
+row kitty "$(sed -n 's/^background *//p' "$CONFIG_DIR/kitty/theme-current.conf" 2>/dev/null | head -1)"
+row tmux "$(tmux show-option -gqv @theme_bg0 2>/dev/null || echo 'no tmux server')"
+row herdr "$(sed -n 's/^accent = "\(.*\)".*/\1/p' "$CONFIG_DIR/herdr/config.toml" 2>/dev/null | head -1)"
+row starship "$(test -f "$CONFIG_DIR/starship.toml" && echo present || echo missing)"
