@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=everforest-dark
+Comment=Everforest dark, generated from the chezmoi palette
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Adwaita-dark
+MetacityTheme=Adwaita
+IconTheme=Yaru
+CursorTheme=Yaru

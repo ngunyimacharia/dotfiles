@@ -1,0 +1,49 @@
+/* GTK3 colour overrides, shared body for the dark and light copies.
+ * The template context is a palette mode map from .chezmoidata/palette.toml,
+ * so colors are referenced as {{ ".green" }}, {{ ".bg0" }} and so on.
+ * Mode: {{ .mode }}
+ * Lands in ~/.config/gtk-3.0/gtk.css (dark, light, and the seeded default).
+ * GTK3 apps read these @define-color names; GNOME 46 libadwaita apps ignore
+ * this file entirely and read ~/.config/gtk-4.0/gtk.css instead. */
+
+@define-color theme_bg_color {{ .bg0 }};
+@define-color theme_fg_color {{ .fg }};
+@define-color theme_base_color {{ .bg_dim }};
+@define-color theme_text_color {{ .fg }};
+@define-color theme_selected_bg_color {{ .green }};
+@define-color theme_selected_fg_color {{ .bg0 }};
+
+@define-color insensitive_bg_color {{ .bg1 }};
+@define-color insensitive_fg_color {{ .grey1 }};
+@define-color insensitive_base_color {{ .bg_dim }};
+
+@define-color theme_unfocused_bg_color {{ .bg0 }};
+@define-color theme_unfocused_fg_color {{ .fg }};
+@define-color theme_unfocused_base_color {{ .bg_dim }};
+@define-color theme_unfocused_text_color {{ .fg }};
+@define-color theme_unfocused_selected_bg_color {{ .bg2 }};
+@define-color theme_unfocused_selected_fg_color {{ .fg }};
+
+@define-color borders {{ .bg4 }};
+@define-color unfocused_borders {{ .bg3 }};
+
+@define-color warning_color {{ .yellow }};
+@define-color error_color {{ .red }};
+@define-color success_color {{ .green }};
+
+@define-color wm_title {{ .fg }};
+@define-color wm_unfocused_title {{ .grey1 }};
+@define-color wm_bg {{ .bg1 }};
+@define-color wm_bg_unfocused {{ .bg0 }};
+@define-color wm_highlight {{ .bg2 }};
+@define-color wm_border {{ .bg4 }};
+@define-color wm_border_unfocused {{ .bg3 }};
+
+@define-color content_view_bg {{ .bg_dim }};
+@define-color text_view_bg {{ .bg_dim }};
+
+@define-color link_color {{ .blue }};
+@define-color visited_link_color {{ .purple }};
+
+@define-color tooltip_background {{ .bg3 }};
+@define-color tooltip_foreground {{ .fg }};
