@@ -1,9 +1,10 @@
 #!/bin/sh
 # Apply the shared keybinding table to GNOME via gsettings.
 #
-# .chezmoidata/keybindings.toml is the single source of truth, shared with
-# AeroSpace on macOS (see private_dot_config/aerospace/aerospace.toml.tmpl).
-# One table describes both sides so they cannot quietly drift apart.
+# .chezmoidata/keybindings.toml is the single source of truth. It was built to
+# feed two renderers, this one and an AeroSpace config on macOS; the macOS
+# side has since been removed, so GNOME is the only consumer for now. The
+# shape is kept so a second renderer can be added back without rework.
 #
 # This is a run_onchange_ TEMPLATE, not a plain script, because the binding
 # values below are rendered straight from keybindings.toml into the script

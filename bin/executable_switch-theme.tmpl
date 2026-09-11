@@ -240,26 +240,6 @@ apply_macos_colors() {
   fi
 }
 
-apply_macos_bars() {
-  [ "$uname_s" = "Darwin" ] || return 0
-
-  apply_file sketchybarrc "$CONFIG_DIR/sketchybar/sketchybarrc"
-  [ -f "$CONFIG_DIR/sketchybar/sketchybarrc" ] &&
-    chmod +x "$CONFIG_DIR/sketchybar/sketchybarrc" 2>/dev/null || true
-  if pgrep -x sketchybar >/dev/null 2>&1; then
-    sketchybar --reload >/dev/null 2>&1 || true
-  fi
-
-  apply_file bordersrc "$CONFIG_DIR/borders/bordersrc"
-  [ -f "$CONFIG_DIR/borders/bordersrc" ] &&
-    chmod +x "$CONFIG_DIR/borders/bordersrc" 2>/dev/null || true
-  # borders has no reload signal, so bounce it, and only if it was up.
-  if pgrep -x borders >/dev/null 2>&1; then
-    pkill -x borders >/dev/null 2>&1 || true
-    "$CONFIG_DIR/borders/bordersrc" >/dev/null 2>&1 &
-  fi
-}
-
 reload_kitty() {
   command -v kitty >/dev/null 2>&1 || return 0
   [ -f "$KITTY_CURRENT_THEME" ] || return 0
@@ -366,7 +346,6 @@ apply_gnome_shell_theme
 apply_icons
 apply_wallpaper
 apply_macos_colors
-apply_macos_bars
 
 reload_kitty
 reload_tmux

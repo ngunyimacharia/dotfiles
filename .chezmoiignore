@@ -19,11 +19,6 @@ bin/handy-gnome-hotkey
 .zshenv
 Library
 .chezmoiscripts/darwin_install-packages.sh
-# The macOS desktop stack: tiling, status bar, window borders. GNOME covers the
-# same ground with its own shell, so none of this belongs on Linux.
-.config/aerospace
-.config/borders
-.config/sketchybar
 {{ end -}}
 
 .config/nvim/lazy-lock.json

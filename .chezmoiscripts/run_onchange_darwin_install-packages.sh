@@ -352,36 +352,3 @@ if [ -f "$ZSH_PATH" ]; then
 else
   echo "Zsh binary not found at expected location."
 fi
-
-# Omarchy-style desktop stack. AeroSpace does the tiling (chosen over yabai
-# because SIP is enabled on this machine and yabai would need it disabled),
-# sketchybar replaces the menu bar, borders draws the active-window outline,
-# and alt-tab gives a real thumbnail window switcher. All four read their
-# colors from .chezmoidata/palette.toml through chezmoi templates.
-# AeroSpace ships as a cask, not a formula, so it needs --cask. Note its tap
-# strips com.apple.quarantine on install and the binary is not notarized by
-# Apple, so this is trusting the maintainer's build directly.
-if brew list --cask aerospace >/dev/null 2>&1; then
-  echo "aerospace is already installed."
-else
-  echo "Installing aerospace..."
-  brew install --cask nikitabobko/tap/aerospace
-fi
-
-# These two build from source in FelixKratz's tap and self-sign ad-hoc.
-for formula in FelixKratz/formulae/sketchybar FelixKratz/formulae/borders; do
-  name="${formula##*/}"
-  if brew list "$name" >/dev/null 2>&1; then
-    echo "$name is already installed."
-  else
-    echo "Installing $name..."
-    brew install "$formula"
-  fi
-done
-
-if ! test -d "/Applications/AltTab.app"; then
-  echo "Installing AltTab..."
-  brew install --cask alt-tab
-else
-  echo "AltTab is already installed."
-fi

@@ -7,8 +7,6 @@
 #   ~/.local/share/dotfiles-themes/<theme>/kitty.conf
 #   ~/.local/share/dotfiles-themes/<theme>/gtk3.css
 #   ~/.local/share/dotfiles-themes/<theme>/gtk4.css
-#   ~/.local/share/dotfiles-themes/<theme>/bordersrc      (executable)
-#   ~/.local/share/dotfiles-themes/<theme>/sketchybarrc   (executable)
 #   ~/.local/share/dotfiles-themes/<theme>/btop.theme
 #   ~/.local/share/dotfiles-themes/<theme>/tmux.conf
 #
@@ -35,7 +33,7 @@
 #
 # Each file below is written with a quoted heredoc (<<'DOTFILES_THEME_EOF').
 # The quoting matters because the rendered configs contain live `$` and
-# backtick characters (sketchybarrc's click_script, starship's format
+# backtick characters (starship's format
 # strings) that an unquoted heredoc would hand to the shell to expand. By
 # the time this script actually runs, the template calls that pull each
 # config's rendered text in are long gone, replaced by plain text, so the
@@ -123,15 +121,7 @@ cat > "$THEME_DIR/gtk4.css" <<'DOTFILES_THEME_EOF'
 {{ template "themed/gtk4.css" $c }}
 DOTFILES_THEME_EOF
 
-cat > "$THEME_DIR/bordersrc" <<'DOTFILES_THEME_EOF'
-{{ template "themed/bordersrc" $c }}
-DOTFILES_THEME_EOF
-chmod +x "$THEME_DIR/bordersrc"
 
-cat > "$THEME_DIR/sketchybarrc" <<'DOTFILES_THEME_EOF'
-{{ template "themed/sketchybarrc" $c }}
-DOTFILES_THEME_EOF
-chmod +x "$THEME_DIR/sketchybarrc"
 
 cat > "$THEME_DIR/btop.theme" <<'DOTFILES_THEME_EOF'
 {{ template "themed/btop.theme" $c }}

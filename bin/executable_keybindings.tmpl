@@ -2,52 +2,32 @@
 
 set -eu
 
-# Print the shared UI keybindings. Generated from .chezmoidata/keybindings.toml,
-# the same table that produces the AeroSpace config on macOS and the gsettings
-# script on GNOME, so this cannot drift from what is actually bound.
-
-if [ "$(uname)" = "Darwin" ]; then
-  os="macos"
-else
-  os="linux"
-fi
+# Print the GNOME UI keybindings. Generated from .chezmoidata/keybindings.toml,
+# the same table run_onchange_gnome-keybindings.sh applies, so this cannot drift
+# from what is actually bound.
 
 case "${1:-}" in
-  --all | -a) os="both" ;;
   --help | -h)
-    echo "Usage: ${0##*/} [--all]"
+    echo "Usage: ${0##*/}"
     echo ""
-    echo "Shows the keybindings active on this machine."
-    echo "  --all   show every binding, including the ones this OS cannot do"
+    echo "Shows the UI keybindings applied from .chezmoidata/keybindings.toml."
     exit 0
     ;;
 esac
 
-show_row() {
-  where="$3"
-  if [ "$os" != "both" ] && [ "$where" != "both" ] && [ "$where" != "$os" ]; then
-    return 0
-  fi
-  printf '%-24s %-20s %-7s %s\n' "$1" "$2" "$where" "$4"
-}
+if [ "$(uname)" = "Darwin" ]; then
+  echo "These bindings are GNOME-only; nothing applies them on macOS."
+  echo "Raycast and the system keyboard settings own shortcuts there."
+  exit 0
+fi
 
-printf '%-24s %-20s %-7s %s\n' "ACTION" "KEY" "WHERE" "NOTE"
+printf '%-24s %-20s %s\n' "ACTION" "KEY" "NOTE"
 
 {{- range .keybinding }}
-{{- $mac := and (hasKey . "aerospace_key") (ne .aerospace_key "") }}
-{{- $gnome := or (hasKey . "gnome_key") (hasKey . "gnome_command") }}
-{{- $manual := and (hasKey . "manual") .manual }}
-{{- $key := "" }}
-{{- if $mac }}{{ $key = .aerospace_key }}{{ else if hasKey . "gnome_binding" }}{{ $key = .gnome_binding }}{{ end }}
-{{- /* Normalise AeroSpace's alt-shift-h and GNOME's <Alt><Shift>h to one
-       neutral spelling, so a row that applies to both machines does not have
-       to pick one side's syntax to display. */}}
-{{- $key = $key | replace "alt-shift-" "Alt+Shift+" | replace "alt-" "Alt+" | replace "<Alt><Shift>" "Alt+Shift+" | replace "<Alt>" "Alt+" | title }}
-{{- $where := "linux" }}
-{{- if and (or $mac $manual) $gnome }}{{ $where = "both" }}{{ else if or $mac $manual }}{{ $where = "macos" }}{{ end }}
-show_row '{{ .label }}' '{{ $key }}' '{{ $where }}' '{{ if hasKey . "note" }}{{ .note | replace "'" "'\\''" }}{{ end }}'
+{{- $key := .gnome_binding | replace "<Alt><Shift>" "Alt+Shift+" | replace "<Alt>" "Alt+" | title }}
+printf '%-24s %-20s %s\n' '{{ .label }}' '{{ $key }}' '{{ if hasKey . "note" }}{{ .note | replace "'" "'\\''" }}{{ end }}'
 {{- end }}
 
 {{- $ws := .workspaces }}
-show_row 'Switch to workspace 1-{{ $ws.count }}' 'Alt+1 .. Alt+{{ $ws.count }}' 'both' ''
-show_row 'Move to workspace 1-{{ $ws.count }}' 'Alt+Shift+1 .. {{ $ws.count }}' 'both' ''
+printf '%-24s %-20s %s\n' 'Switch to workspace 1-{{ $ws.count }}' 'Alt+1 .. Alt+{{ $ws.count }}' ''
+printf '%-24s %-20s %s\n' 'Move to workspace 1-{{ $ws.count }}' 'Alt+Shift+1 .. {{ $ws.count }}' ''

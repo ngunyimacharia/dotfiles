@@ -1,51 +1,38 @@
-# Shared UI keybindings, one table rendered two ways: AeroSpace bindings on
-# macOS, gsettings on GNOME. Nothing reads a single hotkey config across both
-# operating systems, so the next best thing is one source that both sides are
-# generated from, which is what stops them drifting.
+# GNOME UI keybindings, rendered by run_onchange_gnome-keybindings.sh.
 #
-# Alt is the shared modifier on purpose. macOS apps own Cmd and Linux apps own
-# Ctrl, so Alt is the one modifier neither desktop claims for app shortcuts.
-# AeroSpace already defaults to it and GNOME already uses it for window ops.
+# This began as one table feeding two renderers, GNOME here and AeroSpace on
+# macOS, so the two machines could not drift. The macOS window manager has
+# since been removed, so GNOME is the only consumer and the aerospace_* fields
+# are gone with it. The shape still supports a second renderer if one comes
+# back; nothing here is GNOME-specific except the gnome_* field names.
+#
+# Alt is the modifier throughout. Linux apps own Ctrl, so Alt stays clear of
+# application shortcuts, and GNOME already uses it for window operations.
 #
 # Fields:
-#   aerospace_key / aerospace_action  what AeroSpace binds, omitted when the
-#                                     action is not AeroSpace's to perform
-#   gnome_schema / gnome_key          an existing gsettings key to rebind
-#   gnome_command                     a command to run, bound through a custom
-#                                     keybinding instead of an existing key
-#   gnome_binding                     GTK accelerator syntax
-#   manual                            true when neither side can bind it from a
-#                                     config file and you must set it in an app
-#
-# An empty gnome_* means the action has no GNOME equivalent. That is real, not
-# an oversight: GNOME has no directional window focus without an extension.
+#   gnome_schema / gnome_key   an existing gsettings key to rebind
+#   gnome_command              a command to run, bound through a custom
+#                              keybinding instead of an existing key
+#   gnome_binding              GTK accelerator syntax
+#   note                       anything that is not configured from this file
 
 [[keybinding]]
 id = "launcher"
 label = "Open the launcher"
-aerospace_key = ""
-aerospace_action = ""
 gnome_command = "vicinae toggle"
 gnome_binding = "<Alt>space"
-manual = true
-note = "Raycast on macOS keeps its hotkey in its own settings; set it under Raycast Settings > General > Raycast Hotkey. Linux runs Vicinae, which has no global shortcut support of its own and expects the desktop to bind a key to its toggle."
+note = "Vicinae. The Mac uses Raycast, whose hotkey lives in its own settings and cannot be set from a file."
 
 [[keybinding]]
 id = "switch-window"
 label = "Switch window"
-aerospace_key = ""
-aerospace_action = ""
 gnome_schema = "org.gnome.desktop.wm.keybindings"
 gnome_key = "switch-windows"
 gnome_binding = "<Alt>Tab"
-manual = true
-note = "AltTab owns this on macOS and is configured in its own preferences."
 
 [[keybinding]]
 id = "close-window"
 label = "Close window"
-aerospace_key = "alt-w"
-aerospace_action = "close"
 gnome_schema = "org.gnome.desktop.wm.keybindings"
 gnome_key = "close"
 gnome_binding = "<Alt>w"
@@ -53,8 +40,6 @@ gnome_binding = "<Alt>w"
 [[keybinding]]
 id = "fullscreen"
 label = "Toggle fullscreen"
-aerospace_key = "alt-f"
-aerospace_action = "fullscreen"
 gnome_schema = "org.gnome.desktop.wm.keybindings"
 gnome_key = "toggle-fullscreen"
 gnome_binding = "<Alt>f"
@@ -62,8 +47,6 @@ gnome_binding = "<Alt>f"
 [[keybinding]]
 id = "workspace-prev"
 label = "Previous workspace"
-aerospace_key = "alt-left"
-aerospace_action = "workspace prev"
 gnome_schema = "org.gnome.desktop.wm.keybindings"
 gnome_key = "switch-to-workspace-left"
 gnome_binding = "<Alt>Left"
@@ -71,8 +54,6 @@ gnome_binding = "<Alt>Left"
 [[keybinding]]
 id = "workspace-next"
 label = "Next workspace"
-aerospace_key = "alt-right"
-aerospace_action = "workspace next"
 gnome_schema = "org.gnome.desktop.wm.keybindings"
 gnome_key = "switch-to-workspace-right"
 gnome_binding = "<Alt>Right"
@@ -80,8 +61,6 @@ gnome_binding = "<Alt>Right"
 [[keybinding]]
 id = "screenshot"
 label = "Screenshot"
-aerospace_key = "alt-s"
-aerospace_action = "exec-and-forget screencapture -i -c"
 gnome_schema = "org.gnome.shell.keybindings"
 gnome_key = "show-screenshot-ui"
 gnome_binding = "<Alt>s"
@@ -89,8 +68,6 @@ gnome_binding = "<Alt>s"
 [[keybinding]]
 id = "lock-screen"
 label = "Lock the screen"
-aerospace_key = "alt-x"
-aerospace_action = "exec-and-forget open -a ScreenSaverEngine"
 gnome_schema = "org.gnome.settings-daemon.plugins.media-keys"
 gnome_key = "screensaver"
 gnome_binding = "<Alt>x"
@@ -98,91 +75,12 @@ gnome_binding = "<Alt>x"
 [[keybinding]]
 id = "terminal"
 label = "Open a terminal"
-aerospace_key = "alt-enter"
-aerospace_action = "exec-and-forget open -na kitty"
 gnome_command = "kitty"
 gnome_binding = "<Alt>Return"
 
-# Directional focus and move are AeroSpace-only. GNOME ships no directional
-# window focus at all, and its move-to-side keys are half-maximise tiling
-# rather than the same action, so binding them would be a false equivalence.
-[[keybinding]]
-id = "focus-left"
-label = "Focus left"
-aerospace_key = "alt-h"
-aerospace_action = "focus left"
-
-[[keybinding]]
-id = "focus-down"
-label = "Focus down"
-aerospace_key = "alt-j"
-aerospace_action = "focus down"
-
-[[keybinding]]
-id = "focus-up"
-label = "Focus up"
-aerospace_key = "alt-k"
-aerospace_action = "focus up"
-
-[[keybinding]]
-id = "focus-right"
-label = "Focus right"
-aerospace_key = "alt-l"
-aerospace_action = "focus right"
-
-[[keybinding]]
-id = "move-left"
-label = "Move window left"
-aerospace_key = "alt-shift-h"
-aerospace_action = "move left"
-
-[[keybinding]]
-id = "move-down"
-label = "Move window down"
-aerospace_key = "alt-shift-j"
-aerospace_action = "move down"
-
-[[keybinding]]
-id = "move-up"
-label = "Move window up"
-aerospace_key = "alt-shift-k"
-aerospace_action = "move up"
-
-[[keybinding]]
-id = "move-right"
-label = "Move window right"
-aerospace_key = "alt-shift-l"
-aerospace_action = "move right"
-
-[[keybinding]]
-id = "resize-shrink"
-label = "Shrink window"
-aerospace_key = "alt-minus"
-aerospace_action = "resize smart -50"
-
-[[keybinding]]
-id = "resize-grow"
-label = "Grow window"
-aerospace_key = "alt-equal"
-aerospace_action = "resize smart +50"
-
-[[keybinding]]
-id = "layout-tiles"
-label = "Tiling layout"
-aerospace_key = "alt-slash"
-aerospace_action = "layout tiles horizontal vertical"
-
-[[keybinding]]
-id = "layout-accordion"
-label = "Accordion layout"
-aerospace_key = "alt-comma"
-aerospace_action = "layout accordion"
-
-# Workspaces 1-9. Both sides bind the same digits; GNOME needs static
-# workspaces for this to mean anything, which the GNOME script sets up.
+# Workspaces 1-9. GNOME needs static workspaces for these to address
+# anything, which the keybinding script sets up before applying them.
 [workspaces]
 count = 9
-aerospace_switch_prefix = "alt"
-aerospace_move_prefix = "alt-shift"
 gnome_switch_binding_prefix = "<Alt>"
 gnome_move_binding_prefix = "<Alt><Shift>"
