@@ -1,0 +1,185 @@
+#!/bin/sh
+# Generate Everforest wallpapers straight from the palette.
+#
+# Omarchy ships a backgrounds/ directory of hand-drawn PNGs per theme. We
+# don't have that artwork, so this renders a plain vertical gradient PNG
+# instead: bg_dim -> bg0 -> bg1, dark and light. It's palette-driven, not
+# hand-picked, and it needs nothing beyond python3's standard library
+# (zlib + struct) so it works the same on the Ubuntu box and the Mac.
+#
+# The gradient spans only ~17 steps of red channel over 2160 rows, which
+# gives ~127px flat bands and visible banding at native size. To fix that
+# we 8x8-Bayer ordered-dither the float-to-8-bit quantisation: since the
+# gradient is purely vertical, the dither pattern for a whole scanline is
+# just an 8-pixel tile repeated across the row, so this stays O(width) in
+# byte operations, not O(width) in Python-level arithmetic.
+#
+# Why this lives in a run_onchange_ TEMPLATE instead of being a managed
+# file: the output is a binary PNG, and chezmoi templates only render text.
+# So instead we template the palette hex values (bg_dim/bg0/bg1, dark and
+# light) into the BODY of this shell script below. run_onchange_ scripts
+# re-run whenever their own rendered content changes, so editing a hex in
+# palette.toml changes the text of this script, which makes chezmoi re-run
+# it, which regenerates both PNGs. The hexes you see a few lines down are
+# not hardcoded - they come straight out of palette.toml on every apply.
+
+set -eu
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "python3 not found; skipping wallpaper generation"
+    exit 0
+fi
+
+BG_DIR="$HOME/.local/share/backgrounds"
+mkdir -p "$BG_DIR"
+
+python3 - "$BG_DIR" <<'PYEOF'
+import math
+import os
+import struct
+import sys
+import zlib
+
+WIDTH = 3840
+HEIGHT = 2160
+TILE_PX = 8  # Bayer matrix is 8x8; WIDTH is a clean multiple of it.
+REPS = WIDTH // TILE_PX
+
+bg_dir = sys.argv[1]
+
+# Standard 8x8 Bayer ordered-dither matrix, values 0-63.
+BAYER8 = [
+    [0, 32, 8, 40, 2, 34, 10, 42],
+    [48, 16, 56, 24, 50, 18, 58, 26],
+    [12, 44, 4, 36, 14, 46, 6, 38],
+    [60, 28, 52, 20, 62, 30, 54, 22],
+    [3, 35, 11, 43, 1, 33, 9, 41],
+    [51, 19, 59, 27, 49, 17, 57, 25],
+    [15, 47, 7, 39, 13, 45, 5, 37],
+    [63, 31, 55, 23, 61, 29, 53, 21],
+]
+
+
+def hex_to_rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def lerp_float(a, b, t):
+    # No rounding here - keep the exact float value, the dither step
+    # below is what decides how it quantises to an integer.
+    return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+
+
+def chunk(tag, data):
+    return (
+        struct.pack(">I", len(data))
+        + tag
+        + data
+        + struct.pack(">I", zlib.crc32(tag + data) & 0xffffffff)
+    )
+
+
+def dither_tile(base, y):
+    # One row of the gradient is a single float colour. Ordered-dither it
+    # against the 8 Bayer thresholds for this y, giving an 8-pixel-wide
+    # (24 byte) RGB tile that gets repeated across the full row.
+    brow = BAYER8[y % TILE_PX]
+    tile = bytearray(TILE_PX * 3)
+    for cx in range(TILE_PX):
+        offset = brow[cx] / 64.0 - 0.5
+        for c in range(3):
+            iv = int(math.floor(base[c] + offset))
+            if iv < 0:
+                iv = 0
+            elif iv > 255:
+                iv = 255
+            tile[cx * 3 + c] = iv
+    return bytes(tile)
+
+
+def build_tiles(top_hex, mid_hex, bottom_hex):
+    top = hex_to_rgb(top_hex)
+    mid = hex_to_rgb(mid_hex)
+    bottom = hex_to_rgb(bottom_hex)
+    half = (HEIGHT - 1) / 2.0
+
+    tiles = []
+    for y in range(HEIGHT):
+        if y <= half:
+            t = y / half
+            base = lerp_float(top, mid, t)
+        else:
+            t = (y - half) / (HEIGHT - 1 - half)
+            base = lerp_float(mid, bottom, t)
+        tiles.append(dither_tile(base, y))
+    return tiles
+
+
+def filter_up(tiles):
+    # Filter type 2 (Up): Filt(x) = Raw(x) - Prior(x). Dithering means
+    # rows are no longer flat, but each row is still an 8px tile repeated
+    # REPS times, and so is the row above it, so the per-row delta is
+    # itself periodic - compute it once per 24-byte tile, not per pixel.
+    out = bytearray()
+    prior_tile = bytes(TILE_PX * 3)
+    for tile in tiles:
+        up_tile = bytes((tile[i] - prior_tile[i]) & 0xff for i in range(len(tile)))
+        out.append(2)
+        out += up_tile * REPS
+        prior_tile = tile
+    return bytes(out)
+
+
+def filter_sub(tiles):
+    # Filter type 1 (Sub): Filt(x) = Raw(x) - Raw(x - bpp), bpp = 3.
+    # Within a tile-repeated row this is also periodic (period 24 bytes),
+    # except the very first pixel of the row, where Raw(x - bpp) is
+    # defined as 0 rather than wrapping to the tile's last pixel.
+    out = bytearray()
+    for tile in tiles:
+        sub_tile = bytearray(len(tile))
+        for i in range(len(tile)):
+            sub_tile[i] = (tile[i] - tile[(i - 3) % len(tile)]) & 0xff
+        row = bytearray(bytes(sub_tile) * REPS)
+        row[0], row[1], row[2] = tile[0], tile[1], tile[2]
+        out.append(1)
+        out += row
+    return bytes(out)
+
+
+def write_png(path, tiles):
+    comp_up = zlib.compress(filter_up(tiles), 9)
+    comp_sub = zlib.compress(filter_sub(tiles), 9)
+    if len(comp_up) <= len(comp_sub):
+        chosen, label = comp_up, "Up"
+    else:
+        chosen, label = comp_sub, "Sub"
+
+    ihdr = struct.pack(">IIBBBBB", WIDTH, HEIGHT, 8, 2, 0, 0, 0)
+    with open(path, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n")
+        f.write(chunk(b"IHDR", ihdr))
+        f.write(chunk(b"IDAT", chosen))
+        f.write(chunk(b"IEND", b""))
+
+    print("wrote %s (%d bytes, filter %s)" % (path, os.path.getsize(path), label))
+
+
+write_png(
+    os.path.join(bg_dir, "everforest-dark.png"),
+    build_tiles(
+        "{{ .palette.everforest.dark.bg_dim }}",
+        "{{ .palette.everforest.dark.bg0 }}",
+        "{{ .palette.everforest.dark.bg1 }}",
+    ),
+)
+write_png(
+    os.path.join(bg_dir, "everforest-light.png"),
+    build_tiles(
+        "{{ .palette.everforest.light.bg_dim }}",
+        "{{ .palette.everforest.light.bg0 }}",
+        "{{ .palette.everforest.light.bg1 }}",
+    ),
+)
+PYEOF
