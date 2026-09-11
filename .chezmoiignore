@@ -7,11 +7,11 @@ bin/handy-gnome-hotkey
 .chezmoiscripts/setup-inotify-limits.sh
 .chezmoiscripts/setup-syncthing.sh
 .chezmoiscripts/ubuntu_install-packages.sh
-# GNOME-only surfaces. macOS has no GTK app chrome worth theming and no shell
-# theme to load, so these never render there.
+# GNOME-only surfaces. macOS has no GTK app chrome worth theming, so these
+# never render there. ~/.themes is no longer listed: it is written by
+# run_onchange_generate-themes.sh, which skips it on macOS itself.
 .config/gtk-3.0
 .config/gtk-4.0
-.themes
 {{ else -}}
 .zshrc
 .zshenv

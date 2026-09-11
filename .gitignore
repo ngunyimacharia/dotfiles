@@ -1,1 +1,5 @@
 .scratch
+
+# Vestigial state file from an older theme system. The real one is
+# ~/.current_theme, written by bin/switch-theme.
+.current_theme

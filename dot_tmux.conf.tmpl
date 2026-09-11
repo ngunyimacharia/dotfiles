@@ -40,9 +40,11 @@ set -g @plugin 'omerxx/tmux-sessionx'
 set -g @sessionx-bind 'o'
 set -g @sessionx-fzf-builtin-tmux 'on'
 
-if-shell 'test "$(cat ~/.current_theme_mode 2>/dev/null)" = light' \
-  'source-file ~/.config/tmux/everforest-light.conf' \
-  'source-file ~/.config/tmux/everforest-dark.conf'
+# One current file, rewritten by ~/bin/switch-theme, rather than a branch per
+# mode. There are 23 themes now, so branching on mode no longer identifies one.
+if-shell 'test -f ~/.config/tmux/theme-current.conf' \
+  'source-file ~/.config/tmux/theme-current.conf' \
+  ''
 
 # Automatic continuum boot on Start
 set -g @continuum-boot 'on'
@@ -57,22 +59,22 @@ run '~/.tmux/plugins/tpm/tpm'
 set-option -g status "on"
 set -g status-interval 2
 
-set-option -g mode-style fg='#{@everforest_purple}',bg='#{@everforest_bg_red}' # fg=purple, bg=bg_visual
+set-option -g mode-style fg='#{@theme_purple}',bg='#{@theme_bg_red}' # fg=purple, bg=bg_visual
 
 # ---- Windows ----
 # default window title colors
-set-window-option -g window-status-style fg='#{@everforest_bg5}',bg='#{@everforest_bg0}' # fg=yellow bg=bg0
+set-window-option -g window-status-style fg='#{@theme_bg5}',bg='#{@theme_bg0}' # fg=yellow bg=bg0
 
 # default window with an activity alert
-set-window-option -g window-status-activity-style 'bg=#{@everforest_bg1},fg=#{@everforest_bg3}' # bg=bg1, fg=fg3
+set-window-option -g window-status-activity-style 'bg=#{@theme_bg1},fg=#{@theme_bg3}' # bg=bg1, fg=fg3
 
 # active window title colors
-set-window-option -g window-status-current-style fg='#{@everforest_fg}',bg='#{@everforest_bg_green}' # fg=fg bg=bg_green
+set-window-option -g window-status-current-style fg='#{@theme_fg}',bg='#{@theme_bg_green}' # fg=fg bg=bg_green
 
 # ---- Pane ----
 # pane borders
-set-option -g pane-border-style fg='#{@everforest_bg1}' # fg=bg1
-set-option -g pane-active-border-style 'fg=#{@everforest_blue}' # fg=blue
+set-option -g pane-border-style fg='#{@theme_bg1}' # fg=bg1
+set-option -g pane-active-border-style 'fg=#{@theme_blue}' # fg=blue
 
 # pane number display
 set-option -g display-panes-active-colour '#7fbbb3' # blue
@@ -80,28 +82,28 @@ set-option -g display-panes-colour '#e69875' # orange
 
 # ---- Command ----
 # message info
-set-option -g message-style fg='#{@everforest_statusline3}',bg='#{@everforest_bg_dim}' # fg=statusline3 bg=bg_dim
+set-option -g message-style fg='#{@theme_statusline3}',bg='#{@theme_bg_dim}' # fg=statusline3 bg=bg_dim
 
 # writing commands inactive
-set-option -g message-command-style 'fg=#{@everforest_bg3},bg=#{@everforest_bg1}' # bg=fg3, fg=bg1
+set-option -g message-command-style 'fg=#{@theme_bg3},bg=#{@theme_bg1}' # bg=fg3, fg=bg1
 
 # ---- Miscellaneous ----
 # clock
 set-window-option -g clock-mode-colour '#7fbbb3' #blue
 
 # bell
-set-window-option -g window-status-bell-style fg='#{@everforest_bg0}',bg='#{@everforest_statusline3}' # fg=bg, bg=statusline3
+set-window-option -g window-status-bell-style fg='#{@theme_bg0}',bg='#{@theme_statusline3}' # fg=bg, bg=statusline3
 
 # ---- Formatting ----
 set-option -g status-left-style none
 set -g status-left-length 60
-set -g status-left '#[fg=#{@everforest_bg_dim},bg=#{@everforest_green},bold] #S #[fg=#{@everforest_green},bg=#{@everforest_bg0},nobold]'
+set -g status-left '#[fg=#{@theme_bg_dim},bg=#{@theme_green},bold] #S #[fg=#{@theme_green},bg=#{@theme_bg0},nobold]'
 
 set-option -g status-right-style none
 set -g status-right-length 150
 
-set -g status-right '#[fg=#{@everforest_bg2},bg=#{@everforest_bg0}]#[fg=#{@everforest_fg},bg=#{@everforest_bg2}] %Y-%m-%d #[fg=#{@everforest_green},bg=#{@everforest_bg2}]#[fg=#{@everforest_bg0},bg=#{@everforest_green}] %H:%M '
+set -g status-right '#[fg=#{@theme_bg2},bg=#{@theme_bg0}]#[fg=#{@theme_fg},bg=#{@theme_bg2}] %Y-%m-%d #[fg=#{@theme_green},bg=#{@theme_bg2}]#[fg=#{@theme_bg0},bg=#{@theme_green}] %H:%M '
 
-set -g window-status-separator '#[fg=#{@everforest_grey2},bg=#{@everforest_bg0}] '
-set -g window-status-format "#[fg=#{@everforest_grey0},bg=#{@everforest_bg0}] #I  #[fg=#{@everforest_grey0},bg=#{@everforest_bg0}]#W#[fg=#{@everforest_grey0},bg=#{@everforest_bg0}] "
-set -g window-status-current-format "#[fg=#{@everforest_bg0},bg=#{@everforest_bg_green}]#[fg=#{@everforest_fg},bg=#{@everforest_bg_green}] #I  #[fg=#{@everforest_fg},bg=#{@everforest_bg_green},bold]#W#[fg=#{@everforest_fg},bg=#{@everforest_bg_green},bold] #[fg=#{@everforest_bg_green},bg=#{@everforest_bg0},nobold]"
+set -g window-status-separator '#[fg=#{@theme_grey2},bg=#{@theme_bg0}] '
+set -g window-status-format "#[fg=#{@theme_grey0},bg=#{@theme_bg0}] #I  #[fg=#{@theme_grey0},bg=#{@theme_bg0}]#W#[fg=#{@theme_grey0},bg=#{@theme_bg0}] "
+set -g window-status-current-format "#[fg=#{@theme_bg0},bg=#{@theme_bg_green}]#[fg=#{@theme_fg},bg=#{@theme_bg_green}] #I  #[fg=#{@theme_fg},bg=#{@theme_bg_green},bold]#W#[fg=#{@theme_fg},bg=#{@theme_bg_green},bold] #[fg=#{@theme_bg_green},bg=#{@theme_bg0},nobold]"

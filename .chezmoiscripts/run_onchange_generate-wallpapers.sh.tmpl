@@ -166,20 +166,13 @@ def write_png(path, tiles):
     print("wrote %s (%d bytes, filter %s)" % (path, os.path.getsize(path), label))
 
 
+# One gradient per theme, so every theme has a wallpaper even when Omarchy
+# ships none for it. Themes that do have real artwork use that instead; this is
+# only the fallback, picked up by ~/bin/switch-theme.
+{{- range $name, $c := .palette }}
 write_png(
-    os.path.join(bg_dir, "everforest-dark.png"),
-    build_tiles(
-        "{{ .palette.everforest.dark.bg_dim }}",
-        "{{ .palette.everforest.dark.bg0 }}",
-        "{{ .palette.everforest.dark.bg1 }}",
-    ),
+    os.path.join(bg_dir, "{{ $name }}.png"),
+    build_tiles("{{ $c.bg_dim }}", "{{ $c.bg0 }}", "{{ $c.bg1 }}"),
 )
-write_png(
-    os.path.join(bg_dir, "everforest-light.png"),
-    build_tiles(
-        "{{ .palette.everforest.light.bg_dim }}",
-        "{{ .palette.everforest.light.bg0 }}",
-        "{{ .palette.everforest.light.bg1 }}",
-    ),
-)
+{{- end }}
 PYEOF

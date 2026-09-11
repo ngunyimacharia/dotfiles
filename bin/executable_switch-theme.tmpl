@@ -2,22 +2,59 @@
 
 set -eu
 
+# Theme switcher. Every theme lives in .chezmoidata/palette.toml; a chezmoi
+# script renders each one into THEME_DIR at apply time, so switching is just a
+# file copy and needs no chezmoi at runtime.
+
+THEME_FILE="$HOME/.current_theme"
 MODE_FILE="$HOME/.current_theme_mode"
-KITTY_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+THEME_DIR="$HOME/.local/share/dotfiles-themes"
+BACKGROUND_DIR="$HOME/.local/share/backgrounds"
+THEME_BACKGROUND_DIR="$HOME/.local/share/dotfiles-themes-backgrounds"
+KITTY_CONFIG_DIR="$CONFIG_DIR/kitty"
 KITTY_CURRENT_THEME="$KITTY_CONFIG_DIR/theme-current.conf"
 KITTY_SOCKET="unix:/tmp/kitty-theme"
-TMUX_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+TMUX_CONFIG_DIR="$CONFIG_DIR/tmux"
 BTOP_CONFIG_FILE="$CONFIG_DIR/btop/btop.conf"
-BACKGROUND_DIR="$HOME/.local/share/backgrounds"
+
+# Baked in from the palette so the script never has to shell out to chezmoi to
+# learn which themes exist or which of them are light.
+ALL_THEMES="{{ range $name, $c := .palette }}{{ $name }} {{ end }}"
+LIGHT_THEMES="{{ range $name, $c := .palette }}{{ if eq $c.mode "light" }}{{ $name }} {{ end }}{{ end }}"
+DEFAULT_DARK="everforest"
+DEFAULT_LIGHT="everforest-light"
 
 show_usage() {
-  echo "Usage: ${0##*/} [dark|light|auto|status]"
+  echo "Usage: ${0##*/} [<theme>|dark|light|auto|next|random|list|status]"
   echo ""
   echo "Examples:"
-  echo "  ${0##*/} auto"
+  echo "  ${0##*/} list"
+  echo "  ${0##*/} tokyo-night"
   echo "  ${0##*/} light"
-  echo "  ${0##*/} dark"
+  echo "  ${0##*/} auto"
+}
+
+theme_exists() {
+  for t in $ALL_THEMES; do
+    [ "$t" = "$1" ] && return 0
+  done
+  return 1
+}
+
+mode_of() {
+  for t in $LIGHT_THEMES; do
+    [ "$t" = "$1" ] && { echo "light"; return; }
+  done
+  echo "dark"
+}
+
+current_theme() {
+  if [ -f "$THEME_FILE" ] && theme_exists "$(cat "$THEME_FILE")"; then
+    cat "$THEME_FILE"
+  else
+    echo "$DEFAULT_DARK"
+  fi
 }
 
 detect_os_mode() {
@@ -31,7 +68,8 @@ detect_os_mode() {
   fi
 
   if command -v gsettings >/dev/null 2>&1; then
-    if gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | grep -q "prefer-dark"; then
+    if gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null |
+      grep -q "prefer-dark"; then
       echo "dark"
     else
       echo "light"
@@ -39,153 +77,62 @@ detect_os_mode() {
     return
   fi
 
-  if [ -f "$MODE_FILE" ]; then
-    cat "$MODE_FILE"
-  else
-    echo "dark"
-  fi
+  echo "dark"
 }
 
-# Swap a themed config into the place its app actually reads. Each app owns a
-# plain "current" file; the light and dark variants next to it are managed by
-# chezmoi and generated from .chezmoidata/palette.toml.
-apply_variant() {
-  variant="$1"
-  active="$2"
-  [ -f "$variant" ] || return 0
-  mkdir -p "$(dirname "$active")"
-  cp "$variant" "$active"
+list_themes() {
+  cur="$(current_theme)"
+  for t in $ALL_THEMES; do
+    if [ "$t" = "$cur" ]; then
+      printf '* %-18s %s\n' "$t" "$(mode_of "$t")"
+    else
+      printf '  %-18s %s\n' "$t" "$(mode_of "$t")"
+    fi
+  done
 }
 
-apply_starship() {
-  apply_variant "$CONFIG_DIR/starship-$mode.toml" "$CONFIG_DIR/starship.toml"
-  # starship re-reads its config on every prompt, so there is nothing to signal.
+# Copy a generated file into the place its app actually reads. Missing sources
+# are skipped rather than treated as errors, so a machine that lacks an app
+# still switches cleanly.
+apply_file() {
+  src="$THEME_DIR/$theme/$1"
+  dest="$2"
+  [ -f "$src" ] || return 0
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
 }
 
-apply_fastfetch() {
-  apply_variant "$CONFIG_DIR/fastfetch/config-$mode.jsonc" \
-    "$CONFIG_DIR/fastfetch/config.jsonc"
+apply_terminal() {
+  apply_file kitty.conf "$KITTY_CURRENT_THEME"
+  apply_file starship.toml "$CONFIG_DIR/starship.toml"
+  apply_file fastfetch.jsonc "$CONFIG_DIR/fastfetch/config.jsonc"
+  apply_file tmux.conf "$TMUX_CONFIG_DIR/theme-current.conf"
+  apply_file btop.theme "$CONFIG_DIR/btop/themes/current.theme"
 }
 
-# btop rewrites btop.conf itself when it exits, so we edit the one line we own
+# btop rewrites btop.conf itself on exit, so only the one line we own is edited
 # rather than managing the whole file and fighting it.
 apply_btop() {
   [ -f "$BTOP_CONFIG_FILE" ] || return 0
   if grep -q '^color_theme' "$BTOP_CONFIG_FILE"; then
     tmp="$BTOP_CONFIG_FILE.theme-tmp"
-    sed "s|^color_theme.*|color_theme = \"everforest-$mode\"|" \
-      "$BTOP_CONFIG_FILE" > "$tmp" && mv "$tmp" "$BTOP_CONFIG_FILE"
+    sed 's|^color_theme.*|color_theme = "current"|' \
+      "$BTOP_CONFIG_FILE" >"$tmp" && mv "$tmp" "$BTOP_CONFIG_FILE"
   else
-    printf 'color_theme = "everforest-%s"\n' "$mode" >> "$BTOP_CONFIG_FILE"
+    printf 'color_theme = "current"\n' >>"$BTOP_CONFIG_FILE"
   fi
-
-  # Only signal a btop that is actually running; SIGUSR2 makes it reload.
   if pgrep -x btop >/dev/null 2>&1; then
     pkill -USR2 -x btop >/dev/null 2>&1 || true
   fi
 }
 
-# GTK reads one fixed filename per major version, so the light and dark variants
-# sit next to it and get copied over. Neither GTK3 nor GTK4 watches the file, so
-# windows that are already open keep their old colors until the app restarts.
+# GTK reads one fixed filename per major version. Neither GTK3 nor GTK4 watches
+# it, so open windows keep their old colors until the app restarts.
 apply_gtk() {
-  apply_variant "$CONFIG_DIR/gtk-3.0/gtk-$mode.css" "$CONFIG_DIR/gtk-3.0/gtk.css"
-  apply_variant "$CONFIG_DIR/gtk-4.0/gtk-$mode.css" "$CONFIG_DIR/gtk-4.0/gtk.css"
+  apply_file gtk3.css "$CONFIG_DIR/gtk-3.0/gtk.css"
+  apply_file gtk4.css "$CONFIG_DIR/gtk-4.0/gtk.css"
 }
 
-# The GNOME Shell stylesheet only loads through the User Themes extension. When
-# that extension is absent its schema is absent too, so check before setting and
-# stay quiet rather than erroring on a machine that does not have it.
-apply_gnome_shell_theme() {
-  command -v gsettings >/dev/null 2>&1 || return 0
-  gsettings list-schemas 2>/dev/null |
-    grep -qx "org.gnome.shell.extensions.user-theme" || return 0
-  [ -d "$HOME/.themes/everforest-$mode/gnome-shell" ] || return 0
-  gsettings set org.gnome.shell.extensions.user-theme name "everforest-$mode" \
-    >/dev/null 2>&1 || true
-}
-
-# GNOME keeps separate wallpaper keys for light and dark and picks between them
-# from color-scheme, so both get pointed at their image every time and the swap
-# then follows the mode for free. macOS has one desktop picture, so it gets the
-# image for the mode we are switching into.
-apply_wallpaper() {
-  if [ "$(uname)" = "Darwin" ]; then
-    [ -f "$BACKGROUND_DIR/everforest-$mode.png" ] || return 0
-    osascript -e "tell application \"System Events\" to set picture of every desktop to \"$BACKGROUND_DIR/everforest-$mode.png\"" >/dev/null 2>&1 || true
-    return 0
-  fi
-
-  command -v gsettings >/dev/null 2>&1 || return 0
-  [ -f "$BACKGROUND_DIR/everforest-dark.png" ] || return 0
-  [ -f "$BACKGROUND_DIR/everforest-light.png" ] || return 0
-
-  gsettings set org.gnome.desktop.background picture-uri \
-    "file://$BACKGROUND_DIR/everforest-light.png" >/dev/null 2>&1 || true
-  gsettings set org.gnome.desktop.background picture-uri-dark \
-    "file://$BACKGROUND_DIR/everforest-dark.png" >/dev/null 2>&1 || true
-  gsettings set org.gnome.desktop.background picture-options "zoom" >/dev/null 2>&1 || true
-  gsettings set org.gnome.desktop.screensaver picture-uri \
-    "file://$BACKGROUND_DIR/everforest-$mode.png" >/dev/null 2>&1 || true
-}
-
-# Papirus ships matching light and dark icon sets. Fall back silently to
-# whatever is already set when it is not installed.
-apply_icons() {
-  command -v gsettings >/dev/null 2>&1 || return 0
-  if [ "$mode" = "light" ]; then
-    want="Papirus-Light"
-  else
-    want="Papirus-Dark"
-  fi
-  for dir in "$HOME/.local/share/icons" "$HOME/.icons" /usr/share/icons; do
-    if [ -d "$dir/$want" ]; then
-      gsettings set org.gnome.desktop.interface icon-theme "$want" >/dev/null 2>&1 || true
-      return 0
-    fi
-  done
-}
-
-# macOS exposes no user color scheme, so these two keys are the only system
-# colors the palette can reach. Both only apply to apps launched afterwards.
-apply_macos_colors() {
-  [ "$(uname)" = "Darwin" ] || return 0
-  if [ "$mode" = "light" ]; then
-    highlight="{{ .palette.everforest.light.macos.highlight_color }}"
-    accent="{{ .palette.everforest.light.macos.accent_color }}"
-  else
-    highlight="{{ .palette.everforest.dark.macos.highlight_color }}"
-    accent="{{ .palette.everforest.dark.macos.accent_color }}"
-  fi
-  defaults write -g AppleHighlightColor -string "$highlight" >/dev/null 2>&1 || true
-  defaults write -g AppleAccentColor -int "$accent" >/dev/null 2>&1 || true
-}
-
-# sketchybar and borders are the macOS stand-ins for a themed panel and window
-# chrome. Only signal them when they are actually running.
-apply_macos_bars() {
-  [ "$(uname)" = "Darwin" ] || return 0
-
-  apply_variant "$CONFIG_DIR/sketchybar/sketchybarrc-$mode" \
-    "$CONFIG_DIR/sketchybar/sketchybarrc"
-  [ -f "$CONFIG_DIR/sketchybar/sketchybarrc" ] &&
-    chmod +x "$CONFIG_DIR/sketchybar/sketchybarrc" 2>/dev/null || true
-  if pgrep -x sketchybar >/dev/null 2>&1; then
-    sketchybar --reload >/dev/null 2>&1 || true
-  fi
-
-  apply_variant "$CONFIG_DIR/borders/bordersrc-$mode" "$CONFIG_DIR/borders/bordersrc"
-  [ -f "$CONFIG_DIR/borders/bordersrc" ] &&
-    chmod +x "$CONFIG_DIR/borders/bordersrc" 2>/dev/null || true
-  # borders has no reload signal, so bounce it instead, and only if it was up.
-  if pgrep -x borders >/dev/null 2>&1; then
-    pkill -x borders >/dev/null 2>&1 || true
-    "$CONFIG_DIR/borders/bordersrc" >/dev/null 2>&1 &
-  fi
-}
-
-# Follow the switch through to the desktop, so GTK apps and system chrome match
-# the terminal instead of staying on whatever they were.
 apply_os_appearance() {
   if [ "$(uname)" = "Darwin" ]; then
     osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $([ "$mode" = dark ] && echo true || echo false)" >/dev/null 2>&1 || true
@@ -202,41 +149,145 @@ apply_os_appearance() {
   fi
 }
 
-reload_kitty() {
-  if ! command -v kitty >/dev/null 2>&1; then
+# The GNOME Shell stylesheet only loads through the User Themes extension. Its
+# schema is absent when the extension is, so check before setting.
+apply_gnome_shell_theme() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  gsettings list-schemas 2>/dev/null |
+    grep -qx "org.gnome.shell.extensions.user-theme" || return 0
+  [ -d "$HOME/.themes/$theme/gnome-shell" ] || return 0
+  gsettings set org.gnome.shell.extensions.user-theme name "$theme" \
+    >/dev/null 2>&1 || true
+}
+
+apply_icons() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  if [ "$mode" = "light" ]; then
+    want="Papirus-Light"
+  else
+    want="Papirus-Dark"
+  fi
+  for dir in "$HOME/.local/share/icons" "$HOME/.icons" /usr/share/icons; do
+    if [ -d "$dir/$want" ]; then
+      gsettings set org.gnome.desktop.interface icon-theme "$want" >/dev/null 2>&1 || true
+      return 0
+    fi
+  done
+}
+
+# Prefer a wallpaper shipped with the theme; fall back to the generated
+# gradient for the theme's mode when it has none.
+pick_wallpaper() {
+  if [ -d "$THEME_BACKGROUND_DIR/$theme" ]; then
+    for f in "$THEME_BACKGROUND_DIR/$theme"/*; do
+      [ -f "$f" ] && { printf '%s\n' "$f"; return 0; }
+    done
+  fi
+  if [ -f "$BACKGROUND_DIR/$theme.png" ]; then
+    printf '%s\n' "$BACKGROUND_DIR/$theme.png"
     return 0
   fi
+  return 1
+}
+
+apply_wallpaper() {
+  wallpaper="$(pick_wallpaper)" || return 0
+
+  if [ "$uname_s" = "Darwin" ]; then
+    osascript -e "tell application \"System Events\" to set picture of every desktop to \"$wallpaper\"" >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  command -v gsettings >/dev/null 2>&1 || return 0
+  # Both keys get the same image: GNOME picks between them from color-scheme,
+  # and the theme already decided which mode we are in.
+  gsettings set org.gnome.desktop.background picture-uri "file://$wallpaper" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.background picture-uri-dark "file://$wallpaper" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.background picture-options "zoom" >/dev/null 2>&1 || true
+  gsettings set org.gnome.desktop.screensaver picture-uri "file://$wallpaper" >/dev/null 2>&1 || true
+}
+
+# macOS exposes no user color scheme, so these two keys are the only system
+# colors the palette can reach. Both only apply to apps launched afterwards.
+# AppleHighlightColor wants space-separated 0-1 floats plus a name, and
+# AppleAccentColor is a fixed enum, so both are precomputed per theme in
+# palette.toml and baked in here rather than read back off disk.
+macos_highlight() {
+  case "$1" in
+{{- range $name, $c := .palette }}
+    {{ $name }}) echo "{{ $c.macos.highlight_color }}" ;;
+{{- end }}
+  esac
+}
+
+macos_accent() {
+  case "$1" in
+{{- range $name, $c := .palette }}
+    {{ $name }}) echo "{{ $c.macos.accent_color }}" ;;
+{{- end }}
+  esac
+}
+
+apply_macos_colors() {
+  [ "$uname_s" = "Darwin" ] || return 0
+  highlight="$(macos_highlight "$theme")"
+  accent="$(macos_accent "$theme")"
+  if [ -n "$highlight" ]; then
+    defaults write -g AppleHighlightColor -string "$highlight" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$accent" ]; then
+    defaults write -g AppleAccentColor -int "$accent" >/dev/null 2>&1 || true
+  fi
+}
+
+apply_macos_bars() {
+  [ "$uname_s" = "Darwin" ] || return 0
+
+  apply_file sketchybarrc "$CONFIG_DIR/sketchybar/sketchybarrc"
+  [ -f "$CONFIG_DIR/sketchybar/sketchybarrc" ] &&
+    chmod +x "$CONFIG_DIR/sketchybar/sketchybarrc" 2>/dev/null || true
+  if pgrep -x sketchybar >/dev/null 2>&1; then
+    sketchybar --reload >/dev/null 2>&1 || true
+  fi
+
+  apply_file bordersrc "$CONFIG_DIR/borders/bordersrc"
+  [ -f "$CONFIG_DIR/borders/bordersrc" ] &&
+    chmod +x "$CONFIG_DIR/borders/bordersrc" 2>/dev/null || true
+  # borders has no reload signal, so bounce it, and only if it was up.
+  if pgrep -x borders >/dev/null 2>&1; then
+    pkill -x borders >/dev/null 2>&1 || true
+    "$CONFIG_DIR/borders/bordersrc" >/dev/null 2>&1 &
+  fi
+}
+
+reload_kitty() {
+  command -v kitty >/dev/null 2>&1 || return 0
+  [ -f "$KITTY_CURRENT_THEME" ] || return 0
 
   if kitty @ --to "$KITTY_SOCKET" set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
     echo "Updated running kitty windows."
     return 0
   fi
-
   if kitty @ set-colors --all --configured "$KITTY_CURRENT_THEME" >/dev/null 2>&1; then
     echo "Updated current kitty window."
     return 0
   fi
-
   echo "Kitty theme file updated. Restart kitty if no running windows changed."
 }
 
 reload_tmux() {
-  if ! command -v tmux >/dev/null 2>&1; then
-    return 0
-  fi
+  command -v tmux >/dev/null 2>&1 || return 0
+  tmux has-session >/dev/null 2>&1 || return 0
+  [ -f "$TMUX_CONFIG_DIR/theme-current.conf" ] || return 0
 
-  if ! tmux has-session >/dev/null 2>&1; then
-    return 0
-  fi
-
-  tmux source-file "$TMUX_CONFIG_DIR/everforest-$mode.conf" >/dev/null 2>&1 || true
-  tmux_fg="$(tmux show-option -gqv @everforest_fg)"
-  tmux_bg0="$(tmux show-option -gqv @everforest_bg0)"
-  tmux_bg2="$(tmux show-option -gqv @everforest_bg2)"
-  tmux_green="$(tmux show-option -gqv @everforest_green)"
+  tmux source-file "$TMUX_CONFIG_DIR/theme-current.conf" >/dev/null 2>&1 || true
+  tmux_fg="$(tmux show-option -gqv @theme_fg)"
+  tmux_bg0="$(tmux show-option -gqv @theme_bg0)"
+  tmux_bg2="$(tmux show-option -gqv @theme_bg2)"
+  tmux_green="$(tmux show-option -gqv @theme_green)"
 
   tmux set-option -g status-style "fg=$tmux_fg,bg=$tmux_bg0,default" >/dev/null 2>&1 || true
-  tmux set-option -g status-right "#[fg=$tmux_bg2,bg=$tmux_bg0]#[fg=$tmux_fg,bg=$tmux_bg2] %Y-%m-%d #[fg=$tmux_green,bg=$tmux_bg2]#[fg=$tmux_bg0,bg=$tmux_green] %H:%M " >/dev/null 2>&1 || true
+  tmux set-option -g status-right "#[fg=$tmux_bg2,bg=$tmux_bg0]#[fg=$tmux_fg,bg=$tmux_bg2] %Y-%m-%d #[fg=$tmux_green,bg=$tmux_bg2]#[fg=$tmux_bg0,bg=$tmux_green] %H:%M " >/dev/null 2>&1 || true
   if [ -f "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" ]; then
     "$HOME/.tmux/plugins/tmux-sessionx/sessionx.tmux" >/dev/null 2>&1 || true
   fi
@@ -244,49 +295,70 @@ reload_tmux() {
   echo "Updated tmux status theme."
 }
 
-# Resolve the mode inline rather than through a command substitution. A
-# subshell's "exit" only ends the subshell, so the usage/status branches used to
-# be captured into $mode instead of ending the script.
+# Resolve the argument inline. A subshell's "exit" only ends the subshell, so
+# the usage and status branches must not sit inside a command substitution.
 case "${1:-}" in
-  dark|light)
-    mode="$1"
-    ;;
-  auto)
-    mode="$(detect_os_mode)"
-    ;;
   "" | --help | -h)
     show_usage
     exit 0
     ;;
+  list)
+    list_themes
+    exit 0
+    ;;
   status)
-    if [ -f "$MODE_FILE" ]; then
-      echo "Current theme mode: $(cat "$MODE_FILE")"
+    if [ -f "$THEME_FILE" ]; then
+      echo "Current theme: $(current_theme) ($(mode_of "$(current_theme)"))"
     else
-      echo "Current theme mode: unset"
+      echo "Current theme: unset"
     fi
     exit 0
     ;;
+  dark)
+    theme="$DEFAULT_DARK"
+    ;;
+  light)
+    theme="$DEFAULT_LIGHT"
+    ;;
+  auto)
+    if [ "$(detect_os_mode)" = "light" ]; then
+      theme="$DEFAULT_LIGHT"
+    else
+      theme="$DEFAULT_DARK"
+    fi
+    ;;
+  next)
+    cur="$(current_theme)"
+    theme="$(printf '%s\n' $ALL_THEMES | awk -v c="$cur" '
+      { a[NR] = $0 } END { for (i = 1; i <= NR; i++) if (a[i] == c) { print a[i % NR + 1]; exit } print a[1] }')"
+    ;;
+  random)
+    theme="$(printf '%s\n' $ALL_THEMES | awk 'BEGIN { srand() } { a[NR] = $0 } END { print a[int(rand() * NR) + 1] }')"
+    ;;
   *)
-    echo "Error: expected dark, light, auto, or status" >&2
-    show_usage >&2
-    exit 1
+    if theme_exists "$1"; then
+      theme="$1"
+    else
+      echo "Error: unknown theme '$1'" >&2
+      echo "Run '${0##*/} list' to see the available themes." >&2
+      exit 1
+    fi
     ;;
 esac
 
-kitty_source="$KITTY_CONFIG_DIR/theme-everforest-$mode.conf"
-
-if [ ! -f "$kitty_source" ]; then
-  echo "Error: missing $kitty_source" >&2
-  echo "Run chezmoi apply first so the managed kitty theme files exist." >&2
+if [ ! -d "$THEME_DIR/$theme" ]; then
+  echo "Error: missing $THEME_DIR/$theme" >&2
+  echo "Run 'chezmoi apply' first so the generated theme files exist." >&2
   exit 1
 fi
 
-mkdir -p "$KITTY_CONFIG_DIR"
-cp "$kitty_source" "$KITTY_CURRENT_THEME"
-printf '%s\n' "$mode" > "$MODE_FILE"
+mode="$(mode_of "$theme")"
+uname_s="$(uname)"
 
-apply_starship
-apply_fastfetch
+printf '%s\n' "$theme" >"$THEME_FILE"
+printf '%s\n' "$mode" >"$MODE_FILE"
+
+apply_terminal
 apply_btop
 apply_gtk
 apply_os_appearance
@@ -299,10 +371,9 @@ apply_macos_bars
 reload_kitty
 reload_tmux
 
-echo "Theme mode set to $mode."
+echo "Theme set to $theme ($mode)."
 echo "Neovim will use it on next start; run :ThemeSync in an existing Neovim session."
-echo "Restart opencode if its TUI does not repaint from the terminal palette."
 echo "GTK apps pick up the new colors when they next start."
-if [ "$(uname)" != "Darwin" ] && [ -d "$HOME/.themes/everforest-$mode/gnome-shell" ]; then
+if [ "$uname_s" != "Darwin" ] && [ -d "$HOME/.themes/$theme/gnome-shell" ]; then
   echo "GNOME Shell restyles live on Wayland only after logging out and back in."
 fi

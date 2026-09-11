@@ -1,0 +1,176 @@
+#!/bin/sh
+# Render every theme in .chezmoidata/palette.toml, times every config in
+# .chezmoitemplates/themed/, into a plain staging directory:
+#
+#   ~/.local/share/dotfiles-themes/<theme>/starship.toml
+#   ~/.local/share/dotfiles-themes/<theme>/fastfetch.jsonc
+#   ~/.local/share/dotfiles-themes/<theme>/kitty.conf
+#   ~/.local/share/dotfiles-themes/<theme>/gtk3.css
+#   ~/.local/share/dotfiles-themes/<theme>/gtk4.css
+#   ~/.local/share/dotfiles-themes/<theme>/bordersrc      (executable)
+#   ~/.local/share/dotfiles-themes/<theme>/sketchybarrc   (executable)
+#   ~/.local/share/dotfiles-themes/<theme>/btop.theme
+#   ~/.local/share/dotfiles-themes/<theme>/tmux.conf
+#
+# so that switching themes at runtime is a plain file copy out of that
+# directory, with no chezmoi involved. GNOME Shell is the one exception: its
+# stylesheet has to be written straight to its real home, because the User
+# Themes extension enumerates ~/.themes/<name>/gnome-shell/ itself and does
+# not know the staging directory exists:
+#
+#   ~/.themes/<theme>/index.theme
+#   ~/.themes/<theme>/gnome-shell/gnome-shell.css
+#
+# Why this is a run_onchange_ TEMPLATE rather than a plain script: every
+# theme's colours are rendered as literal text into the BODY of this script
+# below, via per-theme "template" calls (see the actual code further down)
+# inside a range over .palette (itself loaded from .chezmoidata/palette.toml
+# and reached here as .palette). A run_onchange_ script re-runs whenever its
+# own rendered content changes, so editing a single hex value in
+# palette.toml changes the text of this script, which is what makes chezmoi
+# re-run it and regenerate every theme. Nothing here is
+# hand-maintained per theme: adding a theme means adding one
+# [palette."name"] block (plus its .ansi/.kitty/.macos sub-tables) to
+# palette.toml, and nothing in this script needs to change.
+#
+# Each file below is written with a quoted heredoc (<<'DOTFILES_THEME_EOF').
+# The quoting matters because the rendered configs contain live `$` and
+# backtick characters (sketchybarrc's click_script, starship's format
+# strings) that an unquoted heredoc would hand to the shell to expand. By
+# the time this script actually runs, the template calls that pull each
+# config's rendered text in are long gone, replaced by plain text, so the
+# quoting only has to survive a
+# single pass through `sh`, not chezmoi's templating too.
+#
+# Stale output is handled two different ways because the two destinations
+# have different ownership:
+#   - ~/.local/share/dotfiles-themes is entirely ours; nothing else writes
+#     there. So it is simplest to build a fresh tree in a temp directory and
+#     swap it into place, which also means a theme removed from
+#     palette.toml just stops appearing, with no diffing needed.
+#   - ~/.themes is shared with themes we do not manage (other GTK/icon
+#     themes a user or package installed by hand), so it cannot be wiped and
+#     rebuilt the same way. Instead this script keeps a manifest of the
+#     theme names it generated last time and, before writing anything,
+#     removes only the ~/.themes/<name> directories that this script itself
+#     created and that no longer have a block in palette.toml.
+
+set -eu
+
+STAGE_ROOT="$HOME/.local/share/dotfiles-themes"
+# GNOME Shell themes are Linux-only. On macOS there is no shell to restyle and
+# nothing reads ~/.themes, so that half of the work is skipped rather than
+# leaving 23 unused theme directories behind.
+if [ "$(uname)" = "Darwin" ]; then
+  WANT_GNOME=0
+else
+  WANT_GNOME=1
+fi
+
+THEMES_ROOT="$HOME/.themes"
+MANIFEST="$THEMES_ROOT/.dotfiles-generated-themes"
+
+# Newline-separated list of every theme name in this run, built from the
+# same palette range used for generation below. Used only to work out which
+# previously-generated ~/.themes/<name> directories are now stale.
+NEW_THEMES='{{ range $name, $c := .palette }}{{ $name }}
+{{ end }}'
+
+[ "$WANT_GNOME" = 1 ] && mkdir -p "$THEMES_ROOT" || true
+if [ -f "$MANIFEST" ]; then
+    while IFS= read -r old_name; do
+        [ -n "$old_name" ] || continue
+        if ! printf '%s\n' "$NEW_THEMES" | grep -qxF "$old_name"; then
+            rm -rf "$THEMES_ROOT/$old_name"
+        fi
+    done < "$MANIFEST"
+fi
+
+STAGE_TMP="$STAGE_ROOT.tmp.$$"
+rm -rf "$STAGE_TMP"
+mkdir -p "$STAGE_TMP"
+trap 'rm -rf "$STAGE_TMP"' EXIT
+
+count=0
+{{ range $name, $c := .palette }}
+count=$((count + 1))
+THEME_DIR="$STAGE_TMP/{{ $name }}"
+mkdir -p "$THEME_DIR"
+
+cat > "$THEME_DIR/starship.toml" <<'DOTFILES_THEME_EOF'
+{{ template "themed/starship.toml" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/fastfetch.jsonc" <<'DOTFILES_THEME_EOF'
+{{ template "themed/fastfetch.jsonc" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/kitty.conf" <<'DOTFILES_THEME_EOF'
+{{ template "themed/kitty.conf" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/gtk3.css" <<'DOTFILES_THEME_EOF'
+{{ template "themed/gtk3.css" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/gtk4.css" <<'DOTFILES_THEME_EOF'
+{{ template "themed/gtk4.css" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/bordersrc" <<'DOTFILES_THEME_EOF'
+{{ template "themed/bordersrc" $c }}
+DOTFILES_THEME_EOF
+chmod +x "$THEME_DIR/bordersrc"
+
+cat > "$THEME_DIR/sketchybarrc" <<'DOTFILES_THEME_EOF'
+{{ template "themed/sketchybarrc" $c }}
+DOTFILES_THEME_EOF
+chmod +x "$THEME_DIR/sketchybarrc"
+
+cat > "$THEME_DIR/btop.theme" <<'DOTFILES_THEME_EOF'
+{{ template "themed/btop.theme" $c }}
+DOTFILES_THEME_EOF
+
+cat > "$THEME_DIR/tmux.conf" <<'DOTFILES_THEME_EOF'
+{{ template "themed/tmux.conf" $c }}
+DOTFILES_THEME_EOF
+
+if [ "$WANT_GNOME" = 1 ]; then
+GNOME_SHELL_DIR="$THEMES_ROOT/{{ $name }}/gnome-shell"
+rm -rf "$THEMES_ROOT/{{ $name }}"
+mkdir -p "$GNOME_SHELL_DIR"
+
+cat > "$GNOME_SHELL_DIR/gnome-shell.css" <<'DOTFILES_THEME_EOF'
+{{ template "themed/gnome-shell.css" $c }}
+DOTFILES_THEME_EOF
+
+{{ $gtk_theme := "Adwaita-dark" }}
+{{ if eq $c.mode "light" }}
+{{ $gtk_theme = "Adwaita" }}
+{{ end }}
+cat > "$THEMES_ROOT/{{ $name }}/index.theme" <<DOTFILES_INDEX_EOF
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name={{ $name }}
+Comment=Generated from the chezmoi palette
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme={{ $gtk_theme }}
+MetacityTheme=Adwaita
+IconTheme=Yaru
+CursorTheme=Yaru
+DOTFILES_INDEX_EOF
+fi
+{{ end }}
+
+rm -rf "$STAGE_ROOT"
+mv "$STAGE_TMP" "$STAGE_ROOT"
+
+printf '%s\n' "$NEW_THEMES" | sed '/^$/d' > "$MANIFEST"
+
+if [ "$WANT_GNOME" = 1 ]; then
+  echo "Generated $count themes into $STAGE_ROOT and $THEMES_ROOT."
+else
+  echo "Generated $count themes into $STAGE_ROOT."
+fi
