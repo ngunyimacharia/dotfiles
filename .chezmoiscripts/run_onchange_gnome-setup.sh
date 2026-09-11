@@ -34,18 +34,56 @@ gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['<Shift
 # is never read and the top bar stays stock. It ships in the gnome-shell-extensions
 # package, which the Ubuntu package script installs.
 USER_THEME_UUID="user-theme@gnome-shell-extensions.gcampax.github.com"
-if command -v gnome-extensions >/dev/null 2>&1; then
-  if gnome-extensions list 2>/dev/null | grep -qx "$USER_THEME_UUID"; then
-    if gnome-extensions enable "$USER_THEME_UUID" 2>/dev/null; then
-      echo "User Themes extension enabled."
-    else
-      echo "User Themes is installed but could not be enabled; log out and back in, then rerun."
-    fi
-  else
-    echo "User Themes extension not installed yet."
-    echo "  Run: sudo apt install gnome-shell-extensions"
-    echo "  Then log out and back in, and rerun 'chezmoi apply'."
+
+# gnome-extensions enable only knows about extensions the running Shell has
+# already scanned. Right after the package is installed it reports "does not
+# exist", and on Wayland the Shell cannot be restarted without logging out. So
+# fall back to writing the enabled-extensions key directly, which the Shell
+# picks up at next login either way.
+enable_user_theme() {
+  if gnome-extensions enable "$USER_THEME_UUID" 2>/dev/null; then
+    echo "User Themes extension enabled."
+    return 0
   fi
+
+  python3 - "$USER_THEME_UUID" <<'PYEOF'
+import ast
+import subprocess
+import sys
+
+uuid = sys.argv[1]
+raw = subprocess.run(
+    ["gsettings", "get", "org.gnome.shell", "enabled-extensions"],
+    capture_output=True, text=True, check=True,
+).stdout.strip()
+
+enabled = [] if raw in ("@as []", "") else ast.literal_eval(raw)
+if uuid in enabled:
+    print("User Themes already in enabled-extensions.")
+    sys.exit(0)
+
+enabled.append(uuid)
+value = "[" + ", ".join("'%s'" % item for item in enabled) + "]"
+subprocess.run(
+    ["gsettings", "set", "org.gnome.shell", "enabled-extensions", value],
+    check=True,
+)
+print("User Themes added to enabled-extensions; it loads at next login.")
+PYEOF
+}
+
+if [ -d /usr/share/gnome-shell/extensions/"$USER_THEME_UUID" ] ||
+  [ -d "$HOME/.local/share/gnome-shell/extensions/$USER_THEME_UUID" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    enable_user_theme
+  else
+    gnome-extensions enable "$USER_THEME_UUID" 2>/dev/null ||
+      echo "User Themes is installed but could not be enabled; log out and back in."
+  fi
+else
+  echo "User Themes extension not installed yet."
+  echo "  Run: sudo apt install gnome-shell-extensions"
+  echo "  Then log out and back in, and rerun 'chezmoi apply'."
 fi
 
 echo "GNOME configuration updated."
