@@ -219,12 +219,30 @@
   border: 1px solid {{ .bg3 }};
 }
 
+/* The bar is a StBarLevel: a DrawingArea that paints its own track and fill
+ * with cairo, driven by the -barlevel-* properties. It has no .level-bar
+ * child to style, and a plain background-color on it just lays a flat
+ * rectangle across the whole widget, which hides the fill and leaves the
+ * OSD showing no volume level at all. */
 .osd-window .level {
-  background-color: {{ .bg3 }};
+  -barlevel-background-color: {{ .bg3 }};
+  -barlevel-active-background-color: {{ .green }};
+  -barlevel-border-color: transparent;
+  -barlevel-active-border-color: transparent;
+  -barlevel-overdrive-color: {{ .red }};
+  -barlevel-overdrive-border-color: transparent;
 }
 
-.osd-window .level-bar {
-  background-color: {{ .green }};
+/* Quick settings volume and brightness sliders are the same widget, and
+ * upstream hardcodes GNOME blue for the fill. */
+.slider {
+  -barlevel-background-color: {{ .bg3 }};
+  -barlevel-active-background-color: {{ .green }};
+  -barlevel-border-color: transparent;
+  -barlevel-active-border-color: transparent;
+  -barlevel-overdrive-color: {{ .red }};
+  -barlevel-overdrive-border-color: transparent;
+  color: {{ .green }};
 }
 
 /* Calendar / date menu. */
