@@ -280,3 +280,87 @@
 .dim-label {
   color: {{ .grey1 }};
 }
+
+/* Accent sweep.
+ *
+ * The stock sheet imported at the top hardcodes GNOME blue (#3584e4) in
+ * twenty places rather than routing them through a variable, so every one
+ * of them has to be named again here or the blue shows through the theme.
+ * The quick settings arrow buttons on the Power and Wired rows are the most
+ * visible of these: they are separate actors from .quick-toggle, so styling
+ * the toggle alone leaves the arrow beside it upstream blue.
+ *
+ * Stock also defines :hover, :focus and :active variants at a higher
+ * specificity than the base rule, so the state selectors are repeated too.
+ * They all resolve to the same accent, which matches how .quick-toggle
+ * :checked above already behaves. */
+.button.default,
+.button.default:hover,
+.button.default:focus,
+.button.default:active,
+.icon-button.default,
+.icon-button.default:hover,
+.icon-button.default:focus,
+.icon-button.default:active,
+.keyboard-brightness-level .button:checked,
+.keyboard-brightness-level .button:hover:checked,
+.keyboard-brightness-level .button:focus:checked,
+.keyboard-brightness-level .button:active:checked,
+.quick-menu-toggle .quick-toggle-arrow:checked,
+.quick-menu-toggle .quick-toggle-arrow:hover:checked,
+.quick-menu-toggle .quick-toggle-arrow:focus:checked,
+.quick-menu-toggle .quick-toggle-arrow:active:checked,
+.quick-toggle-menu .header .icon.active,
+.calendar .calendar-day.calendar-today,
+.calendar .calendar-day.calendar-today:hover,
+.calendar .calendar-day.calendar-today:focus,
+.calendar .calendar-day.calendar-today:active,
+.calendar .calendar-month-header .default.pager-button,
+.message .message-header .default.message-close-button,
+.message .message-header .default.message-expand-button,
+.candidate-box:selected,
+.audio-selection-device:active,
+.osd-monitor-label,
+.keyboard-key.default-key:latched,
+.emoji-panel .keyboard-key:latched {
+  background-color: {{ .green }};
+  color: {{ .bg0 }};
+}
+
+/* Outline-only accents: keep upstream's border widths, swap the color. */
+.cycler-highlight {
+  border: 5px solid {{ .green }};
+}
+
+.magnifier-zoom-region {
+  border: 2px solid {{ .green }};
+}
+
+.pie-timer {
+  -pie-border-color: {{ .green }};
+  -pie-background-color: rgba({{ $green_rgb }}, 0.3);
+}
+
+.tile-preview {
+  background-color: rgba({{ $green_rgb }}, 0.5);
+  border: 1px solid {{ .green }};
+}
+
+.select-area-rubberband {
+  background-color: rgba({{ $green_rgb }}, 0.3);
+  border: 1px solid {{ .green }};
+}
+
+.screenshot-ui-window-selector-window:checked .screenshot-ui-window-selector-window-border {
+  border-color: {{ .green }};
+}
+
+.screenshot-ui-window-selector-window:checked .screenshot-ui-window-selector-check {
+  background-color: {{ .green }};
+}
+
+/* Text selection inside shell entries (search, password prompts). */
+StEntry {
+  selection-background-color: {{ .green }};
+  selected-color: {{ .bg0 }};
+}
